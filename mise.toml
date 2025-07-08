@@ -1,0 +1,79 @@
+[tools]
+node = "24"
+
+[tasks.build]
+description = "Build the TypeScript source"
+run = "npm run build"
+
+[tasks.dev]
+description = "Build TypeScript in watch mode"
+run = "npm run dev"
+
+[tasks.install]
+description = "Install dependencies"
+run = "npm install"
+
+[tasks.test]
+description = "Run unit tests"
+run = "npm test"
+
+[tasks."test:unit"]
+description = "Run unit tests (alias for test)"
+run = "npm test"
+
+[tasks."test:watch"]
+description = "Run unit tests in watch mode"
+run = "npm run test:watch"
+
+[tasks."test:e2e"]
+description = "Run end-to-end tests (requires PostgreSQL)"
+run = "npm run test:e2e"
+
+[tasks."test:docker"]
+description = "Run end-to-end tests in Docker"
+run = "npm run test:docker"
+
+[tasks."test:docker:clean"]
+description = "Clean up Docker containers and volumes"
+run = "npm run test:docker:clean"
+
+[tasks."test:all"]
+description = "Run all tests (unit + e2e in Docker)"
+depends = ["test", "test:docker"]
+
+[tasks.lint]
+description = "Run oxlint on source code"
+run = "npm run lint"
+
+[tasks."lint:fix"]
+description = "Run oxlint with auto-fix"
+run = "npm run lint:fix"
+
+[tasks.format]
+description = "Format code with prettier"
+run = "npm run format"
+
+[tasks."format:check"]
+description = "Check code formatting with prettier"
+run = "npm run format:check"
+
+[tasks.precommit]
+description = "Run format, lint, build, and test"
+run = "npm run precommit"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = """
+rm -rf dist/
+rm -rf node_modules/
+rm -rf test-*
+rm -rf migrations/
+"""
+
+[tasks.typecheck]
+description = "Run TypeScript type checking"
+run = "npx tsc --noEmit"
+
+[tasks.ci]
+description = "Run CI checks (format, lint, typecheck, build, test)"
+depends = ["format:check", "lint", "typecheck", "build", "test"]
