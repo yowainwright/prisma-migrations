@@ -41,7 +41,7 @@
     "schema",
     "knex"
   ],
-  "author": "jeffrywainwright",
+  "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^4.0.0",
@@ -70,10 +70,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeffrywainwright/prisma-migrations.git"
+    "url": "https://github.com/yowainwright/prisma-migrations.git"
   },
   "bugs": {
-    "url": "https://github.com/jeffrywainwright/prisma-migrations/issues"
+    "url": "https://github.com/yowainwright/prisma-migrations/issues"
   },
-  "homepage": "https://github.com/jeffrywainwright/prisma-migrations#readme"
+  "homepage": "https://github.com/yowainwright/prisma-migrations#readme"
 }
