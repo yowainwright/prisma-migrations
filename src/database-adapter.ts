@@ -10,6 +10,7 @@ import { resolve } from "path";
 export class DatabaseAdapter {
   private prisma: PrismaClient;
   private tableName: string;
+  private isPrismaTable: boolean | null = null;
 
   constructor(databaseUrl: string, tableName: string = "_prisma_migrations") {
     this.prisma = new PrismaClient({
@@ -30,7 +31,36 @@ export class DatabaseAdapter {
     await this.prisma.$disconnect();
   }
 
+  private async detectPrismaTable(): Promise<boolean> {
+    if (this.isPrismaTable !== null) {
+      return this.isPrismaTable;
+    }
+
+    try {
+      // Check if table exists and has Prisma's structure (migration_name column)
+      const columnExists = (await this.prisma.$queryRawUnsafe(`
+        SELECT COUNT(*) as count
+        FROM information_schema.columns
+        WHERE table_name = '${this.tableName.replace("_", "")}' AND column_name = 'migration_name'
+      `)) as any[];
+
+      this.isPrismaTable = columnExists[0].count > 0;
+      return this.isPrismaTable;
+    } catch {
+      this.isPrismaTable = false;
+      return false;
+    }
+  }
+
   public async ensureMigrationsTable(): Promise<void> {
+    const isPrismaTable = await this.detectPrismaTable();
+
+    if (isPrismaTable) {
+      // This is Prisma's migrations table, don't create our own
+      return;
+    }
+
+    // Create our custom table structure for non-Prisma usage
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS ${this.tableName} (
         id VARCHAR(255) PRIMARY KEY,
@@ -44,20 +74,41 @@ export class DatabaseAdapter {
   }
 
   public async getAppliedMigrations(): Promise<Migration[]> {
-    const results = (await this.prisma.$queryRawUnsafe(`
-      SELECT id, name, applied_at as appliedAt
-      FROM ${this.tableName}
-      ORDER BY applied_at ASC
-    `)) as any[];
+    const isPrismaTable = await this.detectPrismaTable();
 
-    return results.map((row) => ({
-      id: row.id,
-      name: row.name,
-      filename: `${row.id}_${row.name}.sql`,
-      timestamp: new Date(row.id.substring(0, 8)),
-      applied: true,
-      appliedAt: row.appliedAt,
-    }));
+    if (isPrismaTable) {
+      // Use Prisma's table structure
+      const results = (await this.prisma.$queryRawUnsafe(`
+        SELECT id, migration_name, started_at as appliedAt
+        FROM ${this.tableName}
+        ORDER BY started_at ASC
+      `)) as any[];
+
+      return results.map((row) => ({
+        id: row.id,
+        name: row.migration_name,
+        filename: `${row.id}_${row.migration_name}.sql`,
+        timestamp: new Date(row.id.substring(0, 8)),
+        applied: true,
+        appliedAt: row.appliedAt,
+      }));
+    } else {
+      // Use custom table structure
+      const results = (await this.prisma.$queryRawUnsafe(`
+        SELECT id, name, applied_at as appliedAt
+        FROM ${this.tableName}
+        ORDER BY applied_at ASC
+      `)) as any[];
+
+      return results.map((row) => ({
+        id: row.id,
+        name: row.name,
+        filename: `${row.id}_${row.name}.sql`,
+        timestamp: new Date(row.id.substring(0, 8)),
+        applied: true,
+        appliedAt: row.appliedAt,
+      }));
+    }
   }
 
   public async isMigrationApplied(migrationId: string): Promise<boolean> {
@@ -77,24 +128,42 @@ export class DatabaseAdapter {
     migrationId: string,
     name: string,
   ): Promise<void> {
-    await this.prisma.$executeRawUnsafe(
-      `
-      INSERT INTO ${this.tableName} (id, name)
-      VALUES (?, ?)
-    `,
-      migrationId,
-      name,
-    );
+    const isPrismaTable = await this.detectPrismaTable();
+
+    if (isPrismaTable) {
+      // Don't insert into Prisma's migration table - it's managed by Prisma
+      // This is read-only for compatibility
+      return;
+    } else {
+      // Use custom table structure
+      await this.prisma.$executeRawUnsafe(
+        `
+        INSERT INTO ${this.tableName} (id, name)
+        VALUES (?, ?)
+      `,
+        migrationId,
+        name,
+      );
+    }
   }
 
   public async removeMigration(migrationId: string): Promise<void> {
-    await this.prisma.$executeRawUnsafe(
-      `
-      DELETE FROM ${this.tableName}
-      WHERE id = ?
-    `,
-      migrationId,
-    );
+    const isPrismaTable = await this.detectPrismaTable();
+
+    if (isPrismaTable) {
+      // Don't remove from Prisma's migration table - it's managed by Prisma
+      // This is read-only for compatibility
+      return;
+    } else {
+      // Use custom table structure
+      await this.prisma.$executeRawUnsafe(
+        `
+        DELETE FROM ${this.tableName}
+        WHERE id = ?
+      `,
+        migrationId,
+      );
+    }
   }
 
   public async executeMigration(sql: string): Promise<void> {
@@ -213,51 +282,105 @@ export class DatabaseAdapter {
   }
 
   public async getLastMigration(): Promise<Migration | null> {
-    const result = (await this.prisma.$queryRawUnsafe(`
-      SELECT id, name, applied_at as appliedAt
-      FROM ${this.tableName}
-      ORDER BY applied_at DESC
-      LIMIT 1
-    `)) as any[];
+    const isPrismaTable = await this.detectPrismaTable();
 
-    if (result.length === 0) {
-      return null;
+    if (isPrismaTable) {
+      // Use Prisma's table structure
+      const result = (await this.prisma.$queryRawUnsafe(`
+        SELECT id, migration_name, started_at as appliedAt
+        FROM ${this.tableName}
+        ORDER BY started_at DESC
+        LIMIT 1
+      `)) as any[];
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      const row = result[0];
+      return {
+        id: row.id,
+        name: row.migration_name,
+        filename: `${row.id}_${row.migration_name}.sql`,
+        timestamp: new Date(row.id.substring(0, 8)),
+        applied: true,
+        appliedAt: row.appliedAt,
+      };
+    } else {
+      // Use custom table structure
+      const result = (await this.prisma.$queryRawUnsafe(`
+        SELECT id, name, applied_at as appliedAt
+        FROM ${this.tableName}
+        ORDER BY applied_at DESC
+        LIMIT 1
+      `)) as any[];
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      const row = result[0];
+      return {
+        id: row.id,
+        name: row.name,
+        filename: `${row.id}_${row.name}.sql`,
+        timestamp: new Date(row.id.substring(0, 8)),
+        applied: true,
+        appliedAt: row.appliedAt,
+      };
     }
-
-    const row = result[0];
-    return {
-      id: row.id,
-      name: row.name,
-      filename: `${row.id}_${row.name}.sql`,
-      timestamp: new Date(row.id.substring(0, 8)),
-      applied: true,
-      appliedAt: row.appliedAt,
-    };
   }
 
   public async getMigrationStatus(
     migrationId: string,
   ): Promise<MigrationStatus | null> {
-    const result = (await this.prisma.$queryRawUnsafe(
-      `
-      SELECT id, name, applied_at as appliedAt
-      FROM ${this.tableName}
-      WHERE id = ?
-    `,
-      migrationId,
-    )) as any[];
+    const isPrismaTable = await this.detectPrismaTable();
 
-    if (result.length === 0) {
-      return null;
+    if (isPrismaTable) {
+      // Use Prisma's table structure
+      const result = (await this.prisma.$queryRawUnsafe(
+        `
+        SELECT id, migration_name, started_at as appliedAt
+        FROM ${this.tableName}
+        WHERE id = ?
+      `,
+        migrationId,
+      )) as any[];
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      const row = result[0];
+      return {
+        id: row.id,
+        name: row.migration_name,
+        status: "applied",
+        appliedAt: row.appliedAt,
+      };
+    } else {
+      // Use custom table structure
+      const result = (await this.prisma.$queryRawUnsafe(
+        `
+        SELECT id, name, applied_at as appliedAt
+        FROM ${this.tableName}
+        WHERE id = ?
+      `,
+        migrationId,
+      )) as any[];
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      const row = result[0];
+      return {
+        id: row.id,
+        name: row.name,
+        status: "applied",
+        appliedAt: row.appliedAt,
+      };
     }
-
-    const row = result[0];
-    return {
-      id: row.id,
-      name: row.name,
-      status: "applied",
-      appliedAt: row.appliedAt,
-    };
   }
 
   public async clearMigrations(): Promise<void> {
