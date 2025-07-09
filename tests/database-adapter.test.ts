@@ -14,7 +14,10 @@ describe("DatabaseAdapter", () => {
       caughtError = true;
       assert.ok(error.message.includes("@prisma/client did not initialize"));
     }
-    assert.ok(caughtError, "Expected error when Prisma client is not available");
+    assert.ok(
+      caughtError,
+      "Expected error when Prisma client is not available",
+    );
   });
 
   test("should create adapter with custom table name", () => {
@@ -26,7 +29,10 @@ describe("DatabaseAdapter", () => {
       caughtError = true;
       assert.ok(error.message.includes("@prisma/client did not initialize"));
     }
-    assert.ok(caughtError, "Expected error when Prisma client is not available");
+    assert.ok(
+      caughtError,
+      "Expected error when Prisma client is not available",
+    );
   });
 
   test("should handle connection test when Prisma client is not available", async () => {
@@ -44,16 +50,19 @@ describe("DatabaseAdapter", () => {
     try {
       const adapter1 = new DatabaseAdapter(testDatabaseUrl);
       const adapter2 = new DatabaseAdapter(testDatabaseUrl, "custom_table");
-      
+
       assert.ok(adapter1);
       assert.ok(adapter2);
-      
+
       assert.strictEqual(typeof adapter1, "object");
       assert.strictEqual(typeof adapter2, "object");
     } catch (error) {
       caughtError = true;
       assert.ok(error.message.includes("@prisma/client did not initialize"));
     }
-    assert.ok(caughtError, "Expected error when Prisma client is not available");
+    assert.ok(
+      caughtError,
+      "Expected error when Prisma client is not available",
+    );
   });
 });

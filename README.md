@@ -18,27 +18,33 @@ manage prisma migrations like other orms
 npm install prisma-migrations
 ```
 
-### Compatibility
+## Compatibility
 
-- **Prisma:** 2.0.0 and higher
-- **Node.js:** 20 and higher
+This library is designed to work with modern versions of Prisma and Node.js. Please ensure your environment meets these requirements:
 
-#### Build Formats
+### Minimum Requirements
+
+- **Prisma:** 2.0.0 or higher
+- **Node.js:** 20.0.0 or higher
+
+### Supported Versions
+
+- **Prisma Client:** 4.0.0+ (peer dependency)
+- **Prisma CLI:** 2.0.0+ (peer dependency)
+- **Node.js:** 20.x, 21.x, 22.x, 23.x, 24.x
+
+### Build Formats
 
 - **CommonJS CLI:** Works with Prisma 2.0.0+
 - **ESM CLI:** Works with Prisma 3.15.0+ (requires ES module support)
 - **Library API:** Both ESM and CommonJS builds available
 
-#### Notes
+### Notes
 
 - CommonJS CLI (`dist/cli.cjs`) is used by default for maximum compatibility
 - ESM CLI (`dist/cli.js`) available for users with compatible Prisma versions
 - TypeScript migrations require `tsx` to be installed
-
-### Requirements
-
-- **Runtime:** Node.js 20+ (Tested with Node.js 20-24)
-- **Development/Testing:** Node.js 24+ (Required for unit tests and mocking)
+- Development and testing: Node.js 24+ is required for unit tests and mocking
 
 ## Quick Start
 

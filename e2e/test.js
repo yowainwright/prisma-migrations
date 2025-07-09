@@ -128,6 +128,6 @@ describe("Migration File Structure", () => {
 
     assert.match(content, /export async function up\(prisma: PrismaClient\)/);
     assert.match(content, /export async function down\(prisma: PrismaClient\)/);
-    assert.match(content, /import { PrismaClient } from '@prisma\/client'/);
+    assert.match(content, /import { PrismaClient } from "@prisma\/client"/);
   });
 });

@@ -107,8 +107,7 @@ describe("FileManager", () => {
   test("should get latest migration", () => {
     fileManager.createMigrationFile("first_migration");
     const start = Date.now();
-    while (Date.now() - start < 1000) {
-    }
+    while (Date.now() - start < 1000) {}
     fileManager.createMigrationFile("second_migration");
 
     const latest = fileManager.getLatestMigration();

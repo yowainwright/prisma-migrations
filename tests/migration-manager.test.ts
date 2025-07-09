@@ -29,7 +29,7 @@ describe("MigrationManager", () => {
 
   test("should handle basic object instantiation", () => {
     assert.strictEqual(typeof MigrationManager, "function");
-    
+
     const ManagerClass = MigrationManager;
     assert.ok(ManagerClass);
     assert.strictEqual(ManagerClass.name, "MigrationManager");

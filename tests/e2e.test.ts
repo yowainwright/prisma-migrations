@@ -28,7 +28,7 @@ describe("End-to-End Migration Tests", () => {
         migrationsDir: testDir,
         tableName: "test_migrations",
       });
-    } catch (error) {
+    } catch {
       manager = null;
     }
   });
@@ -38,8 +38,7 @@ describe("End-to-End Migration Tests", () => {
       if (manager) {
         await manager.destroy();
       }
-    } catch {
-    }
+    } catch {}
 
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });

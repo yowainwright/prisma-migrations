@@ -42,8 +42,7 @@ export class ConfigManager {
         if (packageJson.prismaMigrations) {
           return { ...defaultConfig, ...packageJson.prismaMigrations };
         }
-      } catch {
-      }
+      } catch {}
     }
 
     // Try to load from config file
@@ -136,8 +135,7 @@ export class ConfigManager {
             return envValue;
           }
         }
-      } catch {
-      }
+      } catch {}
     }
 
     throw new Error(
