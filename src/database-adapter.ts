@@ -41,7 +41,7 @@ export class DatabaseAdapter {
       const columnExists = (await this.prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as count
         FROM information_schema.columns
-        WHERE table_name = '${this.tableName.replace("_", "")}' AND column_name = 'migration_name'
+        WHERE table_name = '${this.tableName}' AND column_name = 'migration_name'
       `)) as any[];
 
       this.isPrismaTable = columnExists[0].count > 0;
