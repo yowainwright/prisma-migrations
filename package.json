@@ -1,6 +1,6 @@
 {
   "name": "prisma-migrations",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Node.js library to manage Prisma ORM migrations like other ORMs",
   "type": "module",
   "main": "dist/index.cjs",
