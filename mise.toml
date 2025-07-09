@@ -72,7 +72,7 @@ rm -rf migrations/
 
 [tasks.typecheck]
 description = "Run TypeScript type checking"
-run = "npx tsc --noEmit"
+run = "npx -y tsc --noEmit"
 
 [tasks.ci]
 description = "Run CI checks (format, lint, typecheck, build, test)"

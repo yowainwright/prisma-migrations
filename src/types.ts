@@ -14,7 +14,7 @@ export interface MigrationConfig {
   databaseUrl?: string;
   tableName?: string;
   createTable?: boolean;
-  migrationFormat?: 'sql' | 'js' | 'ts';
+  migrationFormat?: "sql" | "js" | "ts";
   extension?: string;
 }
 
@@ -57,7 +57,7 @@ export interface MigrationTemplate {
 
 export interface DatabaseConnection {
   url: string;
-  provider: 'postgresql' | 'mysql' | 'sqlite' | 'sqlserver' | 'mongodb';
+  provider: "postgresql" | "mysql" | "sqlite" | "sqlserver" | "mongodb";
 }
 
 export interface MigrationFile {
@@ -65,7 +65,7 @@ export interface MigrationFile {
   content: string;
   timestamp: string;
   name: string;
-  type: 'sql' | 'js' | 'ts';
+  type: "sql" | "js" | "ts";
 }
 
 // Prisma-style migration function interface
@@ -89,7 +89,7 @@ export interface MigrationContext {
 export interface MigrationStatus {
   id: string;
   name: string;
-  status: 'pending' | 'applied' | 'error';
+  status: "pending" | "applied" | "error";
   appliedAt?: Date;
   error?: string;
 }

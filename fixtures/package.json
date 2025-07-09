@@ -1,0 +1,7 @@
+{
+  "name": "test-package",
+  "prismaMigrations": {
+    "migrationsDir": "./custom-migrations",
+    "tableName": "custom_migrations_table"
+  }
+}

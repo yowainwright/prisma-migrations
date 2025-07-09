@@ -1,6 +1,6 @@
-import { ConfigManager } from './config';
-import { FileManager } from './file-manager';
-import { DatabaseAdapter } from './database-adapter';
+import { ConfigManager } from "./config";
+import { FileManager } from "./file-manager";
+import { DatabaseAdapter } from "./database-adapter";
 import {
   Migration,
   MigrationResult,
@@ -9,8 +9,8 @@ import {
   CreateMigrationOptions,
   RunMigrationOptions,
   RollbackMigrationOptions,
-  MigrationFile
-} from './types';
+  MigrationFile,
+} from "./types";
 
 export class MigrationManager {
   private config: ConfigManager;
@@ -23,7 +23,7 @@ export class MigrationManager {
     const config = this.config.getConfig();
     const { migrationsDir, tableName } = config;
     this.fileManager = new FileManager(migrationsDir, config);
-    
+
     const databaseUrl = this.config.getDatabaseUrl();
     this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
   }
@@ -32,7 +32,7 @@ export class MigrationManager {
     const config = await this.config.getConfigAsync();
     const { migrationsDir, tableName } = config;
     this.fileManager = new FileManager(migrationsDir, config);
-    
+
     const databaseUrl = this.config.getDatabaseUrl();
     this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
   }
@@ -46,14 +46,16 @@ export class MigrationManager {
     await this.dbAdapter.disconnect();
   }
 
-  public async createMigration(options: CreateMigrationOptions): Promise<MigrationFile> {
+  public async createMigration(
+    options: CreateMigrationOptions,
+  ): Promise<MigrationFile> {
     await this.ensureConfigLoaded();
-    
+
     const { name, template } = options;
-    
+
     // Validate migration name
     if (!name || name.trim().length === 0) {
-      throw new Error('Migration name cannot be empty');
+      throw new Error("Migration name cannot be empty");
     }
 
     // Check if migration with same name exists
@@ -65,9 +67,11 @@ export class MigrationManager {
     return this.fileManager.createMigrationFile(name, template as any);
   }
 
-  public async runMigrations(options: RunMigrationOptions = {}): Promise<MigrationResult> {
+  public async runMigrations(
+    options: RunMigrationOptions = {},
+  ): Promise<MigrationResult> {
     const { to, steps, dryRun = false, force = false } = options;
-    
+
     try {
       await this.initialize();
 
@@ -75,8 +79,9 @@ export class MigrationManager {
 
       if (to) {
         // Run up to specific migration
-        const targetMigration = this.fileManager.getMigrationFile(to) || 
-                               this.fileManager.getMigrationByName(to);
+        const targetMigration =
+          this.fileManager.getMigrationFile(to) ||
+          this.fileManager.getMigrationByName(to);
         if (!targetMigration) {
           throw new Error(`Migration '${to}' not found`);
         }
@@ -92,33 +97,39 @@ export class MigrationManager {
       if (dryRun) {
         return {
           success: true,
-          migrations: migrationsToRun.map(file => ({
+          migrations: migrationsToRun.map((file) => ({
             id: file.timestamp,
             name: file.name,
             filename: file.path,
             timestamp: new Date(),
-            applied: false
-          }))
+            applied: false,
+          })),
         };
       }
 
       const appliedMigrations: Migration[] = [];
 
       for (const migrationFile of migrationsToRun) {
-        const isApplied = await this.dbAdapter.isMigrationApplied(migrationFile.timestamp);
-        
+        const isApplied = await this.dbAdapter.isMigrationApplied(
+          migrationFile.timestamp,
+        );
+
         if (isApplied && !force) {
           continue;
         }
 
         await this.dbAdapter.executeInTransaction(async () => {
-          if (migrationFile.type === 'sql') {
-            const { up } = this.fileManager.parseMigrationContent(migrationFile);
+          if (migrationFile.type === "sql") {
+            const { up } =
+              this.fileManager.parseMigrationContent(migrationFile);
             await this.dbAdapter.executeMigration(up);
           } else {
-            await this.dbAdapter.executeMigrationFile(migrationFile, 'up');
+            await this.dbAdapter.executeMigrationFile(migrationFile, "up");
           }
-          await this.dbAdapter.recordMigration(migrationFile.timestamp, migrationFile.name);
+          await this.dbAdapter.recordMigration(
+            migrationFile.timestamp,
+            migrationFile.name,
+          );
         });
 
         appliedMigrations.push({
@@ -127,28 +138,30 @@ export class MigrationManager {
           filename: migrationFile.path,
           timestamp: new Date(),
           applied: true,
-          appliedAt: new Date()
+          appliedAt: new Date(),
         });
       }
 
       return {
         success: true,
-        migrations: appliedMigrations
+        migrations: appliedMigrations,
       };
     } catch (error) {
       return {
         success: false,
         migrations: [],
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     } finally {
       await this.destroy();
     }
   }
 
-  public async rollbackMigrations(options: RollbackMigrationOptions = {}): Promise<MigrationResult> {
+  public async rollbackMigrations(
+    options: RollbackMigrationOptions = {},
+  ): Promise<MigrationResult> {
     const { to, steps, dryRun = false, force = false } = options;
-    
+
     try {
       await this.initialize();
 
@@ -157,12 +170,16 @@ export class MigrationManager {
 
       if (to) {
         // Rollback to specific migration
-        const targetMigration = this.fileManager.getMigrationFile(to) || 
-                               this.fileManager.getMigrationByName(to);
+        const targetMigration =
+          this.fileManager.getMigrationFile(to) ||
+          this.fileManager.getMigrationByName(to);
         if (!targetMigration) {
           throw new Error(`Migration '${to}' not found`);
         }
-        migrationsToRollback = this.getMigrationsToRollbackTo(appliedMigrations, targetMigration.timestamp);
+        migrationsToRollback = this.getMigrationsToRollbackTo(
+          appliedMigrations,
+          targetMigration.timestamp,
+        );
       } else if (steps) {
         // Rollback specific number of migrations
         migrationsToRollback = appliedMigrations.slice(-steps).reverse();
@@ -177,7 +194,7 @@ export class MigrationManager {
       if (dryRun) {
         return {
           success: true,
-          migrations: migrationsToRollback
+          migrations: migrationsToRollback,
         };
       }
 
@@ -190,23 +207,28 @@ export class MigrationManager {
         }
 
         await this.dbAdapter.executeInTransaction(async () => {
-          if (migrationFile.type === 'sql') {
-            const { down } = this.fileManager.parseMigrationContent(migrationFile);
-            
+          if (migrationFile.type === "sql") {
+            const { down } =
+              this.fileManager.parseMigrationContent(migrationFile);
+
             if (!down || down.trim().length === 0) {
               if (!force) {
-                throw new Error(`No rollback SQL found for migration ${migration.name}`);
+                throw new Error(
+                  `No rollback SQL found for migration ${migration.name}`,
+                );
               }
               return;
             }
-            
+
             await this.dbAdapter.executeMigration(down);
           } else {
             try {
-              await this.dbAdapter.executeMigrationFile(migrationFile, 'down');
+              await this.dbAdapter.executeMigrationFile(migrationFile, "down");
             } catch (error) {
               if (!force) {
-                throw new Error(`Failed to rollback migration ${migration.name}: ${error instanceof Error ? error.message : String(error)}`);
+                throw new Error(
+                  `Failed to rollback migration ${migration.name}: ${error instanceof Error ? error.message : String(error)}`,
+                );
               }
               return;
             }
@@ -216,19 +238,19 @@ export class MigrationManager {
 
         rolledBackMigrations.push({
           ...migration,
-          applied: false
+          applied: false,
         });
       }
 
       return {
         success: true,
-        migrations: rolledBackMigrations
+        migrations: rolledBackMigrations,
       };
     } catch (error) {
       return {
         success: false,
         migrations: [],
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     } finally {
       await this.destroy();
@@ -237,40 +259,42 @@ export class MigrationManager {
 
   public async getMigrationState(): Promise<MigrationState> {
     await this.initialize();
-    
+
     const allMigrations = this.fileManager.readMigrationFiles();
     const appliedMigrations = await this.dbAdapter.getAppliedMigrations();
-    
-    const appliedIds = new Set(appliedMigrations.map(m => m.id));
-    const pendingMigrations = allMigrations.filter(m => !appliedIds.has(m.timestamp));
-    
+
+    const appliedIds = new Set(appliedMigrations.map((m) => m.id));
+    const pendingMigrations = allMigrations.filter(
+      (m) => !appliedIds.has(m.timestamp),
+    );
+
     await this.destroy();
-    
+
     return {
-      current: appliedMigrations.map(m => m.id),
-      pending: pendingMigrations.map(m => m.timestamp),
-      applied: appliedMigrations
+      current: appliedMigrations.map((m) => m.id),
+      pending: pendingMigrations.map((m) => m.timestamp),
+      applied: appliedMigrations,
     };
   }
 
   public async getMigrationStatus(): Promise<MigrationStatus[]> {
     await this.initialize();
-    
+
     const allMigrations = this.fileManager.readMigrationFiles();
     const appliedMigrations = await this.dbAdapter.getAppliedMigrations();
-    
-    const appliedMap = new Map(appliedMigrations.map(m => [m.id, m]));
-    
-    const statuses: MigrationStatus[] = allMigrations.map(file => {
+
+    const appliedMap = new Map(appliedMigrations.map((m) => [m.id, m]));
+
+    const statuses: MigrationStatus[] = allMigrations.map((file) => {
       const applied = appliedMap.get(file.timestamp);
       return {
         id: file.timestamp,
         name: file.name,
-        status: applied ? 'applied' : 'pending',
-        appliedAt: applied?.appliedAt
+        status: applied ? "applied" : "pending",
+        appliedAt: applied?.appliedAt,
       };
     });
-    
+
     await this.destroy();
     return statuses;
   }
@@ -281,14 +305,14 @@ export class MigrationManager {
       const result = await this.dbAdapter.testConnection();
       await this.destroy();
       return result;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
 
   private getMigrationsUpTo(targetTimestamp: string): MigrationFile[] {
     const allMigrations = this.fileManager.readMigrationFiles();
-    return allMigrations.filter(m => m.timestamp <= targetTimestamp);
+    return allMigrations.filter((m) => m.timestamp <= targetTimestamp);
   }
 
   private getMigrationsToRun(steps: number): MigrationFile[] {
@@ -300,8 +324,13 @@ export class MigrationManager {
     return this.fileManager.readMigrationFiles();
   }
 
-  private getMigrationsToRollbackTo(appliedMigrations: Migration[], targetTimestamp: string): Migration[] {
-    const targetIndex = appliedMigrations.findIndex(m => m.id === targetTimestamp);
+  private getMigrationsToRollbackTo(
+    appliedMigrations: Migration[],
+    targetTimestamp: string,
+  ): Migration[] {
+    const targetIndex = appliedMigrations.findIndex(
+      (m) => m.id === targetTimestamp,
+    );
     if (targetIndex === -1) {
       return [];
     }

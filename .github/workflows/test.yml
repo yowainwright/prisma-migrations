@@ -23,13 +23,13 @@ jobs:
       run: npm ci
 
     - name: Check formatting
-      run: npx prettier --check src tests
+      run: npx -y prettier --check src tests e2e
 
     - name: Lint code
-      run: npx oxlint src tests
+      run: npx -y oxlint src tests e2e
 
     - name: Type check
-      run: npx tsc --noEmit
+      run: npx -y tsc --noEmit
 
     - name: Check build
       run: npm run build
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
     
     steps:
     - name: Checkout code
@@ -61,10 +61,12 @@ jobs:
 
   e2e-tests:
     runs-on: ubuntu-latest
+    name: E2E Tests (Node ${{ matrix.node-version }}, Postgres ${{ matrix.postgres-version }}, Prisma ${{ matrix.prisma-version }})
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
         postgres-version: [13, 14, 15, 16]
+        prisma-version: ["2.30.0", "3.15.0", "4.16.0", "5.22.0"]
     
     services:
       postgres:
@@ -91,6 +93,9 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    - name: Install specific Prisma version
+      run: npm install @prisma/client@${{ matrix.prisma-version }}
 
     - name: Build project
       run: npm run build
