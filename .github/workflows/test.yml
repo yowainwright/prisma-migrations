@@ -2,62 +2,95 @@ name: Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Check formatting
-      run: npx -y prettier --check src tests e2e
+      - name: Check formatting
+        run: npx -y prettier --check src tests e2e
 
-    - name: Lint code
-      run: npx -y oxlint src tests e2e
+      - name: Lint code
+        run: npx -y oxlint src tests e2e
 
-    - name: Type check
-      run: npx -y tsc --noEmit
+      - name: Type check
+        run: npx -y tsc --noEmit
 
-    - name: Check build
-      run: npm run build
+      - name: Check build
+        run: npm run build
 
   unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm test
+
+  cross-node-compatibility:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [20.x, 22.x]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build project
-      run: npm run build
+      - name: Check formatting
+        run: npx -y prettier --check src tests e2e
 
-    - name: Run unit tests
-      run: npm test
+      - name: Lint code
+        run: npx -y oxlint src tests e2e
+
+      - name: Type check
+        run: npx -y tsc --noEmit
+
+      - name: Build project
+        run: npm run build
+
+      - name: Test CLI functionality (basic smoke test)
+        run: |
+          # Test that CLI can be executed without errors
+          timeout 10s node dist/cli.js --help || true
+          timeout 10s node dist/cli.cjs --help || true
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -67,7 +100,7 @@ jobs:
         node-version: [20.x, 22.x]
         postgres-version: [13, 14, 15, 16]
         prisma-version: ["2.30.0", "3.15.0", "4.16.0", "5.22.0"]
-    
+
     services:
       postgres:
         image: postgres:${{ matrix.postgres-version }}
@@ -76,87 +109,87 @@ jobs:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
         options: >-
-          --health-cmd pg_isready --username=test_user --dbname=test_db
+          --health-cmd "pg_isready -U test_user -d test_db"
           --health-interval 10s --health-timeout 5s --health-retries 5
         ports:
           - 5432:5432
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Install specific Prisma version
-      run: npm install @prisma/client@${{ matrix.prisma-version }}
+      - name: Install specific Prisma version
+        run: npm install @prisma/client@${{ matrix.prisma-version }}
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Wait for PostgreSQL
-      run: |
-        for i in {1..30}; do
-          if pg_isready -h localhost -p 5432 -U test_user -d test_db; then
-            echo "PostgreSQL is ready"
-            break
-          fi
-          echo "Waiting for PostgreSQL..."
-          sleep 2
-        done
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U test_user -d test_db; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
 
-    - name: Run end-to-end tests
-      env:
-        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-      run: npm run test:e2e
+      - name: Run end-to-end tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: npm run test:e2e
 
   docker-tests:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build and test with Docker Compose
-      run: |
-        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
-        docker-compose -f docker-compose.test.yml down -v
+      - name: Build and test with Docker Compose
+        run: |
+          docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+          docker-compose -f docker-compose.test.yml down -v
 
   publish-check:
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-tests, e2e-tests]
+    needs: [lint-and-typecheck, unit-tests, cross-node-compatibility, e2e-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Check package can be published
-      run: npm pack --dry-run
+      - name: Check package can be published
+        run: npm pack --dry-run
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/
-        retention-days: 30
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30

@@ -1,4 +1,5 @@
 # prisma-migrations
+
 manage prisma migrations like other orms
 
 **Prisma Migrations** is a Node.js library and CLI tool that provides a Knex-like migration management approach for Prisma ORM. Write migrations with familiar `up` and `down` functions while leveraging Prisma's powerful client and type safety.
@@ -36,7 +37,8 @@ npm install prisma-migrations
 
 ### Requirements
 
-- Node.js 20+ (Tested with Node.js 20-24)
+- **Runtime:** Node.js 20+ (Tested with Node.js 20-24)
+- **Development/Testing:** Node.js 24+ (Required for unit tests and mocking)
 
 ## Quick Start
 
@@ -64,12 +66,12 @@ prisma-migrations status
 ### Programmatic Usage
 
 ```javascript
-import { MigrationManager } from 'prisma-migrations';
+import { MigrationManager } from "prisma-migrations";
 
 const manager = new MigrationManager();
 
 // Create a new migration
-await manager.createMigration({ name: 'add_users_table' });
+await manager.createMigration({ name: "add_users_table" });
 
 // Run all pending migrations
 await manager.runMigrations();
@@ -86,7 +88,7 @@ const status = await manager.getMigrationStatus();
 Write migrations with familiar `up` and `down` functions, just like Knex:
 
 ```typescript
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export async function up(prisma: PrismaClient): Promise<void> {
   // Raw SQL for schema changes
@@ -98,13 +100,13 @@ export async function up(prisma: PrismaClient): Promise<void> {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
-  
+
   // Use Prisma operations for data seeding
   await prisma.user.createMany({
     data: [
-      { email: 'admin@example.com', name: 'Admin User' },
-      { email: 'user@example.com', name: 'Test User' }
-    ]
+      { email: "admin@example.com", name: "Admin User" },
+      { email: "user@example.com", name: "Test User" },
+    ],
   });
 }
 
@@ -116,7 +118,7 @@ export async function down(prisma: PrismaClient): Promise<void> {
 **JavaScript migrations work too:**
 
 ```javascript
-exports.up = async function(prisma) {
+exports.up = async function (prisma) {
   await prisma.$executeRaw`
     CREATE TABLE posts (
       id SERIAL PRIMARY KEY,
@@ -126,7 +128,7 @@ exports.up = async function(prisma) {
   `;
 };
 
-exports.down = async function(prisma) {
+exports.down = async function (prisma) {
   await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
 };
 ```
@@ -154,25 +156,25 @@ Prisma Migrations can be configured in several ways:
 
 ```javascript
 module.exports = {
-  migrationsDir: './migrations',
-  schemaPath: './prisma/schema.prisma',
-  tableName: '_prisma_migrations',
+  migrationsDir: "./migrations",
+  schemaPath: "./prisma/schema.prisma",
+  tableName: "_prisma_migrations",
   createTable: true,
-  migrationFormat: 'ts', // 'sql', 'js', or 'ts'
-  extension: '.ts' // or '.js', '.sql'
+  migrationFormat: "ts", // 'sql', 'js', or 'ts'
+  extension: ".ts", // or '.js', '.sql'
 };
 ```
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `migrationsDir` | `string` | `'./migrations'` | Directory where migration files are stored |
-| `schemaPath` | `string` | `'./prisma/schema.prisma'` | Path to Prisma schema file |
-| `tableName` | `string` | `'_prisma_migrations'` | Name of the migrations tracking table |
-| `createTable` | `boolean` | `true` | Whether to auto-create the migrations table |
-| `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'` | Format for new migration files |
-| `extension` | `string` | `'.ts'` | File extension for new migrations |
+| Option            | Type                | Default                    | Description                                 |
+| ----------------- | ------------------- | -------------------------- | ------------------------------------------- |
+| `migrationsDir`   | `string`            | `'./migrations'`           | Directory where migration files are stored  |
+| `schemaPath`      | `string`            | `'./prisma/schema.prisma'` | Path to Prisma schema file                  |
+| `tableName`       | `string`            | `'_prisma_migrations'`     | Name of the migrations tracking table       |
+| `createTable`     | `boolean`           | `true`                     | Whether to auto-create the migrations table |
+| `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'`                     | Format for new migration files              |
+| `extension`       | `string`            | `'.ts'`                    | File extension for new migrations           |
 
 ### 3. Environment Variables
 
@@ -189,9 +191,11 @@ Set `DATABASE_URL` environment variable for database connection.
 Create a new migration file.
 
 **Parameters:**
+
 - `<name>`: Migration name (string)
 
 **Example:**
+
 ```bash
 prisma-migrations create add_users_table
 prisma-migrations create "update user schema"
@@ -204,11 +208,13 @@ prisma-migrations create "update user schema"
 Run all pending migrations or specific migrations.
 
 **Options:**
+
 - `-t, --to <timestamp>`: Run up to a specific migration
 - `-s, --steps <number>`: Run a specific number of migrations
 - `-d, --dry-run`: Preview migrations without applying
 
 **Examples:**
+
 ```bash
 # Run all pending migrations
 prisma-migrations up
@@ -230,11 +236,13 @@ prisma-migrations up --dry-run
 Rollback migrations.
 
 **Options:**
+
 - `-t, --to <timestamp>`: Rollback to a specific migration
 - `-s, --steps <number>`: Rollback a specific number of migrations
 - `-d, --dry-run`: Preview rollback without applying
 
 **Examples:**
+
 ```bash
 # Rollback last migration
 prisma-migrations down
@@ -256,11 +264,13 @@ prisma-migrations down --dry-run
 Get the status of all migrations.
 
 **Example:**
+
 ```bash
 prisma-migrations status
 ```
 
 **Output:**
+
 ```
 add_users_table [applied] - 2023-12-01T12:00:00.000Z
 add_posts_table [pending] - Pending
@@ -274,6 +284,7 @@ update_users_schema [applied] - 2023-12-01T13:00:00.000Z
 Test database connection.
 
 **Example:**
+
 ```bash
 prisma-migrations test
 ```
@@ -287,13 +298,15 @@ prisma-migrations test
 Main class for managing migrations programmatically.
 
 **Parameters:**
+
 - `configPath?`: Optional path to configuration file (string)
 
 **Example:**
-```javascript
-import { MigrationManager } from 'prisma-migrations';
 
-const manager = new MigrationManager('./custom-config.js');
+```javascript
+import { MigrationManager } from "prisma-migrations";
+
+const manager = new MigrationManager("./custom-config.js");
 ```
 
 ---
@@ -303,6 +316,7 @@ const manager = new MigrationManager('./custom-config.js');
 Create a new migration file.
 
 **Parameters:**
+
 - `options`: CreateMigrationOptions object
   - `name`: Migration name (string)
   - `directory?`: Optional custom directory (string)
@@ -311,13 +325,14 @@ Create a new migration file.
 **Returns:** `Promise<MigrationFile>`
 
 **Example:**
+
 ```javascript
 const migration = await manager.createMigration({
-  name: 'add_users_table',
+  name: "add_users_table",
   template: {
-    up: 'CREATE TABLE users (id SERIAL PRIMARY KEY);',
-    down: 'DROP TABLE users;'
-  }
+    up: "CREATE TABLE users (id SERIAL PRIMARY KEY);",
+    down: "DROP TABLE users;",
+  },
 });
 ```
 
@@ -328,6 +343,7 @@ const migration = await manager.createMigration({
 Run pending migrations.
 
 **Parameters:**
+
 - `options?`: RunMigrationOptions object
   - `to?`: Run up to specific migration (string)
   - `steps?`: Number of migrations to run (number)
@@ -337,6 +353,7 @@ Run pending migrations.
 **Returns:** `Promise<MigrationResult>`
 
 **Example:**
+
 ```javascript
 // Run all pending migrations
 const result = await manager.runMigrations();
@@ -344,7 +361,7 @@ const result = await manager.runMigrations();
 // Run with options
 const result = await manager.runMigrations({
   steps: 3,
-  dryRun: true
+  dryRun: true,
 });
 ```
 
@@ -355,6 +372,7 @@ const result = await manager.runMigrations({
 Rollback applied migrations.
 
 **Parameters:**
+
 - `options?`: RollbackMigrationOptions object
   - `to?`: Rollback to specific migration (string)
   - `steps?`: Number of migrations to rollback (number)
@@ -364,6 +382,7 @@ Rollback applied migrations.
 **Returns:** `Promise<MigrationResult>`
 
 **Example:**
+
 ```javascript
 // Rollback last migration
 const result = await manager.rollbackMigrations();
@@ -371,7 +390,7 @@ const result = await manager.rollbackMigrations();
 // Rollback with options
 const result = await manager.rollbackMigrations({
   steps: 2,
-  dryRun: true
+  dryRun: true,
 });
 ```
 
@@ -384,9 +403,10 @@ Get status of all migrations.
 **Returns:** `Promise<MigrationStatus[]>`
 
 **Example:**
+
 ```javascript
 const statuses = await manager.getMigrationStatus();
-statuses.forEach(status => {
+statuses.forEach((status) => {
   console.log(`${status.name} [${status.status}]`);
 });
 ```
@@ -400,10 +420,11 @@ Get detailed migration state information.
 **Returns:** `Promise<MigrationState>`
 
 **Example:**
+
 ```javascript
 const state = await manager.getMigrationState();
-console.log('Applied:', state.applied.length);
-console.log('Pending:', state.pending.length);
+console.log("Applied:", state.applied.length);
+console.log("Pending:", state.pending.length);
 ```
 
 ---
@@ -415,10 +436,11 @@ Test database connection.
 **Returns:** `Promise<boolean>`
 
 **Example:**
+
 ```javascript
 const isConnected = await manager.testConnection();
 if (isConnected) {
-  console.log('Database connection successful');
+  console.log("Database connection successful");
 }
 ```
 
@@ -431,6 +453,7 @@ if (isConnected) {
 Manages configuration loading and access.
 
 **Methods:**
+
 - `getConfig()`: Get current configuration
 - `updateConfig(updates)`: Update configuration
 - `getDatabaseUrl()`: Get database URL from various sources
@@ -442,6 +465,7 @@ Manages configuration loading and access.
 Manages migration file operations.
 
 **Methods:**
+
 - `createMigrationFile(name, template?)`: Create new migration file
 - `readMigrationFiles()`: Read all migration files
 - `getMigrationFile(timestamp)`: Get specific migration file
@@ -455,6 +479,7 @@ Manages migration file operations.
 Handles database operations and migration tracking.
 
 **Methods:**
+
 - `connect()`: Connect to database
 - `disconnect()`: Disconnect from database
 - `getAppliedMigrations()`: Get all applied migrations
@@ -508,7 +533,7 @@ interface MigrationResult {
 interface MigrationStatus {
   id: string;
   name: string;
-  status: 'pending' | 'applied' | 'error';
+  status: "pending" | "applied" | "error";
   appliedAt?: Date;
   error?: string;
 }
@@ -537,8 +562,9 @@ DROP TABLE users;
 #### JavaScript/TypeScript Format (Knex-like)
 
 **TypeScript (.ts files):**
+
 ```typescript
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export async function up(prisma: PrismaClient): Promise<void> {
   // Raw SQL approach
@@ -550,13 +576,10 @@ export async function up(prisma: PrismaClient): Promise<void> {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
-  
+
   // Or use Prisma operations for data seeding
   await prisma.user.createMany({
-    data: [
-      { email: 'admin@example.com' },
-      { email: 'user@example.com' }
-    ]
+    data: [{ email: "admin@example.com" }, { email: "user@example.com" }],
   });
 }
 
@@ -566,8 +589,9 @@ export async function down(prisma: PrismaClient): Promise<void> {
 ```
 
 **JavaScript (.js files):**
+
 ```javascript
-exports.up = async function(prisma) {
+exports.up = async function (prisma) {
   await prisma.$executeRaw`
     CREATE TABLE users (
       id SERIAL PRIMARY KEY,
@@ -577,7 +601,7 @@ exports.up = async function(prisma) {
   `;
 };
 
-exports.down = async function(prisma) {
+exports.down = async function (prisma) {
   await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
 };
 ```
@@ -589,13 +613,14 @@ Set the migration format in your configuration:
 ```javascript
 // prisma-migrations.config.js
 module.exports = {
-  migrationFormat: 'ts', // 'sql', 'js', or 'ts'
-  migrationsDir: './migrations',
+  migrationFormat: "ts", // 'sql', 'js', or 'ts'
+  migrationsDir: "./migrations",
   // ... other options
 };
 ```
 
 **Note:** TypeScript migrations require `tsx` to be installed:
+
 ```bash
 npm install tsx
 ```
