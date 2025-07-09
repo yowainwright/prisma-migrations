@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Command } from 'commander';
 import { MigrationManager } from './migration-manager';
 
@@ -17,7 +16,7 @@ program
       await manager.createMigration({ name });
       console.log(`Migration '${name}' created successfully.`);
     } catch (error) {
-      console.error(`Error creating migration: ${error.message}`);
+      console.error(`Error creating migration: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 
@@ -32,7 +31,7 @@ program
       const result = await manager.runMigrations({ to, steps, dryRun });
       console.log(`Migrations applied successfully: ${result.success}`);
     } catch (error) {
-      console.error(`Error running migrations: ${error.message}`);
+      console.error(`Error running migrations: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 
@@ -47,7 +46,7 @@ program
       const result = await manager.rollbackMigrations({ to, steps, dryRun });
       console.log(`Migrations rolled back successfully: ${result.success}`);
     } catch (error) {
-      console.error(`Error rolling back migrations: ${error.message}`);
+      console.error(`Error rolling back migrations: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 
@@ -57,11 +56,11 @@ program
   .action(async () => {
     try {
       const status = await manager.getMigrationStatus();
-      status.forEach(({ id, name, status, appliedAt }) => {
+      status.forEach(({ name, status, appliedAt }) => {
         console.log(`${name} [${status}] - ${appliedAt ? appliedAt : 'Pending'}`);
       });
     } catch (error) {
-      console.error(`Error retrieving status: ${error.message}`);
+      console.error(`Error retrieving status: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 
@@ -73,7 +72,7 @@ program
       const result = await manager.testConnection();
       console.log(`Database connection successful: ${result}`);
     } catch (error) {
-      console.error(`Error testing connection: ${error.message}`);
+      console.error(`Error testing connection: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 

@@ -9,8 +9,7 @@ import {
   CreateMigrationOptions,
   RunMigrationOptions,
   RollbackMigrationOptions,
-  MigrationFile,
-  MigrationTemplate
+  MigrationFile
 } from './types';
 
 export class MigrationManager {
@@ -20,8 +19,19 @@ export class MigrationManager {
 
   constructor(configPath?: string) {
     this.config = new ConfigManager(configPath);
-    const { migrationsDir, tableName } = this.config.getConfig();
-    this.fileManager = new FileManager(migrationsDir);
+    // Initialize with default config, will be updated when needed
+    const config = this.config.getConfig();
+    const { migrationsDir, tableName } = config;
+    this.fileManager = new FileManager(migrationsDir, config);
+    
+    const databaseUrl = this.config.getDatabaseUrl();
+    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
+  }
+
+  private async ensureConfigLoaded(): Promise<void> {
+    const config = await this.config.getConfigAsync();
+    const { migrationsDir, tableName } = config;
+    this.fileManager = new FileManager(migrationsDir, config);
     
     const databaseUrl = this.config.getDatabaseUrl();
     this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
@@ -37,6 +47,8 @@ export class MigrationManager {
   }
 
   public async createMigration(options: CreateMigrationOptions): Promise<MigrationFile> {
+    await this.ensureConfigLoaded();
+    
     const { name, template } = options;
     
     // Validate migration name
@@ -50,7 +62,7 @@ export class MigrationManager {
       throw new Error(`Migration with name '${name}' already exists`);
     }
 
-    return this.fileManager.createMigrationFile(name, template);
+    return this.fileManager.createMigrationFile(name, template as any);
   }
 
   public async runMigrations(options: RunMigrationOptions = {}): Promise<MigrationResult> {
@@ -59,7 +71,6 @@ export class MigrationManager {
     try {
       await this.initialize();
 
-      const state = await this.getMigrationState();
       let migrationsToRun: MigrationFile[] = [];
 
       if (to) {
@@ -100,10 +111,13 @@ export class MigrationManager {
           continue;
         }
 
-        const { up } = this.fileManager.parseMigrationContent(migrationFile.content);
-        
         await this.dbAdapter.executeInTransaction(async () => {
-          await this.dbAdapter.executeMigration(up);
+          if (migrationFile.type === 'sql') {
+            const { up } = this.fileManager.parseMigrationContent(migrationFile);
+            await this.dbAdapter.executeMigration(up);
+          } else {
+            await this.dbAdapter.executeMigrationFile(migrationFile, 'up');
+          }
           await this.dbAdapter.recordMigration(migrationFile.timestamp, migrationFile.name);
         });
 
@@ -125,7 +139,7 @@ export class MigrationManager {
       return {
         success: false,
         migrations: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : String(error)
       };
     } finally {
       await this.destroy();
@@ -175,17 +189,28 @@ export class MigrationManager {
           throw new Error(`Migration file not found for ${migration.id}`);
         }
 
-        const { down } = this.fileManager.parseMigrationContent(migrationFile.content);
-        
-        if (!down || down.trim().length === 0) {
-          if (!force) {
-            throw new Error(`No rollback SQL found for migration ${migration.name}`);
-          }
-          continue;
-        }
-
         await this.dbAdapter.executeInTransaction(async () => {
-          await this.dbAdapter.executeMigration(down);
+          if (migrationFile.type === 'sql') {
+            const { down } = this.fileManager.parseMigrationContent(migrationFile);
+            
+            if (!down || down.trim().length === 0) {
+              if (!force) {
+                throw new Error(`No rollback SQL found for migration ${migration.name}`);
+              }
+              return;
+            }
+            
+            await this.dbAdapter.executeMigration(down);
+          } else {
+            try {
+              await this.dbAdapter.executeMigrationFile(migrationFile, 'down');
+            } catch (error) {
+              if (!force) {
+                throw new Error(`Failed to rollback migration ${migration.name}: ${error instanceof Error ? error.message : String(error)}`);
+              }
+              return;
+            }
+          }
           await this.dbAdapter.removeMigration(migration.id);
         });
 
@@ -203,7 +228,7 @@ export class MigrationManager {
       return {
         success: false,
         migrations: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : String(error)
       };
     } finally {
       await this.destroy();

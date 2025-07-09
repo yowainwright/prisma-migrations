@@ -14,6 +14,8 @@ export interface MigrationConfig {
   databaseUrl?: string;
   tableName?: string;
   createTable?: boolean;
+  migrationFormat?: 'sql' | 'js' | 'ts';
+  extension?: string;
 }
 
 export interface MigrationState {
@@ -63,6 +65,25 @@ export interface MigrationFile {
   content: string;
   timestamp: string;
   name: string;
+  type: 'sql' | 'js' | 'ts';
+}
+
+// Prisma-style migration function interface
+export interface PrismaMigration {
+  up(prisma: any): Promise<void>;
+  down(prisma: any): Promise<void>;
+}
+
+// Function-based migration template
+export interface FunctionMigrationTemplate {
+  up: (prisma: any) => Promise<void>;
+  down: (prisma: any) => Promise<void>;
+}
+
+// Migration context for function-based migrations
+export interface MigrationContext {
+  prisma: any;
+  sql: (query: string, ...params: any[]) => Promise<any>;
 }
 
 export interface MigrationStatus {

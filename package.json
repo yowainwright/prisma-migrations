@@ -2,17 +2,28 @@
   "name": "prisma-migrations",
   "version": "1.0.0",
   "description": "A Node.js library to manage Prisma ORM migrations like other ORMs",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "bin": {
-    "prisma-migrations": "dist/cli.js"
+    "prisma-migrations": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "test": "node --test",
     "test:watch": "node --test --watch",
-    "test:e2e": "npm run build && node --test tests/e2e.test.ts",
+    "test:e2e": "npm run build && node --test e2e/test.js e2e/test-cjs.js",
+    "test:e2e:esm": "npm run build && node --test e2e/test.js",
+    "test:e2e:cjs": "npm run build && node --test e2e/test-cjs.js",
     "test:docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
     "test:docker:clean": "docker-compose -f docker-compose.test.yml down -v",
     "lint": "npx oxlint src tests",
@@ -33,20 +44,24 @@
   "author": "jeffrywainwright",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.0.0",
-    "commander": "^11.0.0",
-    "inquirer": "^9.0.0",
+    "@prisma/client": "^4.0.0",
     "chalk": "^5.0.0",
-    "fs-extra": "^11.0.0"
+    "commander": "^11.0.0",
+    "fs-extra": "^11.0.0",
+    "inquirer": "^9.0.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.0",
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
+    "tsup": "^8.5.0",
     "typescript": "^5.0.0"
   },
+  "optionalDependencies": {
+    "tsx": "^4.0.0"
+  },
   "peerDependencies": {
-    "prisma": "^5.0.0"
+    "prisma": "^2.0.0"
   },
   "files": [
     "dist/",

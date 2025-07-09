@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { Migration, MigrationStatus, DatabaseConnection } from './types';
+import { Migration, MigrationStatus, MigrationFile, PrismaMigration } from './types';
+import { resolve } from 'path';
 
 export class DatabaseAdapter {
   private prisma: PrismaClient;
@@ -90,8 +91,76 @@ export class DatabaseAdapter {
     }
   }
 
+  public async executeMigrationFile(migrationFile: MigrationFile, direction: 'up' | 'down'): Promise<void> {
+    if (migrationFile.type === 'sql') {
+      throw new Error('Use executeMigration() for SQL files');
+    }
+
+    // Load and execute the JavaScript/TypeScript migration
+    const migration = await this.loadMigrationModule(migrationFile.path);
+    
+    if (direction === 'up') {
+      await migration.up(this.prisma);
+    } else {
+      await migration.down(this.prisma);
+    }
+  }
+
+  private async loadMigrationModule(filePath: string): Promise<PrismaMigration> {
+    try {
+      // Clear module cache to ensure fresh loads during development
+      const resolvedPath = resolve(filePath);
+      delete require.cache[resolvedPath];
+      
+      // For TypeScript files, we need tsx to be available
+      if (filePath.endsWith('.ts')) {
+        // Check if tsx is available
+        try {
+          require.resolve('tsx');
+        } catch {
+          throw new Error('tsx is required to run TypeScript migrations. Install it with: npm install tsx');
+        }
+        
+        // Import the TypeScript module directly
+        // tsx should be configured to handle .ts files via require hooks or similar
+        const module = await import(resolvedPath);
+        
+        if (!module.up || !module.down) {
+          throw new Error(`TypeScript migration ${filePath} must export both 'up' and 'down' functions`);
+        }
+        
+        return {
+          up: module.up,
+          down: module.down
+        };
+      } else {
+        // JavaScript file
+        const module = await import(resolvedPath);
+        const up = module.up || module.default?.up || module.exports?.up;
+        const down = module.down || module.default?.down || module.exports?.down;
+        
+        if (!up || !down) {
+          throw new Error(`JavaScript migration ${filePath} must export both 'up' and 'down' functions`);
+        }
+        
+        return { up, down };
+      }
+    } catch (error) {
+      if (error instanceof Error && (error.message.includes('tsx is required') || error.message.includes('must export'))) {
+        throw error;
+      }
+      
+      const fileType = filePath.endsWith('.ts') ? 'TypeScript' : 'JavaScript';
+      const suggestion = filePath.endsWith('.ts') 
+        ? 'Make sure tsx is installed and the file exports \'up\' and \'down\' functions.'
+        : 'Make sure the file exports \'up\' and \'down\' functions.';
+      
+      throw new Error(`Failed to load ${fileType} migration ${filePath}. ${suggestion} Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   public async executeInTransaction(callback: () => Promise<void>): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (_tx: any) => {
       await callback();
     });
   }

@@ -1,20 +1,37 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import { MigrationConfig } from './types';
 
 export class ConfigManager {
   private config: MigrationConfig;
+  private configPromise: Promise<MigrationConfig>;
   
   constructor(configPath?: string) {
-    this.config = this.loadConfig(configPath);
+    this.configPromise = this.loadConfig(configPath);
+    // Initialize with default config synchronously for backwards compatibility
+    this.config = this.getDefaultConfig();
   }
 
-  private loadConfig(configPath?: string): MigrationConfig {
+  private getDefaultConfig(): MigrationConfig {
+    return {
+      migrationsDir: './migrations',
+      schemaPath: './prisma/schema.prisma',
+      tableName: '_prisma_migrations',
+      createTable: true,
+      migrationFormat: 'ts',
+      extension: '.ts'
+    };
+  }
+
+  private async loadConfig(configPath?: string): Promise<MigrationConfig> {
     const defaultConfig: MigrationConfig = {
       migrationsDir: './migrations',
       schemaPath: './prisma/schema.prisma',
       tableName: '_prisma_migrations',
-      createTable: true
+      createTable: true,
+      migrationFormat: 'ts',
+      extension: '.ts'
     };
 
     // Try to load from package.json
@@ -31,13 +48,25 @@ export class ConfigManager {
     }
 
     // Try to load from config file
-    const configFile = configPath || join(process.cwd(), 'prisma-migrations.config.js');
-    if (existsSync(configFile)) {
+    const configFile = configPath || this.findConfigFile();
+    if (configFile && existsSync(configFile)) {
       try {
-        const config = require(configFile);
-        return { ...defaultConfig, ...config };
+        if (configFile.endsWith('.ts')) {
+          // For TypeScript config files, we'd need tsx or compilation
+          console.warn('TypeScript config files require tsx. Please use .mjs config files or ensure tsx is available.');
+        } else if (configFile.endsWith('.mjs') || configFile.endsWith('.js')) {
+          // Use dynamic import for ESM files
+          const configModule = await import(pathToFileURL(configFile).href);
+          const config = configModule.default || configModule;
+          return { ...defaultConfig, ...config };
+        } else {
+          // JSON files
+          const configContent = readFileSync(configFile, 'utf-8');
+          const config = JSON.parse(configContent);
+          return { ...defaultConfig, ...config };
+        }
       } catch (error) {
-        // Ignore loading errors
+        console.warn(`Failed to load config file ${configFile}:`, error);
       }
     }
 
@@ -53,7 +82,29 @@ export class ConfigManager {
     return defaultConfig;
   }
 
+  private findConfigFile(): string | null {
+    const possibleFiles = [
+      join(process.cwd(), 'prisma-migrations.config.js'),
+      join(process.cwd(), 'prisma-migrations.config.ts'),
+      join(process.cwd(), 'prisma-migrations.config.mjs'),
+      join(process.cwd(), 'prisma-migrations.config.json')
+    ];
+
+    for (const file of possibleFiles) {
+      if (existsSync(file)) {
+        return file;
+      }
+    }
+
+    return null;
+  }
+
   public getConfig(): MigrationConfig {
+    return this.config;
+  }
+
+  public async getConfigAsync(): Promise<MigrationConfig> {
+    this.config = await this.configPromise;
     return this.config;
   }
 
