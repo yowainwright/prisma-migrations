@@ -38,11 +38,11 @@ export class DatabaseAdapter {
 
     try {
       // Check if table exists and has Prisma's structure (migration_name column)
-      const columnExists = await this.prisma.$queryRawUnsafe(`
+      const columnExists = (await this.prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as count
         FROM information_schema.columns
-        WHERE table_name = '${this.tableName.replace('_', '')}' AND column_name = 'migration_name'
-      `) as any[];
+        WHERE table_name = '${this.tableName.replace("_", "")}' AND column_name = 'migration_name'
+      `)) as any[];
 
       this.isPrismaTable = columnExists[0].count > 0;
       return this.isPrismaTable;
@@ -54,7 +54,7 @@ export class DatabaseAdapter {
 
   public async ensureMigrationsTable(): Promise<void> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // This is Prisma's migrations table, don't create our own
       return;
@@ -75,7 +75,7 @@ export class DatabaseAdapter {
 
   public async getAppliedMigrations(): Promise<Migration[]> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // Use Prisma's table structure
       const results = (await this.prisma.$queryRawUnsafe(`
@@ -129,7 +129,7 @@ export class DatabaseAdapter {
     name: string,
   ): Promise<void> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // Don't insert into Prisma's migration table - it's managed by Prisma
       // This is read-only for compatibility
@@ -149,7 +149,7 @@ export class DatabaseAdapter {
 
   public async removeMigration(migrationId: string): Promise<void> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // Don't remove from Prisma's migration table - it's managed by Prisma
       // This is read-only for compatibility
@@ -283,7 +283,7 @@ export class DatabaseAdapter {
 
   public async getLastMigration(): Promise<Migration | null> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // Use Prisma's table structure
       const result = (await this.prisma.$queryRawUnsafe(`
@@ -335,7 +335,7 @@ export class DatabaseAdapter {
     migrationId: string,
   ): Promise<MigrationStatus | null> {
     const isPrismaTable = await this.detectPrismaTable();
-    
+
     if (isPrismaTable) {
       // Use Prisma's table structure
       const result = (await this.prisma.$queryRawUnsafe(
