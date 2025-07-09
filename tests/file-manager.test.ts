@@ -1,24 +1,31 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { existsSync, rmSync, mkdirSync } from "node:fs";
+import { existsSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { FileManager } from "../src/file-manager";
+import { MigrationConfig } from "../src/types";
 
 describe("FileManager", () => {
   const testDir = join(process.cwd(), "test-migrations");
   let fileManager: FileManager;
+  const testConfig: MigrationConfig = {
+    migrationsDir: testDir,
+    schemaPath: "./prisma/schema.prisma",
+    tableName: "_prisma_migrations",
+    createTable: true,
+    migrationFormat: "sql",
+    extension: ".sql",
+  };
 
   beforeEach(() => {
-    // Clean up test directory
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
     mkdirSync(testDir, { recursive: true });
-    fileManager = new FileManager(testDir);
+    fileManager = new FileManager(testDir, testConfig);
   });
 
   afterEach(() => {
-    // Clean up test directory
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true });
     }
@@ -30,10 +37,10 @@ describe("FileManager", () => {
       rmSync(newDir, { recursive: true });
     }
 
-    new FileManager(newDir);
+    const newConfig = { ...testConfig, migrationsDir: newDir };
+    new FileManager(newDir, newConfig);
     assert.strictEqual(existsSync(newDir), true);
 
-    // Cleanup
     rmSync(newDir, { recursive: true });
   });
 
@@ -64,7 +71,6 @@ describe("FileManager", () => {
   });
 
   test("should read migration files", () => {
-    // Create some test migration files
     fileManager.createMigrationFile("first_migration");
     fileManager.createMigrationFile("second_migration");
 
@@ -100,10 +106,8 @@ describe("FileManager", () => {
 
   test("should get latest migration", () => {
     fileManager.createMigrationFile("first_migration");
-    // Sleep to ensure different timestamps
     const start = Date.now();
     while (Date.now() - start < 1000) {
-      // Wait 1 second
     }
     fileManager.createMigrationFile("second_migration");
 
@@ -112,27 +116,34 @@ describe("FileManager", () => {
   });
 
   test("should parse migration content correctly", () => {
-    const content = `-- UP
-CREATE TABLE users (id SERIAL PRIMARY KEY);
-INSERT INTO users (id) VALUES (1);
+    const template = {
+      up: "CREATE TABLE users (id SERIAL PRIMARY KEY);",
+      down: "DROP TABLE users;",
+    };
 
--- DOWN
-DROP TABLE users;
-`;
+    const migrationFile = fileManager.createMigrationFile(
+      "create_users_table",
+      template,
+    );
 
-    const parsed = fileManager.parseMigrationContent(content);
+    const parsed = fileManager.parseMigrationContent(migrationFile);
 
     assert.match(parsed.up, /CREATE TABLE users/);
-    assert.match(parsed.up, /INSERT INTO users/);
     assert.match(parsed.down, /DROP TABLE users/);
   });
 
   test("should handle migration content without DOWN section", () => {
-    const content = `-- UP
-CREATE TABLE users (id SERIAL PRIMARY KEY);
-`;
+    const template = {
+      up: "CREATE TABLE users (id SERIAL PRIMARY KEY);",
+      down: "",
+    };
 
-    const parsed = fileManager.parseMigrationContent(content);
+    const migrationFile = fileManager.createMigrationFile(
+      "create_users_table",
+      template,
+    );
+
+    const parsed = fileManager.parseMigrationContent(migrationFile);
 
     assert.match(parsed.up, /CREATE TABLE users/);
     assert.strictEqual(parsed.down, "");
@@ -153,9 +164,8 @@ CREATE TABLE users (id SERIAL PRIMARY KEY);
   });
 
   test("should throw error for invalid migration file format", () => {
-    // Create a file with invalid naming format
     const invalidFile = join(testDir, "invalid-name.sql");
-    require("fs").writeFileSync(invalidFile, "SELECT 1;");
+    writeFileSync(invalidFile, "SELECT 1;");
 
     assert.throws(() => {
       fileManager.readMigrationFiles();

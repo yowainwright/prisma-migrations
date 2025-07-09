@@ -43,7 +43,6 @@ export class ConfigManager {
           return { ...defaultConfig, ...packageJson.prismaMigrations };
         }
       } catch {
-        // Ignore parsing errors
       }
     }
 
@@ -138,7 +137,6 @@ export class ConfigManager {
           }
         }
       } catch {
-        // Ignore parsing errors
       }
     }
 

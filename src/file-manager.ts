@@ -4,6 +4,7 @@ import {
   readFileSync,
   writeFileSync,
   readdirSync,
+  unlinkSync,
 } from "fs";
 import { join } from "path";
 import {
@@ -262,7 +263,7 @@ exports.down = async function(prisma) {
   public deleteMigrationFile(timestamp: string): boolean {
     const file = this.getMigrationFile(timestamp);
     if (file && existsSync(file.path)) {
-      require("fs").unlinkSync(file.path);
+      unlinkSync(file.path);
       return true;
     }
     return false;

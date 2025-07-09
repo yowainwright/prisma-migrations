@@ -52,6 +52,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Generate Prisma client
+        run: npx prisma generate || echo "Prisma schema not found, skipping generate"
+
       - name: Run unit tests
         run: npm test
 
