@@ -60,6 +60,27 @@ This library is designed to work with modern versions of Prisma and Node.js. Ple
 
 ## Quick Start
 
+### New Classes and Interfaces
+
+#### CommitManager
+- Manages git-related actions.
+- **Methods**:
+  - `getCurrentCommit()`: Retrieve current commit.
+  - `getCurrentBranch()`: Retrieve current branch.
+  - `getCommitsBetween(from, to)`: Get commits between references.
+
+#### VersionManager
+- Manages version-based migrations.
+- **Methods**:
+  - `registerVersion(version, migrations)`: Register a version.
+  - `getMigrationsBetween(from, to)`: Determine migrations to run or rollback.
+  - `generateDeploymentPlan(fromVersion, toVersion)`: Generate a plan between versions.
+
+### Interfaces
+- **VersionMigrationMapping**: Information associated with migrations for a version.
+- **VersionMigrationOptions**: Options for managing versions.
+- **VersionMigrationResult**: Result structure for version operations.
+
 ### CLI Usage
 
 ```bash

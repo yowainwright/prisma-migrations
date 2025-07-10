@@ -39,7 +39,12 @@
     "orm",
     "database",
     "schema",
-    "knex"
+    "knex",
+    "sql",
+    "typescript",
+    "postgres",
+    "migrations",
+    "version-control"
   ],
   "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
