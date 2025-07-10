@@ -1,6 +1,7 @@
 import { ConfigManager } from "./config";
 import { FileManager } from "./file-manager";
 import { DatabaseAdapter } from "./database-adapter";
+import { VersionManager } from "./version-manager";
 import {
   Migration,
   MigrationResult,
@@ -10,12 +11,16 @@ import {
   RunMigrationOptions,
   RollbackMigrationOptions,
   MigrationFile,
+  VersionMigrationOptions,
+  VersionMigrationResult,
+  VersionMigrationMapping,
 } from "./types";
 
 export class MigrationManager {
   private config: ConfigManager;
   private fileManager: FileManager;
   private dbAdapter: DatabaseAdapter;
+  private versionManager: VersionManager;
 
   constructor(configPath?: string) {
     this.config = new ConfigManager(configPath);
@@ -23,6 +28,7 @@ export class MigrationManager {
     const config = this.config.getConfig();
     const { migrationsDir, tableName } = config;
     this.fileManager = new FileManager(migrationsDir, config);
+    this.versionManager = new VersionManager(migrationsDir);
 
     const databaseUrl = this.config.getDatabaseUrl();
     this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
@@ -32,6 +38,7 @@ export class MigrationManager {
     const config = await this.config.getConfigAsync();
     const { migrationsDir, tableName } = config;
     this.fileManager = new FileManager(migrationsDir, config);
+    this.versionManager = new VersionManager(migrationsDir);
 
     const databaseUrl = this.config.getDatabaseUrl();
     this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
@@ -335,5 +342,198 @@ export class MigrationManager {
       return [];
     }
     return appliedMigrations.slice(targetIndex + 1).reverse();
+  }
+
+  // Version-based migration management methods
+
+  /**
+   * Register a version with its associated migrations
+   */
+  public registerVersion(
+    version: string,
+    migrations: string[],
+    description?: string,
+    commit?: string,
+  ): void {
+    this.versionManager.registerVersion(
+      version,
+      migrations,
+      description,
+      commit,
+    );
+  }
+
+  /**
+   * Deploy to a specific version
+   */
+  public async deployToVersion(
+    options: VersionMigrationOptions,
+  ): Promise<VersionMigrationResult> {
+    const { fromVersion, toVersion, dryRun = false, force = false } = options;
+
+    try {
+      await this.initialize();
+
+      const currentVersion =
+        fromVersion || this.versionManager.getCurrentVersion();
+      const { migrationsToRun, migrationsToRollback } =
+        this.versionManager.getMigrationsBetween(currentVersion, toVersion);
+
+      if (dryRun) {
+        const plan = this.versionManager.generateDeploymentPlan(
+          currentVersion,
+          toVersion,
+        );
+        console.log(plan.summary);
+
+        return {
+          success: true,
+          fromVersion: currentVersion,
+          toVersion,
+          migrationsRun: [],
+          migrationsRolledBack: [],
+        };
+      }
+
+      const migrationsRun: Migration[] = [];
+      const migrationsRolledBack: Migration[] = [];
+
+      // First, rollback migrations that are not in the target version
+      for (const migrationId of migrationsToRollback.reverse()) {
+        const migrationFile = this.fileManager.getMigrationFile(migrationId);
+        if (!migrationFile) {
+          throw new Error(`Migration file not found for ${migrationId}`);
+        }
+
+        await this.dbAdapter.executeInTransaction(async () => {
+          if (migrationFile.type === "sql") {
+            const { down } =
+              this.fileManager.parseMigrationContent(migrationFile);
+            if (!down || down.trim().length === 0) {
+              if (!force) {
+                throw new Error(
+                  `No rollback SQL found for migration ${migrationFile.name}`,
+                );
+              }
+              return;
+            }
+            await this.dbAdapter.executeMigration(down);
+          } else {
+            await this.dbAdapter.executeMigrationFile(migrationFile, "down");
+          }
+          await this.dbAdapter.removeMigration(migrationId);
+        });
+
+        migrationsRolledBack.push({
+          id: migrationId,
+          name: migrationFile.name,
+          filename: migrationFile.path,
+          timestamp: new Date(),
+          applied: false,
+        });
+      }
+
+      // Then, run migrations that are in the target version but not currently applied
+      for (const migrationId of migrationsToRun) {
+        const migrationFile = this.fileManager.getMigrationFile(migrationId);
+        if (!migrationFile) {
+          throw new Error(`Migration file not found for ${migrationId}`);
+        }
+
+        const isApplied = await this.dbAdapter.isMigrationApplied(migrationId);
+        if (isApplied && !force) {
+          continue;
+        }
+
+        await this.dbAdapter.executeInTransaction(async () => {
+          if (migrationFile.type === "sql") {
+            const { up } =
+              this.fileManager.parseMigrationContent(migrationFile);
+            await this.dbAdapter.executeMigration(up);
+          } else {
+            await this.dbAdapter.executeMigrationFile(migrationFile, "up");
+          }
+          await this.dbAdapter.recordMigration(migrationId, migrationFile.name);
+        });
+
+        migrationsRun.push({
+          id: migrationId,
+          name: migrationFile.name,
+          filename: migrationFile.path,
+          timestamp: new Date(),
+          applied: true,
+          appliedAt: new Date(),
+        });
+      }
+
+      // Update current version
+      this.versionManager.setCurrentVersion(toVersion);
+
+      return {
+        success: true,
+        fromVersion: currentVersion,
+        toVersion,
+        migrationsRun,
+        migrationsRolledBack,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        fromVersion,
+        toVersion,
+        migrationsRun: [],
+        migrationsRolledBack: [],
+        error: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      await this.destroy();
+    }
+  }
+
+  /**
+   * Get deployment plan between versions
+   */
+  public getDeploymentPlan(
+    fromVersion: string | undefined,
+    toVersion: string,
+  ): {
+    plan: Array<{
+      action: "run" | "rollback";
+      migration: string;
+      order: number;
+    }>;
+    summary: string;
+  } {
+    return this.versionManager.generateDeploymentPlan(fromVersion, toVersion);
+  }
+
+  /**
+   * Get all registered versions
+   */
+  public getAllVersions(): VersionMigrationMapping[] {
+    return this.versionManager.getAllVersions();
+  }
+
+  /**
+   * Get current version
+   */
+  public getCurrentVersion(): string | undefined {
+    return this.versionManager.getCurrentVersion();
+  }
+
+  /**
+   * Set current version
+   */
+  public setCurrentVersion(version: string): void {
+    this.versionManager.setCurrentVersion(version);
+  }
+
+  /**
+   * Validate version migrations
+   */
+  public validateVersionMigrations(version: string): boolean {
+    const allMigrations = this.fileManager.readMigrationFiles();
+    const migrationIds = allMigrations.map((m) => m.timestamp);
+    return this.versionManager.validateVersionMigrations(version, migrationIds);
   }
 }

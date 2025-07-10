@@ -645,6 +645,59 @@ npm install tsx
 
 ---
 
+## Version-Based Migration Management
+
+Manage migrations using git commits or semantic versioning for deployment and rollback scenarios.
+
+### Git Commit-Based Migrations
+
+```javascript
+// Deploy to specific commit
+const manager = new MigrationManager();
+const commitSha = "abc123";
+const migrations = await manager.getMigrationsByCommit(commitSha);
+await manager.runMigrations({ to: migrations[migrations.length - 1].id });
+
+// Rollback to previous commit
+const previousCommit = "def456";
+const targetMigrations = await manager.getMigrationsByCommit(previousCommit);
+await manager.rollbackMigrations({
+  to: targetMigrations[targetMigrations.length - 1].id,
+});
+```
+
+### Semantic Versioning
+
+```javascript
+// Register version with migrations
+const manager = new MigrationManager();
+await manager.registerVersion("1.2.0", ["20231201120000", "20231201130000"]);
+
+// Deploy to version
+await manager.deployToVersion("1.2.0");
+
+// Rollback to previous version
+await manager.rollbackToVersion("1.1.0");
+```
+
+### CLI Usage
+
+```bash
+# Deploy to git commit
+prisma-migrations up --commit abc123
+
+# Rollback to commit
+prisma-migrations down --commit def456
+
+# Deploy to version
+prisma-migrations up --version 1.2.0
+
+# Rollback to version
+prisma-migrations down --version 1.1.0
+```
+
+---
+
 ## Development
 
 Use [Corepack](https://nodejs.org/api/corepack.html) to manage Yarn and ensure you have the latest Node and npm.

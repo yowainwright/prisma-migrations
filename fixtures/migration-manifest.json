@@ -1,0 +1,17 @@
+{
+  "versions": [
+    {
+      "version": "v1.0.0",
+      "migrations": ["m1", "m2"],
+      "description": "Initial release",
+      "createdAt": "2025-07-10T08:09:41.414Z"
+    },
+    {
+      "version": "v1.1.0",
+      "migrations": ["m3", "m4"],
+      "description": "Update release",
+      "createdAt": "2025-07-10T08:09:41.417Z"
+    }
+  ],
+  "lastUpdated": "2025-07-10T08:09:41.417Z"
+}
