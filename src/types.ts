@@ -93,3 +93,34 @@ export interface MigrationStatus {
   appliedAt?: Date;
   error?: string;
 }
+
+// Version-based migration management
+export interface VersionMigrationMapping {
+  version: string;
+  commit?: string; // Optional commit hash
+  migrations: string[]; // Array of migration IDs/timestamps
+  description?: string;
+  createdAt: Date;
+}
+
+export interface VersionMigrationOptions {
+  fromVersion?: string;
+  toVersion: string;
+  dryRun?: boolean;
+  force?: boolean;
+}
+
+export interface VersionMigrationResult {
+  success: boolean;
+  fromVersion?: string;
+  toVersion: string;
+  migrationsRun: Migration[];
+  migrationsRolledBack: Migration[];
+  error?: string;
+}
+
+export interface MigrationManifest {
+  versions: VersionMigrationMapping[];
+  currentVersion?: string;
+  lastUpdated: Date;
+}

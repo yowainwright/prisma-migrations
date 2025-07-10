@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "node --import tsx --test tests/config.test.ts tests/database-adapter.test.ts tests/e2e.test.ts tests/file-manager.test.ts tests/index.test.ts tests/migration-manager.test.ts",
+    "test": "node --import tsx --test tests/commit-manager.test.ts tests/config.test.ts tests/database-adapter.test.ts tests/e2e.test.ts tests/file-manager.test.ts tests/index.test.ts tests/migration-manager.test.ts tests/version-manager.test.ts",
     "test:watch": "node --test --watch",
     "test:e2e": "npm run build && node --test e2e/test.js e2e/test-cjs.js",
     "test:e2e:esm": "npm run build && node --test e2e/test.js",

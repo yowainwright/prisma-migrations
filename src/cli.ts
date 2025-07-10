@@ -2,7 +2,11 @@ import { Command } from "commander";
 import { MigrationManager } from "./migration-manager";
 
 const program = new Command();
-const manager = new MigrationManager();
+
+// Helper function to get manager instance when needed
+function getManager() {
+  return new MigrationManager();
+}
 
 program.version("1.0.0").description("Prisma Migrations CLI");
 
@@ -11,6 +15,7 @@ program
   .description("Create a new migration")
   .action(async (name: string) => {
     try {
+      const manager = getManager();
       await manager.createMigration({ name });
       console.log(`Migration '${name}' created successfully.`);
     } catch (error) {
@@ -32,6 +37,7 @@ program
   .option("-d, --dry-run", "Preview migrations without applying")
   .action(async ({ to, steps, dryRun }) => {
     try {
+      const manager = getManager();
       const result = await manager.runMigrations({ to, steps, dryRun });
       console.log(`Migrations applied successfully: ${result.success}`);
     } catch (error) {
@@ -53,6 +59,7 @@ program
   .option("-d, --dry-run", "Preview rollback without applying")
   .action(async ({ to, steps, dryRun }) => {
     try {
+      const manager = getManager();
       const result = await manager.rollbackMigrations({ to, steps, dryRun });
       console.log(`Migrations rolled back successfully: ${result.success}`);
     } catch (error) {
@@ -67,6 +74,7 @@ program
   .description("Get migration status")
   .action(async () => {
     try {
+      const manager = getManager();
       const status = await manager.getMigrationStatus();
       status.forEach(({ name, status, appliedAt }) => {
         console.log(
@@ -85,6 +93,7 @@ program
   .description("Test database connection")
   .action(async () => {
     try {
+      const manager = getManager();
       const result = await manager.testConnection();
       console.log(`Database connection successful: ${result}`);
     } catch (error) {
