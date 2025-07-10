@@ -48,7 +48,7 @@ describe("MigrationManager", () => {
 
   test("should validate migration manager methods exist", () => {
     assert.strictEqual(typeof MigrationManager, "function");
-    
+
     // Check that key methods are defined on the prototype
     const prototype = MigrationManager.prototype;
     assert.strictEqual(typeof prototype.initialize, "function");

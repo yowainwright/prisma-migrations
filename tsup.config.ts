@@ -1,11 +1,11 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig([
   // Library build (dual format)
   {
-    entry: ['src/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'node20',
+    entry: ["src/index.ts"],
+    format: ["esm", "cjs"],
+    target: "node20",
     dts: true,
     sourcemap: true,
     clean: true,
@@ -13,20 +13,20 @@ export default defineConfig([
     minify: false,
     bundle: true,
     external: [
-      '@prisma/client',
-      'commander',
-      'inquirer',
-      'chalk',
-      'fs-extra',
-      'tsx'
+      "@prisma/client",
+      "commander",
+      "inquirer",
+      "chalk",
+      "fs-extra",
+      "tsx",
     ],
-    outDir: 'dist',
+    outDir: "dist",
   },
   // CLI build (dual format for broader compatibility)
   {
-    entry: ['src/cli.ts'],
-    format: ['esm', 'cjs'],
-    target: 'node20',
+    entry: ["src/cli.ts"],
+    format: ["esm", "cjs"],
+    target: "node20",
     dts: false,
     sourcemap: true,
     clean: false,
@@ -34,17 +34,17 @@ export default defineConfig([
     minify: false,
     bundle: true,
     external: [
-      '@prisma/client',
-      'commander',
-      'inquirer',
-      'chalk',
-      'fs-extra',
-      'tsx'
+      "@prisma/client",
+      "commander",
+      "inquirer",
+      "chalk",
+      "fs-extra",
+      "tsx",
     ],
-    outDir: 'dist',
+    outDir: "dist",
     shims: true,
     banner: {
-      js: '#!/usr/bin/env node'
-    }
-  }
+      js: "#!/usr/bin/env node",
+    },
+  },
 ]);

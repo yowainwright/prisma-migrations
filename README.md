@@ -661,7 +661,9 @@ await manager.runMigrations({ to: migrations[migrations.length - 1].id });
 // Rollback to previous commit
 const previousCommit = "def456";
 const targetMigrations = await manager.getMigrationsByCommit(previousCommit);
-await manager.rollbackMigrations({ to: targetMigrations[targetMigrations.length - 1].id });
+await manager.rollbackMigrations({
+  to: targetMigrations[targetMigrations.length - 1].id,
+});
 ```
 
 ### Semantic Versioning

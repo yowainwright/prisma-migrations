@@ -1,16 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { 
-  VersionMigrationMapping, 
-  MigrationManifest
-} from "./types";
+import { VersionMigrationMapping, MigrationManifest } from "./types";
 import { CommitManager } from "./commit-manager";
 
 export class VersionManager {
   private manifestPath: string;
   private manifest: MigrationManifest;
 
-private commitManager: CommitManager;
+  private commitManager: CommitManager;
 
   constructor(migrationsDir: string) {
     this.manifestPath = join(migrationsDir, "migration-manifest.json");
@@ -27,17 +24,17 @@ private commitManager: CommitManager;
         manifest.lastUpdated = new Date(manifest.lastUpdated);
         manifest.versions = manifest.versions.map((v: any) => ({
           ...v,
-          createdAt: new Date(v.createdAt)
+          createdAt: new Date(v.createdAt),
         }));
         return manifest;
       } catch {
         console.warn("Failed to load migration manifest, creating new one");
       }
     }
-    
+
     return {
       versions: [],
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
   }
 
@@ -48,15 +45,22 @@ private commitManager: CommitManager;
   /**
    * Register a version with its associated migrations
    */
-public registerVersion(version: string, migrations: string[], description?: string, commit?: string): void {
-const existingIndex = this.manifest.versions.findIndex(v => v.version === version);
-    
+  public registerVersion(
+    version: string,
+    migrations: string[],
+    description?: string,
+    commit?: string,
+  ): void {
+    const existingIndex = this.manifest.versions.findIndex(
+      (v) => v.version === version,
+    );
+
     const versionMapping: VersionMigrationMapping = {
       version,
       commit,
       migrations,
       description,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     if (existingIndex >= 0) {
@@ -66,7 +70,9 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
     }
 
     // Sort versions (assuming semantic versioning)
-    this.manifest.versions.sort((a, b) => this.compareVersions(a.version, b.version));
+    this.manifest.versions.sort((a, b) =>
+      this.compareVersions(a.version, b.version),
+    );
     this.manifest.lastUpdated = new Date();
     this.saveManifest();
   }
@@ -74,7 +80,11 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
   /**
    * Get all migrations that need to be applied/rolled back between versions or commits
    */
-  public getMigrationsBetween(from: string | undefined, to: string, isCommit: boolean = false): {
+  public getMigrationsBetween(
+    from: string | undefined,
+    to: string,
+    isCommit: boolean = false,
+  ): {
     migrationsToRun: string[];
     migrationsToRollback: string[];
   } {
@@ -82,7 +92,9 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
     let toMigrations: Set<string> = new Set();
 
     if (isCommit) {
-      fromMigrations = from ? new Set(this.getCommitMigrations(from)) : new Set();
+      fromMigrations = from
+        ? new Set(this.getCommitMigrations(from))
+        : new Set();
       toMigrations = new Set(this.getCommitMigrations(to));
     } else {
       const fromVersionData = from ? this.getVersionData(from) : null;
@@ -97,14 +109,18 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
     }
 
     // Migrations to run: in target version/commit but not in current version/commit
-    const migrationsToRun = Array.from(toMigrations).filter(m => !fromMigrations.has(m));
+    const migrationsToRun = Array.from(toMigrations).filter(
+      (m) => !fromMigrations.has(m),
+    );
 
     // Migrations to rollback: in current version/commit but not in target version/commit
-    const migrationsToRollback = Array.from(fromMigrations).filter(m => !toMigrations.has(m));
+    const migrationsToRollback = Array.from(fromMigrations).filter(
+      (m) => !toMigrations.has(m),
+    );
 
     return {
       migrationsToRun,
-      migrationsToRollback
+      migrationsToRollback,
     };
   }
 
@@ -115,7 +131,9 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
     const info = this.commitManager.getCommitInfo(commit);
 
     // Find the most recent version/tag reachable from this commit
-    const version = info.branch ? this.commitManager.getLatestTag(commit) : null;
+    const version = info.branch
+      ? this.commitManager.getLatestTag(commit)
+      : null;
     if (!version) {
       throw new Error(`No version tag found for commit ${commit}`);
     }
@@ -132,7 +150,7 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
    * Get version data by version string
    */
   public getVersionData(version: string): VersionMigrationMapping | null {
-    return this.manifest.versions.find(v => v.version === version) || null;
+    return this.manifest.versions.find((v) => v.version === version) || null;
   }
 
   /**
@@ -171,8 +189,12 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
    */
   private compareVersions(a: string, b: string): number {
     const parseVersion = (version: string) => {
-      const parts = version.split('.').map(Number);
-      return { major: parts[0] || 0, minor: parts[1] || 0, patch: parts[2] || 0 };
+      const parts = version.split(".").map(Number);
+      return {
+        major: parts[0] || 0,
+        minor: parts[1] || 0,
+        patch: parts[2] || 0,
+      };
     };
 
     const versionA = parseVersion(a);
@@ -190,29 +212,40 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
   /**
    * Validate that all migrations for a version exist
    */
-  public validateVersionMigrations(version: string, existingMigrations: string[]): boolean {
+  public validateVersionMigrations(
+    version: string,
+    existingMigrations: string[],
+  ): boolean {
     const versionData = this.getVersionData(version);
     if (!versionData) return false;
 
     const existingSet = new Set(existingMigrations);
-    return versionData.migrations.every(migration => existingSet.has(migration));
+    return versionData.migrations.every((migration) =>
+      existingSet.has(migration),
+    );
   }
 
   /**
    * Generate a deployment plan between versions
    */
-  public generateDeploymentPlan(fromVersion: string | undefined, toVersion: string): {
+  public generateDeploymentPlan(
+    fromVersion: string | undefined,
+    toVersion: string,
+  ): {
     plan: Array<{
-      action: 'run' | 'rollback';
+      action: "run" | "rollback";
       migration: string;
       order: number;
     }>;
     summary: string;
   } {
-    const { migrationsToRun, migrationsToRollback } = this.getMigrationsBetween(fromVersion, toVersion);
-    
+    const { migrationsToRun, migrationsToRollback } = this.getMigrationsBetween(
+      fromVersion,
+      toVersion,
+    );
+
     const plan: Array<{
-      action: 'run' | 'rollback';
+      action: "run" | "rollback";
       migration: string;
       order: number;
     }> = [];
@@ -220,22 +253,22 @@ const existingIndex = this.manifest.versions.findIndex(v => v.version === versio
     // Rollbacks first (in reverse order)
     migrationsToRollback.reverse().forEach((migration, index) => {
       plan.push({
-        action: 'rollback',
+        action: "rollback",
         migration,
-        order: index + 1
+        order: index + 1,
       });
     });
 
     // Then run new migrations (in forward order)
     migrationsToRun.forEach((migration, index) => {
       plan.push({
-        action: 'run',
+        action: "run",
         migration,
-        order: migrationsToRollback.length + index + 1
+        order: migrationsToRollback.length + index + 1,
       });
     });
 
-    const summary = `Deployment plan from ${fromVersion || 'initial'} to ${toVersion}:
+    const summary = `Deployment plan from ${fromVersion || "initial"} to ${toVersion}:
 - ${migrationsToRollback.length} migration(s) to rollback
 - ${migrationsToRun.length} migration(s) to run
 - Total steps: ${plan.length}`;

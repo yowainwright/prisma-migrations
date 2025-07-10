@@ -16,9 +16,9 @@ Brief description of the issue or feature request.
 
 ## Steps to reproduce (if bug)
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Expected behavior
 

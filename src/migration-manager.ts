@@ -349,32 +349,49 @@ export class MigrationManager {
   /**
    * Register a version with its associated migrations
    */
-public registerVersion(version: string, migrations: string[], description?: string, commit?: string): void {
-    this.versionManager.registerVersion(version, migrations, description, commit);
+  public registerVersion(
+    version: string,
+    migrations: string[],
+    description?: string,
+    commit?: string,
+  ): void {
+    this.versionManager.registerVersion(
+      version,
+      migrations,
+      description,
+      commit,
+    );
   }
 
   /**
    * Deploy to a specific version
    */
-  public async deployToVersion(options: VersionMigrationOptions): Promise<VersionMigrationResult> {
+  public async deployToVersion(
+    options: VersionMigrationOptions,
+  ): Promise<VersionMigrationResult> {
     const { fromVersion, toVersion, dryRun = false, force = false } = options;
 
     try {
       await this.initialize();
 
-      const currentVersion = fromVersion || this.versionManager.getCurrentVersion();
-      const { migrationsToRun, migrationsToRollback } = this.versionManager.getMigrationsBetween(currentVersion, toVersion);
+      const currentVersion =
+        fromVersion || this.versionManager.getCurrentVersion();
+      const { migrationsToRun, migrationsToRollback } =
+        this.versionManager.getMigrationsBetween(currentVersion, toVersion);
 
       if (dryRun) {
-        const plan = this.versionManager.generateDeploymentPlan(currentVersion, toVersion);
+        const plan = this.versionManager.generateDeploymentPlan(
+          currentVersion,
+          toVersion,
+        );
         console.log(plan.summary);
-        
+
         return {
           success: true,
           fromVersion: currentVersion,
           toVersion,
           migrationsRun: [],
-          migrationsRolledBack: []
+          migrationsRolledBack: [],
         };
       }
 
@@ -390,10 +407,13 @@ public registerVersion(version: string, migrations: string[], description?: stri
 
         await this.dbAdapter.executeInTransaction(async () => {
           if (migrationFile.type === "sql") {
-            const { down } = this.fileManager.parseMigrationContent(migrationFile);
+            const { down } =
+              this.fileManager.parseMigrationContent(migrationFile);
             if (!down || down.trim().length === 0) {
               if (!force) {
-                throw new Error(`No rollback SQL found for migration ${migrationFile.name}`);
+                throw new Error(
+                  `No rollback SQL found for migration ${migrationFile.name}`,
+                );
               }
               return;
             }
@@ -427,7 +447,8 @@ public registerVersion(version: string, migrations: string[], description?: stri
 
         await this.dbAdapter.executeInTransaction(async () => {
           if (migrationFile.type === "sql") {
-            const { up } = this.fileManager.parseMigrationContent(migrationFile);
+            const { up } =
+              this.fileManager.parseMigrationContent(migrationFile);
             await this.dbAdapter.executeMigration(up);
           } else {
             await this.dbAdapter.executeMigrationFile(migrationFile, "up");
@@ -453,7 +474,7 @@ public registerVersion(version: string, migrations: string[], description?: stri
         fromVersion: currentVersion,
         toVersion,
         migrationsRun,
-        migrationsRolledBack
+        migrationsRolledBack,
       };
     } catch (error) {
       return {
@@ -472,9 +493,12 @@ public registerVersion(version: string, migrations: string[], description?: stri
   /**
    * Get deployment plan between versions
    */
-  public getDeploymentPlan(fromVersion: string | undefined, toVersion: string): {
+  public getDeploymentPlan(
+    fromVersion: string | undefined,
+    toVersion: string,
+  ): {
     plan: Array<{
-      action: 'run' | 'rollback';
+      action: "run" | "rollback";
       migration: string;
       order: number;
     }>;
@@ -509,7 +533,7 @@ public registerVersion(version: string, migrations: string[], description?: stri
    */
   public validateVersionMigrations(version: string): boolean {
     const allMigrations = this.fileManager.readMigrationFiles();
-    const migrationIds = allMigrations.map(m => m.timestamp);
+    const migrationIds = allMigrations.map((m) => m.timestamp);
     return this.versionManager.validateVersionMigrations(version, migrationIds);
   }
 }

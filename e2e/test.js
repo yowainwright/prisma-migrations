@@ -83,7 +83,10 @@ describe("Prisma Migrations E2E Tests (ESM)", () => {
     console.log("Empty name error:", result.stderr);
 
     // Should handle gracefully and show error message
-    assert.match(result.stderr, /(Error creating migration|Migration name cannot be empty|@prisma\/client)/);
+    assert.match(
+      result.stderr,
+      /(Error creating migration|Migration name cannot be empty|@prisma\/client)/,
+    );
   });
 
   test("should handle up command", async () => {

@@ -41,6 +41,7 @@ Thanks for your interest in contributing to prisma-migrations! This guide will h
 ## Issue Reporting
 
 When reporting issues, please include:
+
 - Node.js version
 - npm version
 - Operating system
