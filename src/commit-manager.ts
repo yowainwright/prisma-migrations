@@ -91,7 +91,7 @@ export class CommitManager {
     try {
       const status = this.execGitCommand("git status --porcelain").trim();
       return status.length === 0;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

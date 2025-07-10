@@ -30,7 +30,7 @@ private commitManager: CommitManager;
           createdAt: new Date(v.createdAt)
         }));
         return manifest;
-      } catch (error) {
+      } catch {
         console.warn("Failed to load migration manifest, creating new one");
       }
     }

@@ -1,4 +1,4 @@
-import { test, describe, it, before } from "node:test";
+import { test, describe } from "node:test";
 import assert from "node:assert";
 import { MigrationManager } from "../src/migration-manager";
 
@@ -38,9 +38,9 @@ describe("MigrationManager", () => {
   test("should handle version registration without database connection", () => {
     // Test version management functionality that doesn't require database
     try {
-      const manager = new MigrationManager();
+      new MigrationManager();
       // This should fail due to missing DATABASE_URL
-      assert.fail("Expected error when DATABASE_URL is not set");
+      assert.fail("Expected constructor to throw an error");
     } catch (error) {
       assert.ok(error.message.includes("Database URL not found"));
     }
@@ -70,9 +70,9 @@ describe("MigrationManager", () => {
 
   test("should handle createMigration validation", async () => {
     try {
-      const manager = new MigrationManager();
+      new MigrationManager();
       // This should fail due to missing DATABASE_URL before we can test createMigration
-      assert.fail("Expected error when DATABASE_URL is not set");
+      assert.fail("Expected constructor to throw an error");
     } catch (error) {
       assert.ok(error.message.includes("Database URL not found"));
     }
@@ -80,9 +80,9 @@ describe("MigrationManager", () => {
 
   test("should handle testConnection gracefully", async () => {
     try {
-      const manager = new MigrationManager();
+      new MigrationManager();
       // This should fail due to missing DATABASE_URL
-      assert.fail("Expected error when DATABASE_URL is not set");
+      assert.fail("Expected constructor to throw an error");
     } catch (error) {
       assert.ok(error.message.includes("Database URL not found"));
     }
