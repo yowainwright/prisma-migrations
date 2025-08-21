@@ -5,6 +5,7 @@ export { DatabaseAdapter } from "./adapters/database";
 export { VersionManager } from "./managers/version";
 export { CommitManager } from "./managers/commit";
 export { DiffGenerator } from "./api/diff";
+export { setGlobalLogger, getDefaultLogger } from "./utils/logger";
 
 export {
   createMigrationContext,

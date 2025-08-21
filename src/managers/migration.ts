@@ -17,9 +17,8 @@ import {
   VersionMigrationOptions,
   VersionMigrationResult,
   VersionMigrationMapping,
+  Logger,
 } from "../utils/types";
-
-const logger = createLogger("MigrationManager");
 
 export class MigrationManager {
   private config: ConfigManager;
@@ -27,11 +26,13 @@ export class MigrationManager {
   private dbAdapter: DatabaseAdapter;
   private versionManager: VersionManager;
   private diffGenerator: DiffGenerator;
+  private logger: Logger;
 
   constructor(configPath?: string) {
     this.config = new ConfigManager(configPath);
     const config = this.config.getConfig();
-    const { migrationsDir, tableName, prismaClient } = config;
+    const { migrationsDir, tableName, prismaClient, logger } = config;
+    this.logger = createLogger("MigrationManager", logger);
     this.fileManager = new FileManager(migrationsDir, config);
     this.versionManager = new VersionManager(migrationsDir);
     this.diffGenerator = new DiffGenerator();
@@ -41,12 +42,14 @@ export class MigrationManager {
       databaseUrl,
       tableName,
       prismaClient as PrismaClientLike | undefined,
+      logger,
     );
   }
 
   private async ensureConfigLoaded(): Promise<void> {
     const config = await this.config.getConfigAsync();
-    const { migrationsDir, tableName, prismaClient } = config;
+    const { migrationsDir, tableName, prismaClient, logger } = config;
+    this.logger = createLogger("MigrationManager", logger);
     this.fileManager = new FileManager(migrationsDir, config);
     this.versionManager = new VersionManager(migrationsDir);
 
@@ -55,17 +58,18 @@ export class MigrationManager {
       databaseUrl,
       tableName,
       prismaClient as PrismaClientLike | undefined,
+      logger,
     );
   }
 
   public async initialize(): Promise<void> {
     try {
-      logger.info("Initializing migration manager...");
+      this.logger.info("Initializing migration manager...");
       await this.dbAdapter.connect();
       await this.dbAdapter.ensureMigrationsTable();
-      logger.info("Migration manager initialized successfully");
+      this.logger.info("Migration manager initialized successfully");
     } catch (error) {
-      logger.error({ error }, "Failed to initialize");
+      this.logger.error({ error }, "Failed to initialize");
       throw error;
     }
   }
@@ -424,7 +428,7 @@ export class MigrationManager {
           currentVersion,
           toVersion,
         );
-        logger.info({ summary: plan.summary }, "Version deployment plan");
+        this.logger.info({ summary: plan.summary }, "Version deployment plan");
 
         return {
           success: true,

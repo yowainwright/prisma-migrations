@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { MigrationManager } from "./managers/migration";
-import { createLogger } from "./utils/logger";
+import { createLogger, getDefaultLogger } from "./utils/logger";
 import chalk from "chalk";
 
 const program = new Command();

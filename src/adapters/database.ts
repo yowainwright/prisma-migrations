@@ -3,27 +3,30 @@ import {
   MigrationStatus,
   MigrationFile,
   PrismaMigration,
+  Logger,
 } from "../utils/types";
 import { resolve, join } from "path";
 import { existsSync } from "fs";
 import { createLogger } from "../utils/logger";
 import type { PrismaClientLike } from "../api/migration";
 
-const logger = createLogger("DatabaseAdapter");
-
 export class DatabaseAdapter {
   private prisma: PrismaClientLike;
   private tableName: string;
   private isPrismaTable: boolean | null = null;
   private PrismaClientConstructor?: new () => PrismaClientLike;
+  private logger: Logger;
 
   constructor(
     _databaseUrl: string,
     tableName: string = "_prisma_migrations",
     customPrismaClient?: PrismaClientLike,
+    customLogger?: Logger,
   ) {
+    this.logger = createLogger("DatabaseAdapter", customLogger);
+    
     if (customPrismaClient) {
-      logger.debug("Using provided PrismaClient instance");
+      this.logger.debug("Using provided PrismaClient instance");
       this.prisma = customPrismaClient;
     } else {
       this.PrismaClientConstructor = this.resolvePrismaClient();
@@ -64,7 +67,7 @@ export class DatabaseAdapter {
         const prismaModule = require(clientPath);
 
         if (prismaModule.PrismaClient) {
-          logger.debug({ clientPath }, "Found PrismaClient");
+          this.logger.debug({ clientPath }, "Found PrismaClient");
           return prismaModule.PrismaClient;
         }
       } catch (err) {}
@@ -83,7 +86,7 @@ export class DatabaseAdapter {
           ) {
             const prismaModule = require(genPath);
             if (prismaModule.PrismaClient) {
-              logger.debug({ path: genPath }, "Found generated PrismaClient");
+              this.logger.debug({ path: genPath }, "Found generated PrismaClient");
               return prismaModule.PrismaClient;
             }
           }
@@ -94,11 +97,11 @@ export class DatabaseAdapter {
     try {
       const prismaModule = require("@prisma/client");
       if (prismaModule.PrismaClient) {
-        logger.debug("Found PrismaClient via direct require");
+        this.logger.debug("Found PrismaClient via direct require");
         return prismaModule.PrismaClient;
       }
     } catch (err) {
-      logger.error({ error: err }, "Failed to load @prisma/client");
+      this.logger.error({ error: err }, "Failed to load @prisma/client");
     }
 
     return null;
@@ -109,9 +112,9 @@ export class DatabaseAdapter {
       if (this.prisma.$connect) {
         await this.prisma.$connect();
       }
-      logger.info("Successfully connected to database");
+      this.logger.info("Successfully connected to database");
     } catch (error) {
-      logger.error({ error }, "Failed to connect to database");
+      this.logger.error({ error }, "Failed to connect to database");
       throw new Error(
         `Database connection failed. Please check:\n` +
           `1. Database is running and accessible\n` +

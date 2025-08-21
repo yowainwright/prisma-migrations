@@ -1,3 +1,11 @@
+export interface Logger {
+  debug(...args: any[]): void;
+  info(...args: any[]): void;
+  warn(...args: any[]): void;
+  error(...args: any[]): void;
+  child?(bindings: Record<string, any>): Logger;
+}
+
 export interface Migration {
   id: string;
   name: string;
@@ -16,7 +24,8 @@ export interface MigrationConfig {
   createTable?: boolean;
   migrationFormat?: "sql" | "js" | "ts";
   extension?: string;
-  prismaClient?: unknown; // Allow passing a custom PrismaClient instance
+  prismaClient?: unknown;
+  logger?: Logger;
 }
 
 export interface MigrationState {
