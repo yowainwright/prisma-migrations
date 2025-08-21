@@ -16,9 +16,6 @@ export class CommitManager {
     this.gitDir = gitDir;
   }
 
-  /**
-   * Get current commit hash
-   */
   public getCurrentCommit(): string {
     try {
       return this.execGitCommand("git rev-parse HEAD").trim();
@@ -29,9 +26,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Get current short commit hash
-   */
   public getCurrentShortCommit(): string {
     try {
       return this.execGitCommand("git rev-parse --short HEAD").trim();
@@ -42,9 +36,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Get current branch name
-   */
   public getCurrentBranch(): string {
     try {
       return this.execGitCommand("git rev-parse --abbrev-ref HEAD").trim();
@@ -55,9 +46,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Get detailed commit information
-   */
   public getCommitInfo(commitHash?: string): CommitInfo {
     const commit = commitHash || "HEAD";
 
@@ -79,15 +67,12 @@ export class CommitManager {
 
       let branch: string | undefined;
       try {
-        // Try to get the branch containing this commit
         branch = this.execGitCommand(
           `git branch --contains ${hash} | grep -v "detached" | head -1`,
         )
           .trim()
           .replace(/^\*?\s*/, "");
-      } catch {
-        // Branch detection failed, not critical
-      }
+      } catch {}
 
       return {
         hash,
@@ -104,9 +89,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Check if the working directory is clean (no uncommitted changes)
-   */
   public isWorkingDirectoryClean(): boolean {
     try {
       const status = this.execGitCommand("git status --porcelain").trim();
@@ -116,9 +98,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Get commits between two references
-   */
   public getCommitsBetween(from: string, to: string): CommitInfo[] {
     try {
       const range = `${from}..${to}`;
@@ -135,9 +114,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Check if a commit exists
-   */
   public commitExists(commitHash: string): boolean {
     try {
       this.execGitCommand(`git rev-parse --verify ${commitHash}`);
@@ -147,9 +123,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Get tags for a specific commit
-   */
   public getTagsForCommit(commitHash: string): string[] {
     try {
       const tags = this.execGitCommand(
@@ -161,9 +134,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Find the most recent tag reachable from a commit
-   */
   public getLatestTag(commitHash?: string): string | null {
     try {
       const commit = commitHash || "HEAD";
@@ -176,9 +146,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Check if Git repository exists
-   */
   public isGitRepository(): boolean {
     try {
       this.execGitCommand("git rev-parse --git-dir");
@@ -188,9 +155,6 @@ export class CommitManager {
     }
   }
 
-  /**
-   * Generate a version string based on git state
-   */
   public generateVersionFromGit(): string {
     try {
       const latestTag = this.getLatestTag();
@@ -199,7 +163,6 @@ export class CommitManager {
       const isClean = this.isWorkingDirectoryClean();
 
       if (latestTag) {
-        // If we're exactly on a tag, use the tag
         const tagCommit = this.execGitCommand(
           `git rev-parse ${latestTag}`,
         ).trim();
@@ -209,7 +172,6 @@ export class CommitManager {
           return latestTag;
         }
 
-        // Otherwise, create a version with tag + commits since tag
         const commitsSinceTag = this.execGitCommand(
           `git rev-list --count ${latestTag}..HEAD`,
         ).trim();
@@ -217,7 +179,6 @@ export class CommitManager {
         return `${latestTag}-${commitsSinceTag}-g${shortCommit}${suffix}`;
       }
 
-      // No tags, use branch and commit
       const cleanBranch = branch.replace(/[^a-zA-Z0-9.-]/g, "-");
       const suffix = isClean ? "" : "-dirty";
       return `${cleanBranch}-${shortCommit}${suffix}`;

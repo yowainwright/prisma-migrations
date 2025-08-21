@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
-import { MigrationConfig } from "./types";
+import { MigrationConfig } from "../utils/types";
 
 export class ConfigManager {
   private config: MigrationConfig;
@@ -9,7 +9,7 @@ export class ConfigManager {
 
   constructor(configPath?: string) {
     this.configPromise = this.loadConfig(configPath);
-    // Initialize with default config synchronously for backwards compatibility
+
     this.config = this.getDefaultConfig();
   }
 
@@ -34,7 +34,6 @@ export class ConfigManager {
       extension: ".ts",
     };
 
-    // Try to load from package.json
     const packageJsonPath = join(process.cwd(), "package.json");
     if (existsSync(packageJsonPath)) {
       try {
@@ -45,22 +44,18 @@ export class ConfigManager {
       } catch {}
     }
 
-    // Try to load from config file
     const configFile = configPath || this.findConfigFile();
     if (configFile && existsSync(configFile)) {
       try {
         if (configFile.endsWith(".ts")) {
-          // For TypeScript config files, we'd need tsx or compilation
           console.warn(
             "TypeScript config files require tsx. Please use .mjs config files or ensure tsx is available.",
           );
         } else if (configFile.endsWith(".mjs") || configFile.endsWith(".js")) {
-          // Use dynamic import for ESM files
           const configModule = await import(pathToFileURL(configFile).href);
           const config = configModule.default || configModule;
           return { ...defaultConfig, ...config };
         } else {
-          // JSON files
           const configContent = readFileSync(configFile, "utf-8");
           const config = JSON.parse(configContent);
           return { ...defaultConfig, ...config };
@@ -70,7 +65,6 @@ export class ConfigManager {
       }
     }
 
-    // Try to load from prisma directory
     const prismaDir = join(process.cwd(), "prisma");
     if (existsSync(prismaDir)) {
       const schemaPath = join(prismaDir, "schema.prisma");
@@ -117,13 +111,11 @@ export class ConfigManager {
       return this.config.databaseUrl;
     }
 
-    // Try to get from environment
     const envUrl = process.env.DATABASE_URL;
     if (envUrl) {
       return envUrl;
     }
 
-    // Try to parse from schema.prisma
     if (existsSync(this.config.schemaPath)) {
       try {
         const schema = readFileSync(this.config.schemaPath, "utf-8");

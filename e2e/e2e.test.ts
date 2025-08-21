@@ -2,7 +2,7 @@ import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { existsSync, rmSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { MigrationManager } from "../src/migration-manager";
+import { MigrationManager } from "../src/managers/migration";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 

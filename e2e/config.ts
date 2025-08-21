@@ -1,4 +1,4 @@
-import { MigrationConfig } from "../src/types";
+import { MigrationConfig } from "../src/utils/types";
 
 const config: MigrationConfig = {
   migrationsDir: "./e2e",

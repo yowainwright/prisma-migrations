@@ -1,13 +1,18 @@
 import assert from "node:assert";
-import { describe, it, before } from "node:test";
-import { VersionManager } from "../src/version-manager";
+import { describe, it, before, after } from "node:test";
+import { VersionManager } from "../../src/managers/version";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // Test configurations for VersionManager functionality
 describe("VersionManager", () => {
   let versionManager: VersionManager;
+  let tempDir: string;
 
   before(() => {
-    versionManager = new VersionManager("fixtures");
+    tempDir = mkdtempSync(join(tmpdir(), "version-manager-test-"));
+    versionManager = new VersionManager(tempDir);
     versionManager.registerVersion("v1.0.0", ["m1", "m2"], "Initial release");
   });
 
@@ -30,5 +35,9 @@ describe("VersionManager", () => {
     const plan = versionManager.generateDeploymentPlan("v1.0.0", "v1.1.0");
     assert(plan.hasOwnProperty("summary"));
     assert(Array.isArray(plan.plan));
+  });
+
+  after(() => {
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });
