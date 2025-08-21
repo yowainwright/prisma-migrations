@@ -48,17 +48,14 @@ export class ConfigManager {
     if (configFile && existsSync(configFile)) {
       try {
         if (configFile.endsWith(".ts")) {
-
           console.warn(
             "TypeScript config files require tsx. Please use .mjs config files or ensure tsx is available.",
           );
         } else if (configFile.endsWith(".mjs") || configFile.endsWith(".js")) {
-
           const configModule = await import(pathToFileURL(configFile).href);
           const config = configModule.default || configModule;
           return { ...defaultConfig, ...config };
         } else {
-
           const configContent = readFileSync(configFile, "utf-8");
           const config = JSON.parse(configContent);
           return { ...defaultConfig, ...config };

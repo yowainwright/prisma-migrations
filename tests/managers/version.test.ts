@@ -11,7 +11,7 @@ describe("VersionManager", () => {
   let tempDir: string;
 
   before(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'version-manager-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), "version-manager-test-"));
     versionManager = new VersionManager(tempDir);
     versionManager.registerVersion("v1.0.0", ["m1", "m2"], "Initial release");
   });

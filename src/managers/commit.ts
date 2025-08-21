@@ -67,15 +67,12 @@ export class CommitManager {
 
       let branch: string | undefined;
       try {
-
         branch = this.execGitCommand(
           `git branch --contains ${hash} | grep -v "detached" | head -1`,
         )
           .trim()
           .replace(/^\*?\s*/, "");
-      } catch {
-
-      }
+      } catch {}
 
       return {
         hash,
@@ -166,7 +163,6 @@ export class CommitManager {
       const isClean = this.isWorkingDirectoryClean();
 
       if (latestTag) {
-
         const tagCommit = this.execGitCommand(
           `git rev-parse ${latestTag}`,
         ).trim();

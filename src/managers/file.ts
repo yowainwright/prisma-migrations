@@ -149,9 +149,7 @@ export class FileManager {
     return this.generatePrismaMigrationTemplate(format);
   }
 
-  private generatePrismaMigrationTemplate(
-    format: "js" | "ts",
-  ): string {
+  private generatePrismaMigrationTemplate(format: "js" | "ts"): string {
     const isTypeScript = format === "ts";
 
     if (isTypeScript) {

@@ -131,12 +131,12 @@ export interface ColumnDetails {
   constraints?: string[];
   previousType?: string;
   newType?: string;
-  action?: 'ADD' | 'DROP' | 'MODIFY' | 'RENAME';
+  action?: "ADD" | "DROP" | "MODIFY" | "RENAME";
 }
 
 export interface MigrationChange {
-  type: 'CREATE' | 'ALTER' | 'DROP' | 'INSERT' | 'UPDATE' | 'DELETE' | 'OTHER';
-  object: 'TABLE' | 'COLUMN' | 'INDEX' | 'CONSTRAINT' | 'DATA' | 'OTHER';
+  type: "CREATE" | "ALTER" | "DROP" | "INSERT" | "UPDATE" | "DELETE" | "OTHER";
+  object: "TABLE" | "COLUMN" | "INDEX" | "CONSTRAINT" | "DATA" | "OTHER";
   target?: string;
   details?: string;
   sql: string;

@@ -63,6 +63,7 @@ This library is designed to work with modern versions of Prisma and Node.js. Ple
 ### New Classes and Interfaces
 
 #### CommitManager
+
 - Manages git-related actions.
 - **Methods**:
   - `getCurrentCommit()`: Retrieve current commit.
@@ -70,6 +71,7 @@ This library is designed to work with modern versions of Prisma and Node.js. Ple
   - `getCommitsBetween(from, to)`: Get commits between references.
 
 #### VersionManager
+
 - Manages version-based migrations.
 - **Methods**:
   - `registerVersion(version, migrations)`: Register a version.
@@ -77,6 +79,7 @@ This library is designed to work with modern versions of Prisma and Node.js. Ple
   - `generateDeploymentPlan(fromVersion, toVersion)`: Generate a plan between versions.
 
 ### Interfaces
+
 - **VersionMigrationMapping**: Information associated with migrations for a version.
 - **VersionMigrationOptions**: Options for managing versions.
 - **VersionMigrationResult**: Result structure for version operations.
@@ -206,15 +209,15 @@ module.exports = {
 
 ### Configuration Options
 
-| Option            | Type                | Default                    | Description                                 |
-| ----------------- | ------------------- | -------------------------- | ------------------------------------------- |
-| `migrationsDir`   | `string`            | `'./migrations'`           | Directory where migration files are stored  |
-| `schemaPath`      | `string`            | `'./prisma/schema.prisma'` | Path to Prisma schema file                  |
-| `tableName`       | `string`            | `'_prisma_migrations'`     | Name of the migrations tracking table       |
-| `createTable`     | `boolean`           | `true`                     | Whether to auto-create the migrations table |
-| `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'`                     | Format for new migration files              |
-| `extension`       | `string`            | `'.ts'`                    | File extension for new migrations           |
-| `prismaClient`    | `PrismaClient`      | `undefined`                | Custom PrismaClient instance (for monorepos)|
+| Option            | Type                | Default                    | Description                                  |
+| ----------------- | ------------------- | -------------------------- | -------------------------------------------- |
+| `migrationsDir`   | `string`            | `'./migrations'`           | Directory where migration files are stored   |
+| `schemaPath`      | `string`            | `'./prisma/schema.prisma'` | Path to Prisma schema file                   |
+| `tableName`       | `string`            | `'_prisma_migrations'`     | Name of the migrations tracking table        |
+| `createTable`     | `boolean`           | `true`                     | Whether to auto-create the migrations table  |
+| `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'`                     | Format for new migration files               |
+| `extension`       | `string`            | `'.ts'`                    | File extension for new migrations            |
+| `prismaClient`    | `PrismaClient`      | `undefined`                | Custom PrismaClient instance (for monorepos) |
 
 ### 3. Environment Variables
 
@@ -235,7 +238,7 @@ For complex monorepo setups, you can provide your own PrismaClient instance:
 
 ```javascript
 // prisma-migrations.config.mjs
-import { PrismaClient } from '../../../node_modules/@prisma/client';
+import { PrismaClient } from "../../../node_modules/@prisma/client";
 
 export default {
   migrationsDir: "./migrations",
@@ -246,6 +249,7 @@ export default {
 ```
 
 This is particularly useful when:
+
 - Your Prisma Client is generated in a non-standard location
 - You're using a workspace with multiple Prisma schemas
 - You need custom PrismaClient configuration

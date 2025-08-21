@@ -40,9 +40,9 @@ export default defineMigration({
     await execute(`CREATE INDEX idx_posts_published ON posts(published)`);
     await execute(`CREATE INDEX idx_posts_slug ON posts(slug)`);
 
-    const defaultCategories = ['Technology', 'Design', 'Business'];
+    const defaultCategories = ["Technology", "Design", "Business"];
     for (const category of defaultCategories) {
-      const slug = category.toLowerCase().replace(/\s+/g, '-');
+      const slug = category.toLowerCase().replace(/\s+/g, "-");
 
       await execute(`
         INSERT INTO categories (name, slug) 
@@ -55,5 +55,5 @@ export default defineMigration({
     await execute(`DROP TABLE IF EXISTS post_categories`);
     await execute(`DROP TABLE IF EXISTS posts`);
     await execute(`DROP TABLE IF EXISTS categories`);
-  }
+  },
 });

@@ -30,15 +30,15 @@ DROP TABLE users;`,
     };
 
     const changes = diffGenerator.analyzeMigration(migration);
-    
+
     assert.strictEqual(changes.length, 1);
     assert.strictEqual(changes[0].type, "CREATE");
     assert.strictEqual(changes[0].object, "TABLE");
     assert.strictEqual(changes[0].target, "users");
     assert.ok(changes[0].columnChanges);
     assert.strictEqual(changes[0].columnChanges.length, 4);
-    
-    const idColumn = changes[0].columnChanges.find(c => c.name === "id");
+
+    const idColumn = changes[0].columnChanges.find((c) => c.name === "id");
     assert.ok(idColumn);
     assert.strictEqual(idColumn.action, "ADD");
     assert.ok(idColumn.constraints?.includes("PRIMARY KEY"));
@@ -66,24 +66,28 @@ ALTER TABLE users
     };
 
     const changes = diffGenerator.analyzeMigration(migration);
-    
+
     assert.strictEqual(changes.length, 1);
     assert.strictEqual(changes[0].type, "ALTER");
     assert.strictEqual(changes[0].object, "COLUMN");
     assert.strictEqual(changes[0].target, "users");
     assert.ok(changes[0].columnChanges);
     assert.strictEqual(changes[0].columnChanges.length, 4);
-    
-    const ageColumn = changes[0].columnChanges.find(c => c.name === "age");
+
+    const ageColumn = changes[0].columnChanges.find((c) => c.name === "age");
     assert.ok(ageColumn);
     assert.strictEqual(ageColumn.action, "ADD");
     assert.ok(ageColumn.dataType.includes("INT"));
-    
-    const dropColumn = changes[0].columnChanges.find(c => c.name === "old_field");
+
+    const dropColumn = changes[0].columnChanges.find(
+      (c) => c.name === "old_field",
+    );
     assert.ok(dropColumn);
     assert.strictEqual(dropColumn.action, "DROP");
-    
-    const modifyColumn = changes[0].columnChanges.find(c => c.name === "email");
+
+    const modifyColumn = changes[0].columnChanges.find(
+      (c) => c.name === "email",
+    );
     assert.ok(modifyColumn);
     assert.strictEqual(modifyColumn.action, "MODIFY");
     assert.ok(modifyColumn.dataType.includes("VARCHAR"));
@@ -105,7 +109,7 @@ CREATE TABLE products (
     };
 
     const diff = diffGenerator.formatDiff(migration, "up");
-    
+
     assert.ok(diff.includes("Migration: create_products_table"));
     assert.ok(diff.includes("CREATE"));
     assert.ok(diff.includes("TABLE"));
@@ -128,7 +132,7 @@ CREATE TABLE products (
     };
 
     const changes = diffGenerator.analyzeMigration(migration);
-    
+
     assert.strictEqual(changes.length, 1);
     assert.strictEqual(changes[0].type, "OTHER");
     assert.strictEqual(changes[0].object, "OTHER");
@@ -154,14 +158,16 @@ ALTER TABLE users ADD COLUMN post_count INT DEFAULT 0;`,
     };
 
     const changes = diffGenerator.analyzeMigration(migration);
-    
+
     assert.ok(changes.length >= 2);
-    
-    const createTable = changes.find(c => c.type === "CREATE" && c.object === "TABLE");
+
+    const createTable = changes.find(
+      (c) => c.type === "CREATE" && c.object === "TABLE",
+    );
     assert.ok(createTable);
     assert.strictEqual(createTable.target, "posts");
-    
-    const alterTable = changes.find(c => c.type === "ALTER");
+
+    const alterTable = changes.find((c) => c.type === "ALTER");
     assert.ok(alterTable);
     assert.strictEqual(alterTable.target, "users");
   });
@@ -186,7 +192,7 @@ ALTER TABLE users ADD COLUMN post_count INT DEFAULT 0;`,
     ];
 
     const summary = diffGenerator.formatMigrationSummary(migrations);
-    
+
     assert.ok(summary.includes("Migration Summary"));
     assert.ok(summary.includes("create_test1"));
     assert.ok(summary.includes("alter_test1"));

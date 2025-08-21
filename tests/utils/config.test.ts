@@ -10,15 +10,18 @@ describe("ConfigManager", () => {
   const originalCwd = process.cwd();
 
   before(() => {
-    testDir = mkdtempSync(join(tmpdir(), 'config-test-'));
+    testDir = mkdtempSync(join(tmpdir(), "config-test-"));
     const packageJson = {
       name: "test-package",
       prismaMigrations: {
         migrationsDir: "./custom-migrations",
-        tableName: "custom_migrations_table"
-      }
+        tableName: "custom_migrations_table",
+      },
     };
-    writeFileSync(join(testDir, 'package.json'), JSON.stringify(packageJson, null, 2));
+    writeFileSync(
+      join(testDir, "package.json"),
+      JSON.stringify(packageJson, null, 2),
+    );
   });
 
   test("should load default configuration", () => {

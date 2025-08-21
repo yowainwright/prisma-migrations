@@ -9,7 +9,7 @@ import { existsSync } from "fs";
 import { createLogger } from "../utils/logger";
 import type { PrismaClientLike } from "../api/migration";
 
-const logger = createLogger('DatabaseAdapter');
+const logger = createLogger("DatabaseAdapter");
 
 export class DatabaseAdapter {
   private prisma: PrismaClientLike;
@@ -18,12 +18,12 @@ export class DatabaseAdapter {
   private PrismaClientConstructor?: new () => PrismaClientLike;
 
   constructor(
-    _databaseUrl: string, 
+    _databaseUrl: string,
     tableName: string = "_prisma_migrations",
-    customPrismaClient?: PrismaClientLike
+    customPrismaClient?: PrismaClientLike,
   ) {
     if (customPrismaClient) {
-      logger.debug('Using provided PrismaClient instance');
+      logger.debug("Using provided PrismaClient instance");
       this.prisma = customPrismaClient;
     } else {
       this.PrismaClientConstructor = this.resolvePrismaClient();
@@ -31,10 +31,10 @@ export class DatabaseAdapter {
       if (!this.PrismaClientConstructor) {
         throw new Error(
           "Failed to load @prisma/client. Please ensure:\n" +
-          "1. @prisma/client is installed: npm install @prisma/client\n" +
-          "2. Prisma client is generated: npx prisma generate\n" +
-          "3. Your schema.prisma file is properly configured\n" +
-          "4. Or provide a PrismaClient instance in the configuration"
+            "1. @prisma/client is installed: npm install @prisma/client\n" +
+            "2. Prisma client is generated: npx prisma generate\n" +
+            "3. Your schema.prisma file is properly configured\n" +
+            "4. Or provide a PrismaClient instance in the configuration",
         );
       }
 
@@ -46,56 +46,59 @@ export class DatabaseAdapter {
   private resolvePrismaClient(): any {
     const searchPaths = [
       process.cwd(),
-      join(process.cwd(), '..'),
-      join(process.cwd(), '../..'),
-      join(process.cwd(), '../../..'),
-      join(process.cwd(), '../../../..'),
-      join(process.cwd(), '../../../../..'),
-      join(process.cwd(), 'node_modules'),
-      join(process.cwd(), '..', 'node_modules'),
-      join(process.cwd(), '../..', 'node_modules'),
+      join(process.cwd(), ".."),
+      join(process.cwd(), "../.."),
+      join(process.cwd(), "../../.."),
+      join(process.cwd(), "../../../.."),
+      join(process.cwd(), "../../../../.."),
+      join(process.cwd(), "node_modules"),
+      join(process.cwd(), "..", "node_modules"),
+      join(process.cwd(), "../..", "node_modules"),
     ];
 
     for (const searchPath of searchPaths) {
       try {
-        const clientPath = require.resolve('@prisma/client', { paths: [searchPath] });
+        const clientPath = require.resolve("@prisma/client", {
+          paths: [searchPath],
+        });
         const prismaModule = require(clientPath);
 
         if (prismaModule.PrismaClient) {
-          logger.debug({ clientPath }, 'Found PrismaClient');
+          logger.debug({ clientPath }, "Found PrismaClient");
           return prismaModule.PrismaClient;
         }
-      } catch (err) {
-      }
+      } catch (err) {}
 
       const generatedPaths = [
-        join(searchPath, 'node_modules/.prisma/client'),
-        join(searchPath, 'node_modules/@prisma/client'),
-        join(searchPath, 'prisma/generated/client'),
+        join(searchPath, "node_modules/.prisma/client"),
+        join(searchPath, "node_modules/@prisma/client"),
+        join(searchPath, "prisma/generated/client"),
       ];
 
       for (const genPath of generatedPaths) {
         try {
-          if (existsSync(join(genPath, 'index.js')) || existsSync(join(genPath, 'index.d.ts'))) {
+          if (
+            existsSync(join(genPath, "index.js")) ||
+            existsSync(join(genPath, "index.d.ts"))
+          ) {
             const prismaModule = require(genPath);
             if (prismaModule.PrismaClient) {
-              logger.debug({ path: genPath }, 'Found generated PrismaClient');
+              logger.debug({ path: genPath }, "Found generated PrismaClient");
               return prismaModule.PrismaClient;
             }
           }
-        } catch (err) {
-        }
+        } catch (err) {}
       }
     }
 
     try {
-      const prismaModule = require('@prisma/client');
+      const prismaModule = require("@prisma/client");
       if (prismaModule.PrismaClient) {
-        logger.debug('Found PrismaClient via direct require');
+        logger.debug("Found PrismaClient via direct require");
         return prismaModule.PrismaClient;
       }
     } catch (err) {
-      logger.error({ error: err }, 'Failed to load @prisma/client');
+      logger.error({ error: err }, "Failed to load @prisma/client");
     }
 
     return null;
@@ -106,15 +109,15 @@ export class DatabaseAdapter {
       if (this.prisma.$connect) {
         await this.prisma.$connect();
       }
-      logger.info('Successfully connected to database');
+      logger.info("Successfully connected to database");
     } catch (error) {
-      logger.error({ error }, 'Failed to connect to database');
+      logger.error({ error }, "Failed to connect to database");
       throw new Error(
         `Database connection failed. Please check:\n` +
-        `1. Database is running and accessible\n` +
-        `2. DATABASE_URL environment variable is set correctly\n` +
-        `3. Database credentials are valid\n` +
-        `Error: ${error instanceof Error ? error.message : String(error)}`
+          `1. Database is running and accessible\n` +
+          `2. DATABASE_URL environment variable is set correctly\n` +
+          `3. Database credentials are valid\n` +
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -354,7 +357,7 @@ export class DatabaseAdapter {
       if (this.prisma.$queryRaw) {
         await this.prisma.$queryRaw`SELECT 1`;
       } else {
-        await this.prisma.$queryRawUnsafe('SELECT 1');
+        await this.prisma.$queryRawUnsafe("SELECT 1");
       }
       return true;
     } catch {

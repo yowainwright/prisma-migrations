@@ -19,7 +19,7 @@ import {
   VersionMigrationMapping,
 } from "../utils/types";
 
-const logger = createLogger('MigrationManager');
+const logger = createLogger("MigrationManager");
 
 export class MigrationManager {
   private config: ConfigManager;
@@ -37,7 +37,11 @@ export class MigrationManager {
     this.diffGenerator = new DiffGenerator();
 
     const databaseUrl = this.config.getDatabaseUrl();
-    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName, prismaClient as PrismaClientLike | undefined);
+    this.dbAdapter = new DatabaseAdapter(
+      databaseUrl,
+      tableName,
+      prismaClient as PrismaClientLike | undefined,
+    );
   }
 
   private async ensureConfigLoaded(): Promise<void> {
@@ -47,17 +51,21 @@ export class MigrationManager {
     this.versionManager = new VersionManager(migrationsDir);
 
     const databaseUrl = this.config.getDatabaseUrl();
-    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName, prismaClient as PrismaClientLike | undefined);
+    this.dbAdapter = new DatabaseAdapter(
+      databaseUrl,
+      tableName,
+      prismaClient as PrismaClientLike | undefined,
+    );
   }
 
   public async initialize(): Promise<void> {
     try {
-      logger.info('Initializing migration manager...');
+      logger.info("Initializing migration manager...");
       await this.dbAdapter.connect();
       await this.dbAdapter.ensureMigrationsTable();
-      logger.info('Migration manager initialized successfully');
+      logger.info("Migration manager initialized successfully");
     } catch (error) {
-      logger.error({ error }, 'Failed to initialize');
+      logger.error({ error }, "Failed to initialize");
       throw error;
     }
   }
@@ -88,7 +96,13 @@ export class MigrationManager {
   public async runMigrations(
     options: RunMigrationOptions = {},
   ): Promise<MigrationResult & { diff?: string }> {
-    const { to, steps, dryRun = false, force = false, explain = false } = options;
+    const {
+      to,
+      steps,
+      dryRun = false,
+      force = false,
+      explain = false,
+    } = options;
 
     try {
       await this.initialize();
@@ -111,9 +125,9 @@ export class MigrationManager {
 
       let diff: string | undefined;
       if (dryRun || explain) {
-        diff = migrationsToRun.map(migration => 
-          this.diffGenerator.formatDiff(migration, 'up')
-        ).join('\n\n');
+        diff = migrationsToRun
+          .map((migration) => this.diffGenerator.formatDiff(migration, "up"))
+          .join("\n\n");
       }
 
       if (dryRun) {
@@ -184,7 +198,13 @@ export class MigrationManager {
   public async rollbackMigrations(
     options: RollbackMigrationOptions = {},
   ): Promise<MigrationResult & { diff?: string }> {
-    const { to, steps, dryRun = false, force = false, explain = false } = options;
+    const {
+      to,
+      steps,
+      dryRun = false,
+      force = false,
+      explain = false,
+    } = options;
 
     try {
       await this.initialize();
@@ -214,14 +234,14 @@ export class MigrationManager {
 
       let diff: string | undefined;
       if (dryRun || explain) {
-        const migrationFiles = migrationsToRollback.map(m => {
+        const migrationFiles = migrationsToRollback.map((m) => {
           const file = this.fileManager.getMigrationFile(m.id);
           if (!file) throw new Error(`Migration file not found for ${m.id}`);
           return file;
         });
-        diff = migrationFiles.map(migration => 
-          this.diffGenerator.formatDiff(migration, 'down')
-        ).join('\n\n');
+        diff = migrationFiles
+          .map((migration) => this.diffGenerator.formatDiff(migration, "down"))
+          .join("\n\n");
       }
 
       if (dryRun) {
@@ -404,7 +424,7 @@ export class MigrationManager {
           currentVersion,
           toVersion,
         );
-        logger.info({ summary: plan.summary }, 'Version deployment plan');
+        logger.info({ summary: plan.summary }, "Version deployment plan");
 
         return {
           success: true,

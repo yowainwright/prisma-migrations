@@ -1,4 +1,9 @@
-import { MigrationFile, Migration, MigrationChange, ColumnDetails } from "../utils/types";
+import {
+  MigrationFile,
+  Migration,
+  MigrationChange,
+  ColumnDetails,
+} from "../utils/types";
 import chalk from "chalk";
 import sqlParser from "node-sql-parser";
 import Table from "cli-table3";
@@ -8,14 +13,15 @@ export class DiffGenerator {
   private parser: sqlParser.Parser;
 
   constructor() {
-    const ParserClass = sqlParser.Parser || (sqlParser as any).default?.Parser || sqlParser;
+    const ParserClass =
+      sqlParser.Parser || (sqlParser as any).default?.Parser || sqlParser;
     this.parser = new ParserClass();
   }
 
   public analyzeMigration(migration: MigrationFile): MigrationChange[] {
     const changes: MigrationChange[] = [];
 
-    if (migration.type === 'sql') {
+    if (migration.type === "sql") {
       const upSection = this.extractUpSection(migration.content);
       const statements = this.splitStatements(upSection);
 
@@ -27,11 +33,11 @@ export class DiffGenerator {
       }
     } else {
       changes.push({
-        type: 'OTHER',
-        object: 'OTHER',
+        type: "OTHER",
+        object: "OTHER",
         target: migration.name,
         details: `${migration.type.toUpperCase()} migration`,
-        sql: ''
+        sql: "",
       });
     }
 
@@ -45,14 +51,14 @@ export class DiffGenerator {
 
   private extractDownSection(content: string): string {
     const downMatch = content.match(/--\s*DOWN\s*\n([\s\S]*?)$/i);
-    return downMatch ? downMatch[1] : '';
+    return downMatch ? downMatch[1] : "";
   }
 
   private splitStatements(sql: string): string[] {
     return sql
-      .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.match(/^\s*--/));
+      .split(";")
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0 && !stmt.match(/^\s*--/));
   }
 
   private analyzeStatement(sql: string): MigrationChange | null {
@@ -65,24 +71,24 @@ export class DiffGenerator {
 
       for (const node of astArray) {
         switch (node.type) {
-          case 'create':
+          case "create":
             return this.analyzeCreate(node, sql);
-          case 'alter':
+          case "alter":
             return this.analyzeAlter(node, sql);
-          case 'drop':
+          case "drop":
             return this.analyzeDrop(node, sql);
-          case 'insert':
+          case "insert":
             return this.analyzeInsert(node, sql);
-          case 'update':
+          case "update":
             return this.analyzeUpdate(node, sql);
-          case 'delete':
+          case "delete":
             return this.analyzeDelete(node, sql);
           default:
             return {
-              type: 'OTHER',
-              object: 'OTHER',
+              type: "OTHER",
+              object: "OTHER",
               details: node.type,
-              sql: sql.substring(0, 100)
+              sql: sql.substring(0, 100),
             };
         }
       }
@@ -94,16 +100,16 @@ export class DiffGenerator {
   }
 
   private analyzeCreate(node: any, sql: string): MigrationChange {
-    const keyword = node.keyword || 'table';
-    const table = node.table?.[0]?.table || node.table?.name || 'unknown';
+    const keyword = node.keyword || "table";
+    const table = node.table?.[0]?.table || node.table?.name || "unknown";
     const columnChanges: ColumnDetails[] = [];
 
-    if (keyword.toLowerCase() === 'table' && node.create_definitions) {
+    if (keyword.toLowerCase() === "table" && node.create_definitions) {
       for (const def of node.create_definitions) {
         if (def.column && def.definition) {
           const column: ColumnDetails = {
             name: def.column.column || def.column,
-            action: 'ADD'
+            action: "ADD",
           };
 
           if (def.definition.dataType) {
@@ -115,13 +121,15 @@ export class DiffGenerator {
           }
 
           if (def.definition.default_val) {
-            column.defaultValue = this.formatDefaultValue(def.definition.default_val);
+            column.defaultValue = this.formatDefaultValue(
+              def.definition.default_val,
+            );
           }
 
           const constraints: string[] = [];
-          if (def.unique) constraints.push('UNIQUE');
-          if (def.primary_key) constraints.push('PRIMARY KEY');
-          if (def.auto_increment) constraints.push('AUTO_INCREMENT');
+          if (def.unique) constraints.push("UNIQUE");
+          if (def.primary_key) constraints.push("PRIMARY KEY");
+          if (def.auto_increment) constraints.push("AUTO_INCREMENT");
 
           if (constraints.length > 0) {
             column.constraints = constraints;
@@ -134,21 +142,21 @@ export class DiffGenerator {
 
     let details = `Create ${keyword} ${table}`;
     if (columnChanges.length > 0) {
-      details += ` with ${columnChanges.length} column${columnChanges.length === 1 ? '' : 's'}`;
+      details += ` with ${columnChanges.length} column${columnChanges.length === 1 ? "" : "s"}`;
     }
 
     return {
-      type: 'CREATE',
+      type: "CREATE",
       object: keyword.toUpperCase() as any,
       target: table,
       details,
       sql,
-      columnChanges: columnChanges.length > 0 ? columnChanges : undefined
+      columnChanges: columnChanges.length > 0 ? columnChanges : undefined,
     };
   }
 
   private analyzeAlter(node: any, sql: string): MigrationChange {
-    const table = node.table?.[0]?.table || 'unknown';
+    const table = node.table?.[0]?.table || "unknown";
     const columnChanges: ColumnDetails[] = [];
 
     if (node.expr && Array.isArray(node.expr)) {
@@ -160,84 +168,86 @@ export class DiffGenerator {
       }
     }
 
-    const action = node.expr?.[0]?.action || 'modify';
+    const action = node.expr?.[0]?.action || "modify";
     let details = `Alter table ${table}`;
 
     if (columnChanges.length > 0) {
-      const actions = columnChanges.map(col => {
-        if (col.action === 'ADD') {
-          return `ADD COLUMN ${col.name} ${col.dataType || 'unknown'}${col.nullable === false ? ' NOT NULL' : ''}${col.defaultValue ? ` DEFAULT ${col.defaultValue}` : ''}`;
-        } else if (col.action === 'DROP') {
-          return `DROP COLUMN ${col.name}`;
-        } else if (col.action === 'MODIFY') {
-          return `MODIFY COLUMN ${col.name} ${col.newType || col.dataType || 'unknown'}`;
-        } else if (col.action === 'RENAME') {
-          return `RENAME COLUMN ${col.name}`;
-        }
-        return `${col.action || action} ${col.name}`;
-      }).join(', ');
+      const actions = columnChanges
+        .map((col) => {
+          if (col.action === "ADD") {
+            return `ADD COLUMN ${col.name} ${col.dataType || "unknown"}${col.nullable === false ? " NOT NULL" : ""}${col.defaultValue ? ` DEFAULT ${col.defaultValue}` : ""}`;
+          } else if (col.action === "DROP") {
+            return `DROP COLUMN ${col.name}`;
+          } else if (col.action === "MODIFY") {
+            return `MODIFY COLUMN ${col.name} ${col.newType || col.dataType || "unknown"}`;
+          } else if (col.action === "RENAME") {
+            return `RENAME COLUMN ${col.name}`;
+          }
+          return `${col.action || action} ${col.name}`;
+        })
+        .join(", ");
       details = `${details}: ${actions}`;
     } else {
       details = `${details} (${action})`;
     }
 
     return {
-      type: 'ALTER',
-      object: columnChanges.length > 0 ? 'COLUMN' : 'TABLE',
+      type: "ALTER",
+      object: columnChanges.length > 0 ? "COLUMN" : "TABLE",
       target: table,
       details,
       sql,
-      columnChanges: columnChanges.length > 0 ? columnChanges : undefined
+      columnChanges: columnChanges.length > 0 ? columnChanges : undefined,
     };
   }
 
   private analyzeDrop(node: any, sql: string): MigrationChange {
-    const keyword = node.keyword || 'table';
-    const table = node.name?.[0]?.table || node.table?.[0]?.table || 'unknown';
+    const keyword = node.keyword || "table";
+    const table = node.name?.[0]?.table || node.table?.[0]?.table || "unknown";
 
     return {
-      type: 'DROP',
+      type: "DROP",
       object: keyword.toUpperCase() as any,
       target: table,
       details: `Drop ${keyword} ${table}`,
-      sql
+      sql,
     };
   }
 
   private analyzeInsert(node: any, sql: string): MigrationChange {
-    const table = node.table?.[0]?.table || 'unknown';
+    const table = node.table?.[0]?.table || "unknown";
     const valueCount = node.values?.[0]?.value?.length || 0;
 
     return {
-      type: 'INSERT',
-      object: 'DATA',
+      type: "INSERT",
+      object: "DATA",
       target: table,
       details: `Insert ${valueCount} value(s) into ${table}`,
-      sql
+      sql,
     };
   }
 
   private analyzeUpdate(node: any, sql: string): MigrationChange {
-    const table = node.table?.[0]?.table || 'unknown';
+    const table = node.table?.[0]?.table || "unknown";
 
     return {
-      type: 'UPDATE',
-      object: 'DATA',
+      type: "UPDATE",
+      object: "DATA",
       target: table,
       details: `Update data in ${table}`,
-      sql
+      sql,
     };
   }
 
   private analyzeDelete(node: any, sql: string): MigrationChange {
-    const table = node.from?.[0]?.table || 'unknown';
+    const table = node.from?.[0]?.table || "unknown";
 
     return {
-      type: 'DELETE',
-      object: 'DATA',
+      type: "DELETE",
+      object: "DATA",
       target: table,
       details: `Delete data from ${table}`,
-      sql
+      sql,
     };
   }
 
@@ -246,12 +256,15 @@ export class DiffGenerator {
 
     const action = expr.action?.toUpperCase();
     const column: ColumnDetails = {
-      name: '',
-      action: action as any
+      name: "",
+      action: action as any,
     };
 
     if (expr.column) {
-      column.name = typeof expr.column === 'string' ? expr.column : expr.column.column || '';
+      column.name =
+        typeof expr.column === "string"
+          ? expr.column
+          : expr.column.column || "";
     }
 
     if (expr.definition) {
@@ -270,31 +283,33 @@ export class DiffGenerator {
       }
 
       const constraints: string[] = [];
-      if (def.unique) constraints.push('UNIQUE');
-      if (def.primary_key) constraints.push('PRIMARY KEY');
-      if (def.foreign_key) constraints.push('FOREIGN KEY');
-      if (def.check) constraints.push('CHECK');
+      if (def.unique) constraints.push("UNIQUE");
+      if (def.primary_key) constraints.push("PRIMARY KEY");
+      if (def.foreign_key) constraints.push("FOREIGN KEY");
+      if (def.check) constraints.push("CHECK");
 
       if (constraints.length > 0) {
         column.constraints = constraints;
       }
     }
 
-    if (action === 'MODIFY' && expr.old_column) {
-      column.previousType = expr.old_column.dataType ? this.formatDataType(expr.old_column.dataType) : undefined;
+    if (action === "MODIFY" && expr.old_column) {
+      column.previousType = expr.old_column.dataType
+        ? this.formatDataType(expr.old_column.dataType)
+        : undefined;
       column.newType = column.dataType;
     }
 
-    if (action === 'RENAME') {
+    if (action === "RENAME") {
       column.name = expr.old_column?.column || column.name;
-      column.newType = expr.new_column?.column || '';
+      column.newType = expr.new_column?.column || "";
     }
 
     return column.name ? column : null;
   }
 
   private formatDataType(dataType: any): string {
-    if (typeof dataType === 'string') return dataType;
+    if (typeof dataType === "string") return dataType;
 
     if (dataType.dataType) {
       let type = dataType.dataType;
@@ -310,9 +325,9 @@ export class DiffGenerator {
   }
 
   private formatDefaultValue(defaultVal: any): string {
-    if (typeof defaultVal === 'string') return defaultVal;
+    if (typeof defaultVal === "string") return defaultVal;
     if (defaultVal.value !== undefined) return String(defaultVal.value);
-    if (defaultVal.type === 'function') return defaultVal.name || 'function';
+    if (defaultVal.type === "function") return defaultVal.name || "function";
     return JSON.stringify(defaultVal);
   }
 
@@ -320,30 +335,39 @@ export class DiffGenerator {
     const upperSQL = sql.toUpperCase();
     const columnChanges: ColumnDetails[] = [];
 
-    const addColumnMatch = sql.match(/ADD\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?=\s+(?:NOT\s+)?NULL|\s+DEFAULT|\s+PRIMARY|\s+UNIQUE|\s+AUTO_INCREMENT|,|;|$)([^,;]*)/gi);
+    const addColumnMatch = sql.match(
+      /ADD\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?=\s+(?:NOT\s+)?NULL|\s+DEFAULT|\s+PRIMARY|\s+UNIQUE|\s+AUTO_INCREMENT|,|;|$)([^,;]*)/gi,
+    );
     if (addColumnMatch) {
       for (const match of addColumnMatch) {
-        const parts = match.match(/ADD\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?:\s+(.*))?$/i);
+        const parts = match.match(
+          /ADD\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?:\s+(.*))?$/i,
+        );
         if (parts) {
           const column: ColumnDetails = {
             name: parts[1],
             dataType: parts[2].trim(),
-            action: 'ADD'
+            action: "ADD",
           };
 
-          const rest = parts[3] || '';
-          if (rest.includes('NOT NULL')) column.nullable = false;
-          else if (rest.includes('NULL') && !rest.includes('NOT')) column.nullable = true;
+          const rest = parts[3] || "";
+          if (rest.includes("NOT NULL")) column.nullable = false;
+          else if (rest.includes("NULL") && !rest.includes("NOT"))
+            column.nullable = true;
 
-          const defaultMatch = rest.match(/DEFAULT\s+(?:'([^']*)'|"([^"]*)"|(\S+))/i);
+          const defaultMatch = rest.match(
+            /DEFAULT\s+(?:'([^']*)'|"([^"]*)"|(\S+))/i,
+          );
           if (defaultMatch) {
-            column.defaultValue = defaultMatch[1] || defaultMatch[2] || defaultMatch[3];
+            column.defaultValue =
+              defaultMatch[1] || defaultMatch[2] || defaultMatch[3];
           }
 
           const constraints: string[] = [];
-          if (rest.includes('PRIMARY KEY')) constraints.push('PRIMARY KEY');
-          if (rest.includes('UNIQUE')) constraints.push('UNIQUE');
-          if (rest.includes('AUTO_INCREMENT')) constraints.push('AUTO_INCREMENT');
+          if (rest.includes("PRIMARY KEY")) constraints.push("PRIMARY KEY");
+          if (rest.includes("UNIQUE")) constraints.push("UNIQUE");
+          if (rest.includes("AUTO_INCREMENT"))
+            constraints.push("AUTO_INCREMENT");
           if (constraints.length > 0) column.constraints = constraints;
 
           columnChanges.push(column);
@@ -358,30 +382,38 @@ export class DiffGenerator {
         if (parts) {
           columnChanges.push({
             name: parts[1],
-            action: 'DROP'
+            action: "DROP",
           });
         }
       }
     }
 
-    const modifyColumnMatch = sql.match(/(?:MODIFY|ALTER)\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?=\s+(?:NOT\s+)?NULL|\s+DEFAULT|\s+PRIMARY|\s+UNIQUE|,|;|$)([^,;]*)/gi);
+    const modifyColumnMatch = sql.match(
+      /(?:MODIFY|ALTER)\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?=\s+(?:NOT\s+)?NULL|\s+DEFAULT|\s+PRIMARY|\s+UNIQUE|,|;|$)([^,;]*)/gi,
+    );
     if (modifyColumnMatch) {
       for (const match of modifyColumnMatch) {
-        const parts = match.match(/(?:MODIFY|ALTER)\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?:\s+(.*))?$/i);
+        const parts = match.match(
+          /(?:MODIFY|ALTER)\s+(?:COLUMN\s+)?([\w_]+)\s+([\w(),\s]+?)(?:\s+(.*))?$/i,
+        );
         if (parts) {
           const column: ColumnDetails = {
             name: parts[1],
             dataType: parts[2].trim(),
-            action: 'MODIFY'
+            action: "MODIFY",
           };
 
-          const rest = parts[3] || '';
-          if (rest.includes('NOT NULL')) column.nullable = false;
-          else if (rest.includes('NULL') && !rest.includes('NOT')) column.nullable = true;
+          const rest = parts[3] || "";
+          if (rest.includes("NOT NULL")) column.nullable = false;
+          else if (rest.includes("NULL") && !rest.includes("NOT"))
+            column.nullable = true;
 
-          const defaultMatch = rest.match(/DEFAULT\s+(?:'([^']*)'|"([^"]*)"|(\S+))/i);
+          const defaultMatch = rest.match(
+            /DEFAULT\s+(?:'([^']*)'|"([^"]*)"|(\S+))/i,
+          );
           if (defaultMatch) {
-            column.defaultValue = defaultMatch[1] || defaultMatch[2] || defaultMatch[3];
+            column.defaultValue =
+              defaultMatch[1] || defaultMatch[2] || defaultMatch[3];
           }
 
           columnChanges.push(column);
@@ -389,51 +421,53 @@ export class DiffGenerator {
       }
     }
 
-    if (upperSQL.includes('CREATE TABLE')) {
+    if (upperSQL.includes("CREATE TABLE")) {
       return {
-        type: 'CREATE',
-        object: 'TABLE',
-        details: 'Create table',
-        sql
+        type: "CREATE",
+        object: "TABLE",
+        details: "Create table",
+        sql,
       };
     }
 
-    if (upperSQL.includes('ALTER TABLE')) {
-      let details = 'Alter table';
+    if (upperSQL.includes("ALTER TABLE")) {
+      let details = "Alter table";
       if (columnChanges.length > 0) {
-        const actions = columnChanges.map(col => `${col.action} ${col.name}`).join(', ');
+        const actions = columnChanges
+          .map((col) => `${col.action} ${col.name}`)
+          .join(", ");
         details = `Alter table: ${actions}`;
       }
 
       return {
-        type: 'ALTER',
-        object: columnChanges.length > 0 ? 'COLUMN' : 'TABLE',
+        type: "ALTER",
+        object: columnChanges.length > 0 ? "COLUMN" : "TABLE",
         details,
         sql,
-        columnChanges: columnChanges.length > 0 ? columnChanges : undefined
+        columnChanges: columnChanges.length > 0 ? columnChanges : undefined,
       };
     }
 
-    if (upperSQL.includes('DROP TABLE')) {
+    if (upperSQL.includes("DROP TABLE")) {
       return {
-        type: 'DROP',
-        object: 'TABLE',
-        details: 'Drop table',
-        sql
+        type: "DROP",
+        object: "TABLE",
+        details: "Drop table",
+        sql,
       };
     }
 
     return {
-      type: 'OTHER',
-      object: 'OTHER',
-      details: 'SQL statement',
-      sql: sql.substring(0, 100)
+      type: "OTHER",
+      object: "OTHER",
+      details: "SQL statement",
+      sql: sql.substring(0, 100),
     };
   }
 
   public formatDiff(
     migrationFile: MigrationFile,
-    direction: 'up' | 'down' = 'up'
+    direction: "up" | "down" = "up",
   ): string {
     const changes = this.analyzeMigration(migrationFile);
     const output: string[] = [];
@@ -444,15 +478,15 @@ export class DiffGenerator {
     output.push(chalk.gray(`Direction: ${direction.toUpperCase()}`));
 
     if (changes.length === 0) {
-      output.push(chalk.yellow('\nNo changes detected'));
-      return output.join('\n');
+      output.push(chalk.yellow("\nNo changes detected"));
+      return output.join("\n");
     }
 
     const table = new Table({
-      head: ['#', 'Type', 'Object', 'Target', 'Description'],
+      head: ["#", "Type", "Object", "Target", "Description"],
       style: {
-        head: ['cyan']
-      }
+        head: ["cyan"],
+      },
     });
 
     changes.forEach((change, i) => {
@@ -460,16 +494,18 @@ export class DiffGenerator {
         (i + 1).toString(),
         this.colorizeType(change.type),
         change.object,
-        change.target || '-',
-        change.details || '-'
+        change.target || "-",
+        change.details || "-",
       ]);
     });
 
-    output.push('\n' + table.toString());
+    output.push("\n" + table.toString());
 
-    const columnsWithChanges = changes.filter(c => c.columnChanges && c.columnChanges.length > 0);
+    const columnsWithChanges = changes.filter(
+      (c) => c.columnChanges && c.columnChanges.length > 0,
+    );
     if (columnsWithChanges.length > 0) {
-      output.push('\n' + chalk.bold.cyan('📊 Column Details:'));
+      output.push("\n" + chalk.bold.cyan("📊 Column Details:"));
 
       for (const change of columnsWithChanges) {
         if (!change.columnChanges) continue;
@@ -477,20 +513,27 @@ export class DiffGenerator {
         output.push(chalk.gray(`\n  Table: ${change.target}`));
 
         const columnTable = new Table({
-          head: ['Action', 'Column', 'Type', 'Nullable', 'Default', 'Constraints'],
+          head: [
+            "Action",
+            "Column",
+            "Type",
+            "Nullable",
+            "Default",
+            "Constraints",
+          ],
           style: {
-            head: ['cyan']
-          }
+            head: ["cyan"],
+          },
         });
 
         for (const col of change.columnChanges) {
           const actionColor = this.getColumnActionColor(col.action);
-          const action = actionColor(col.action || 'CHANGE');
+          const action = actionColor(col.action || "CHANGE");
 
-          let typeInfo = col.dataType || '-';
-          if (col.action === 'MODIFY' && col.previousType && col.newType) {
+          let typeInfo = col.dataType || "-";
+          if (col.action === "MODIFY" && col.previousType && col.newType) {
             typeInfo = `${col.previousType} → ${col.newType}`;
-          } else if (col.action === 'RENAME' && col.newType) {
+          } else if (col.action === "RENAME" && col.newType) {
             typeInfo = `${col.name} → ${col.newType}`;
           }
 
@@ -498,9 +541,9 @@ export class DiffGenerator {
             action,
             col.name,
             typeInfo,
-            col.nullable === true ? '✓' : col.nullable === false ? '✗' : '-',
-            col.defaultValue || '-',
-            col.constraints ? col.constraints.join(', ') : '-'
+            col.nullable === true ? "✓" : col.nullable === false ? "✗" : "-",
+            col.defaultValue || "-",
+            col.constraints ? col.constraints.join(", ") : "-",
           ]);
         }
 
@@ -508,91 +551,105 @@ export class DiffGenerator {
       }
     }
 
-    return output.join('\n');
+    return output.join("\n");
   }
 
-  private colorizeType(type: MigrationChange['type']): string {
+  private colorizeType(type: MigrationChange["type"]): string {
     switch (type) {
-      case 'CREATE': return chalk.green(type);
-      case 'ALTER': return chalk.yellow(type);
-      case 'DROP': return chalk.red(type);
-      case 'INSERT': return chalk.cyan(type);
-      case 'UPDATE': return chalk.yellow(type);
-      case 'DELETE': return chalk.red(type);
-      default: return chalk.gray(type);
+      case "CREATE":
+        return chalk.green(type);
+      case "ALTER":
+        return chalk.yellow(type);
+      case "DROP":
+        return chalk.red(type);
+      case "INSERT":
+        return chalk.cyan(type);
+      case "UPDATE":
+        return chalk.yellow(type);
+      case "DELETE":
+        return chalk.red(type);
+      default:
+        return chalk.gray(type);
     }
   }
 
   private getColumnActionColor(action?: string): (text: string) => string {
     switch (action) {
-      case 'ADD': return chalk.green;
-      case 'DROP': return chalk.red;
-      case 'MODIFY': return chalk.yellow;
-      case 'RENAME': return chalk.blue;
-      default: return chalk.gray;
+      case "ADD":
+        return chalk.green;
+      case "DROP":
+        return chalk.red;
+      case "MODIFY":
+        return chalk.yellow;
+      case "RENAME":
+        return chalk.blue;
+      default:
+        return chalk.gray;
     }
   }
 
   public showSQLDiff(
     migration: MigrationFile,
-    options: { context?: number; color?: boolean } = {}
+    options: { context?: number; color?: boolean } = {},
   ): string {
     const { context = 3, color = true } = options;
 
-    if (migration.type !== 'sql') {
-      return chalk.gray('No SQL diff available for non-SQL migrations');
+    if (migration.type !== "sql") {
+      return chalk.gray("No SQL diff available for non-SQL migrations");
     }
 
     const upSection = this.extractUpSection(migration.content);
     const downSection = this.extractDownSection(migration.content);
 
     if (!downSection) {
-      return this.formatSQL(upSection, 'up');
+      return this.formatSQL(upSection, "up");
     }
 
-    const changes = diff.diffLines(downSection, upSection, { ignoreWhitespace: false });
+    const changes = diff.diffLines(downSection, upSection, {
+      ignoreWhitespace: false,
+    });
     const output: string[] = [];
 
-    output.push(chalk.bold('\n📝 SQL Diff (DOWN → UP)'));
-    output.push('');
+    output.push(chalk.bold("\n📝 SQL Diff (DOWN → UP)"));
+    output.push("");
 
     for (const change of changes) {
-      const lines = change.value.split('\n').filter(line => line.trim());
+      const lines = change.value.split("\n").filter((line) => line.trim());
 
       for (const line of lines) {
         if (change.added) {
-          output.push(color ? chalk.green('+ ' + line) : '+ ' + line);
+          output.push(color ? chalk.green("+ " + line) : "+ " + line);
         } else if (change.removed) {
-          output.push(color ? chalk.red('- ' + line) : '- ' + line);
+          output.push(color ? chalk.red("- " + line) : "- " + line);
         } else if (context > 0) {
-          output.push(color ? chalk.gray('  ' + line) : '  ' + line);
+          output.push(color ? chalk.gray("  " + line) : "  " + line);
         }
       }
     }
 
-    return output.join('\n');
+    return output.join("\n");
   }
 
   private formatSQL(sql: string, direction: string): string {
-    const lines = sql.split('\n').filter(line => line.trim());
+    const lines = sql.split("\n").filter((line) => line.trim());
     const output: string[] = [];
 
     output.push(chalk.bold(`\n📝 SQL (${direction.toUpperCase()})`));
-    output.push('');
+    output.push("");
 
     for (const line of lines) {
-      output.push(chalk.gray('  ' + line));
+      output.push(chalk.gray("  " + line));
     }
 
-    return output.join('\n');
+    return output.join("\n");
   }
 
   public formatMigrationSummary(migrations: MigrationFile[]): string {
     const table = new Table({
-      head: ['#', 'Timestamp', 'Name', 'Type', 'Changes'],
+      head: ["#", "Timestamp", "Name", "Type", "Changes"],
       style: {
-        head: ['cyan']
-      }
+        head: ["cyan"],
+      },
     });
 
     migrations.forEach((migration, i) => {
@@ -604,11 +661,11 @@ export class DiffGenerator {
         migration.timestamp,
         migration.name,
         migration.type.toUpperCase(),
-        summary
+        summary,
       ]);
     });
 
-    return '\n' + chalk.bold('📋 Migration Summary') + '\n' + table.toString();
+    return "\n" + chalk.bold("📋 Migration Summary") + "\n" + table.toString();
   }
 
   private summarizeChanges(changes: MigrationChange[]): string {
@@ -622,42 +679,42 @@ export class DiffGenerator {
     const parts: string[] = [];
 
     Object.entries(counts).forEach(([key, count]) => {
-      const [type, object] = key.split('_');
+      const [type, object] = key.split("_");
       parts.push(`${count} ${type.toLowerCase()} ${object.toLowerCase()}`);
     });
 
-    return parts.join(', ') || 'No changes';
+    return parts.join(", ") || "No changes";
   }
 
   public compareAppliedWithPending(
     applied: Migration[],
-    pending: MigrationFile[]
+    pending: MigrationFile[],
   ): string {
     const table = new Table({
-      head: ['Status', 'Timestamp', 'Name', 'Applied At'],
+      head: ["Status", "Timestamp", "Name", "Applied At"],
       style: {
-        head: ['cyan']
-      }
+        head: ["cyan"],
+      },
     });
 
     for (const migration of applied) {
       table.push([
-        chalk.green('✓ Applied'),
-        migration.timestamp.toISOString().split('T')[0],
+        chalk.green("✓ Applied"),
+        migration.timestamp.toISOString().split("T")[0],
         migration.name,
-        migration.appliedAt?.toISOString().split('T')[0] || '-'
+        migration.appliedAt?.toISOString().split("T")[0] || "-",
       ]);
     }
 
     for (const migration of pending) {
       table.push([
-        chalk.yellow('⧗ Pending'),
+        chalk.yellow("⧗ Pending"),
         migration.timestamp,
         migration.name,
-        '-'
+        "-",
       ]);
     }
 
-    return '\n' + chalk.bold('📊 Migration Status') + '\n' + table.toString();
+    return "\n" + chalk.bold("📊 Migration Status") + "\n" + table.toString();
   }
 }

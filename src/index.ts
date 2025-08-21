@@ -6,14 +6,14 @@ export { VersionManager } from "./managers/version";
 export { CommitManager } from "./managers/commit";
 export { DiffGenerator } from "./api/diff";
 
-export { 
+export {
   createMigrationContext,
   defineMigration,
   sql,
   type MigrationContext,
   type Migration,
   type MigrationFunction,
-  type PrismaClientLike
+  type PrismaClientLike,
 } from "./api/migration";
 
 export * from "./utils/types";

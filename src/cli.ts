@@ -4,7 +4,7 @@ import { createLogger } from "./utils/logger";
 import chalk from "chalk";
 
 const program = new Command();
-const logger = createLogger('CLI');
+const logger = createLogger("CLI");
 
 function getManager() {
   return new MigrationManager();
@@ -41,19 +41,27 @@ program
   .action(async ({ to, steps, dryRun, explain }) => {
     try {
       const manager = getManager();
-      const result = await manager.runMigrations({ to, steps, dryRun, explain });
+      const result = await manager.runMigrations({
+        to,
+        steps,
+        dryRun,
+        explain,
+      });
 
       if (result.diff && (dryRun || explain)) {
         console.log(result.diff);
       }
 
       if (!dryRun) {
-        logger.info({ success: result.success, count: result.migrations.length }, 'Migrations applied');
+        logger.info(
+          { success: result.success, count: result.migrations.length },
+          "Migrations applied",
+        );
       } else {
-        logger.info({ count: result.migrations.length }, 'Dry run completed');
+        logger.info({ count: result.migrations.length }, "Dry run completed");
       }
     } catch (error) {
-      logger.error({ error }, 'Error running migrations');
+      logger.error({ error }, "Error running migrations");
       process.exit(1);
     }
   });
@@ -72,17 +80,25 @@ program
   .action(async ({ to, steps, dryRun, explain }) => {
     try {
       const manager = getManager();
-      const result = await manager.rollbackMigrations({ to, steps, dryRun, explain });
+      const result = await manager.rollbackMigrations({
+        to,
+        steps,
+        dryRun,
+        explain,
+      });
 
       if (result.diff && (dryRun || explain)) {
         console.log(result.diff);
       }
 
       if (!dryRun) {
-        logger.info({ success: result.success, count: result.migrations.length }, 'Migrations rolled back');
+        logger.info(
+          { success: result.success, count: result.migrations.length },
+          "Migrations rolled back",
+        );
       }
     } catch (error) {
-      logger.error({ error }, 'Error rolling back migrations');
+      logger.error({ error }, "Error rolling back migrations");
       process.exit(1);
     }
   });
@@ -94,15 +110,15 @@ program
     try {
       const manager = getManager();
       const status = await manager.getMigrationStatus();
-      console.log(chalk.bold('\nMigration Status:\n'));
+      console.log(chalk.bold("\nMigration Status:\n"));
       status.forEach(({ name, status, appliedAt }) => {
-        const statusColor = status === 'applied' ? chalk.green : chalk.yellow;
+        const statusColor = status === "applied" ? chalk.green : chalk.yellow;
         console.log(
-          `${statusColor('●')} ${name} [${statusColor(status)}] - ${appliedAt ? appliedAt : "Pending"}`,
+          `${statusColor("●")} ${name} [${statusColor(status)}] - ${appliedAt ? appliedAt : "Pending"}`,
         );
       });
     } catch (error) {
-      logger.error({ error }, 'Error retrieving status');
+      logger.error({ error }, "Error retrieving status");
       process.exit(1);
     }
   });
