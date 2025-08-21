@@ -1,34 +1,128 @@
-import { PrismaClient } from "@prisma/client";
 import {
   Migration,
   MigrationStatus,
   MigrationFile,
   PrismaMigration,
-} from "./types";
-import { resolve } from "path";
+} from "../utils/types";
+import { resolve, join } from "path";
+import { existsSync } from "fs";
+import { createLogger } from "../utils/logger";
+import type { PrismaClientLike } from "../api/migration";
+
+const logger = createLogger('DatabaseAdapter');
 
 export class DatabaseAdapter {
-  private prisma: PrismaClient;
+  private prisma: PrismaClientLike;
   private tableName: string;
   private isPrismaTable: boolean | null = null;
+  private PrismaClientConstructor?: new () => PrismaClientLike;
 
-  constructor(databaseUrl: string, tableName: string = "_prisma_migrations") {
-    this.prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: databaseUrl,
-        },
-      },
-    });
+  constructor(
+    _databaseUrl: string, 
+    tableName: string = "_prisma_migrations",
+    customPrismaClient?: PrismaClientLike
+  ) {
+    if (customPrismaClient) {
+      logger.debug('Using provided PrismaClient instance');
+      this.prisma = customPrismaClient;
+    } else {
+      this.PrismaClientConstructor = this.resolvePrismaClient();
+
+      if (!this.PrismaClientConstructor) {
+        throw new Error(
+          "Failed to load @prisma/client. Please ensure:\n" +
+          "1. @prisma/client is installed: npm install @prisma/client\n" +
+          "2. Prisma client is generated: npx prisma generate\n" +
+          "3. Your schema.prisma file is properly configured\n" +
+          "4. Or provide a PrismaClient instance in the configuration"
+        );
+      }
+
+      this.prisma = new this.PrismaClientConstructor() as PrismaClientLike;
+    }
     this.tableName = tableName;
   }
 
+  private resolvePrismaClient(): any {
+    const searchPaths = [
+      process.cwd(),
+      join(process.cwd(), '..'),
+      join(process.cwd(), '../..'),
+      join(process.cwd(), '../../..'),
+      join(process.cwd(), '../../../..'),
+      join(process.cwd(), '../../../../..'),
+      join(process.cwd(), 'node_modules'),
+      join(process.cwd(), '..', 'node_modules'),
+      join(process.cwd(), '../..', 'node_modules'),
+    ];
+
+    for (const searchPath of searchPaths) {
+      try {
+        const clientPath = require.resolve('@prisma/client', { paths: [searchPath] });
+        const prismaModule = require(clientPath);
+
+        if (prismaModule.PrismaClient) {
+          logger.debug({ clientPath }, 'Found PrismaClient');
+          return prismaModule.PrismaClient;
+        }
+      } catch (err) {
+      }
+
+      const generatedPaths = [
+        join(searchPath, 'node_modules/.prisma/client'),
+        join(searchPath, 'node_modules/@prisma/client'),
+        join(searchPath, 'prisma/generated/client'),
+      ];
+
+      for (const genPath of generatedPaths) {
+        try {
+          if (existsSync(join(genPath, 'index.js')) || existsSync(join(genPath, 'index.d.ts'))) {
+            const prismaModule = require(genPath);
+            if (prismaModule.PrismaClient) {
+              logger.debug({ path: genPath }, 'Found generated PrismaClient');
+              return prismaModule.PrismaClient;
+            }
+          }
+        } catch (err) {
+        }
+      }
+    }
+
+    try {
+      const prismaModule = require('@prisma/client');
+      if (prismaModule.PrismaClient) {
+        logger.debug('Found PrismaClient via direct require');
+        return prismaModule.PrismaClient;
+      }
+    } catch (err) {
+      logger.error({ error: err }, 'Failed to load @prisma/client');
+    }
+
+    return null;
+  }
+
   public async connect(): Promise<void> {
-    await this.prisma.$connect();
+    try {
+      if (this.prisma.$connect) {
+        await this.prisma.$connect();
+      }
+      logger.info('Successfully connected to database');
+    } catch (error) {
+      logger.error({ error }, 'Failed to connect to database');
+      throw new Error(
+        `Database connection failed. Please check:\n` +
+        `1. Database is running and accessible\n` +
+        `2. DATABASE_URL environment variable is set correctly\n` +
+        `3. Database credentials are valid\n` +
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   public async disconnect(): Promise<void> {
-    await this.prisma.$disconnect();
+    if (this.prisma.$disconnect) {
+      await this.prisma.$disconnect();
+    }
   }
 
   private async detectPrismaTable(): Promise<boolean> {
@@ -37,7 +131,6 @@ export class DatabaseAdapter {
     }
 
     try {
-      // Check if table exists and has Prisma's structure (migration_name column)
       const columnExists = (await this.prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as count
         FROM information_schema.columns
@@ -56,11 +149,9 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // This is Prisma's migrations table, don't create our own
       return;
     }
 
-    // Create our custom table structure for non-Prisma usage
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS ${this.tableName} (
         id VARCHAR(255) PRIMARY KEY,
@@ -77,7 +168,6 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // Use Prisma's table structure
       const results = (await this.prisma.$queryRawUnsafe(`
         SELECT id, migration_name, started_at as appliedAt
         FROM ${this.tableName}
@@ -93,7 +183,6 @@ export class DatabaseAdapter {
         appliedAt: row.appliedAt,
       }));
     } else {
-      // Use custom table structure
       const results = (await this.prisma.$queryRawUnsafe(`
         SELECT id, name, applied_at as appliedAt
         FROM ${this.tableName}
@@ -131,11 +220,8 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // Don't insert into Prisma's migration table - it's managed by Prisma
-      // This is read-only for compatibility
       return;
     } else {
-      // Use custom table structure
       await this.prisma.$executeRawUnsafe(
         `
         INSERT INTO ${this.tableName} (id, name)
@@ -151,11 +237,8 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // Don't remove from Prisma's migration table - it's managed by Prisma
-      // This is read-only for compatibility
       return;
     } else {
-      // Use custom table structure
       await this.prisma.$executeRawUnsafe(
         `
         DELETE FROM ${this.tableName}
@@ -167,7 +250,6 @@ export class DatabaseAdapter {
   }
 
   public async executeMigration(sql: string): Promise<void> {
-    // Split SQL into individual statements
     const statements = sql
       .split(";")
       .map((stmt) => stmt.trim())
@@ -186,13 +268,14 @@ export class DatabaseAdapter {
       throw new Error("Use executeMigration() for SQL files");
     }
 
-    // Load and execute the JavaScript/TypeScript migration
     const migration = await this.loadMigrationModule(migrationFile.path);
+    const { createMigrationContext } = await import("../api/migration");
+    const context = createMigrationContext(this.prisma);
 
     if (direction === "up") {
-      await migration.up(this.prisma);
+      await migration.up(context);
     } else {
-      await migration.down(this.prisma);
+      await migration.down(context);
     }
   }
 
@@ -200,13 +283,10 @@ export class DatabaseAdapter {
     filePath: string,
   ): Promise<PrismaMigration> {
     try {
-      // Clear module cache to ensure fresh loads during development
       const resolvedPath = resolve(filePath);
       delete require.cache[resolvedPath];
 
-      // For TypeScript files, we need tsx to be available
       if (filePath.endsWith(".ts")) {
-        // Check if tsx is available
         try {
           require.resolve("tsx");
         } catch {
@@ -215,8 +295,6 @@ export class DatabaseAdapter {
           );
         }
 
-        // Import the TypeScript module directly
-        // tsx should be configured to handle .ts files via require hooks or similar
         const module = await import(resolvedPath);
 
         if (!module.up || !module.down) {
@@ -230,7 +308,6 @@ export class DatabaseAdapter {
           down: module.down,
         };
       } else {
-        // JavaScript file
         const module = await import(resolvedPath);
         const up = module.up || module.default?.up || module.exports?.up;
         const down =
@@ -274,7 +351,11 @@ export class DatabaseAdapter {
 
   public async testConnection(): Promise<boolean> {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
+      if (this.prisma.$queryRaw) {
+        await this.prisma.$queryRaw`SELECT 1`;
+      } else {
+        await this.prisma.$queryRawUnsafe('SELECT 1');
+      }
       return true;
     } catch {
       return false;
@@ -285,7 +366,6 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // Use Prisma's table structure
       const result = (await this.prisma.$queryRawUnsafe(`
         SELECT id, migration_name, started_at as appliedAt
         FROM ${this.tableName}
@@ -307,7 +387,6 @@ export class DatabaseAdapter {
         appliedAt: row.appliedAt,
       };
     } else {
-      // Use custom table structure
       const result = (await this.prisma.$queryRawUnsafe(`
         SELECT id, name, applied_at as appliedAt
         FROM ${this.tableName}
@@ -337,7 +416,6 @@ export class DatabaseAdapter {
     const isPrismaTable = await this.detectPrismaTable();
 
     if (isPrismaTable) {
-      // Use Prisma's table structure
       const result = (await this.prisma.$queryRawUnsafe(
         `
         SELECT id, migration_name, started_at as appliedAt
@@ -359,7 +437,6 @@ export class DatabaseAdapter {
         appliedAt: row.appliedAt,
       };
     } else {
-      // Use custom table structure
       const result = (await this.prisma.$queryRawUnsafe(
         `
         SELECT id, name, applied_at as appliedAt
@@ -394,9 +471,6 @@ export class DatabaseAdapter {
   }
 
   public getDatabaseProvider(): string {
-    // This is a simplified way to detect the provider
-    // In a real implementation, you might want to parse the connection string
-    // or use Prisma's internal methods
-    return "postgresql"; // Default assumption
+    return "postgresql";
   }
 }

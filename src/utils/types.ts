@@ -16,6 +16,7 @@ export interface MigrationConfig {
   createTable?: boolean;
   migrationFormat?: "sql" | "js" | "ts";
   extension?: string;
+  prismaClient?: unknown; // Allow passing a custom PrismaClient instance
 }
 
 export interface MigrationState {
@@ -41,6 +42,7 @@ export interface RunMigrationOptions {
   steps?: number;
   dryRun?: boolean;
   force?: boolean;
+  explain?: boolean;
 }
 
 export interface RollbackMigrationOptions {
@@ -48,6 +50,7 @@ export interface RollbackMigrationOptions {
   steps?: number;
   dryRun?: boolean;
   force?: boolean;
+  explain?: boolean;
 }
 
 export interface MigrationTemplate {
@@ -68,23 +71,19 @@ export interface MigrationFile {
   type: "sql" | "js" | "ts";
 }
 
-// Prisma-style migration function interface
+import type { MigrationContext as ApiMigrationContext } from "../api/migration";
+
 export interface PrismaMigration {
-  up(prisma: any): Promise<void>;
-  down(prisma: any): Promise<void>;
+  up(context: ApiMigrationContext): Promise<void>;
+  down(context: ApiMigrationContext): Promise<void>;
 }
 
-// Function-based migration template
 export interface FunctionMigrationTemplate {
-  up: (prisma: any) => Promise<void>;
-  down: (prisma: any) => Promise<void>;
+  up: (context: ApiMigrationContext) => Promise<void>;
+  down: (context: ApiMigrationContext) => Promise<void>;
 }
 
-// Migration context for function-based migrations
-export interface MigrationContext {
-  prisma: any;
-  sql: (query: string, ...params: any[]) => Promise<any>;
-}
+export type MigrationContext = ApiMigrationContext;
 
 export interface MigrationStatus {
   id: string;
@@ -94,7 +93,6 @@ export interface MigrationStatus {
   error?: string;
 }
 
-// Version-based migration management
 export interface VersionMigrationMapping {
   version: string;
   commit?: string; // Optional commit hash
@@ -123,4 +121,24 @@ export interface MigrationManifest {
   versions: VersionMigrationMapping[];
   currentVersion?: string;
   lastUpdated: Date;
+}
+
+export interface ColumnDetails {
+  name: string;
+  dataType?: string;
+  nullable?: boolean;
+  defaultValue?: string;
+  constraints?: string[];
+  previousType?: string;
+  newType?: string;
+  action?: 'ADD' | 'DROP' | 'MODIFY' | 'RENAME';
+}
+
+export interface MigrationChange {
+  type: 'CREATE' | 'ALTER' | 'DROP' | 'INSERT' | 'UPDATE' | 'DELETE' | 'OTHER';
+  object: 'TABLE' | 'COLUMN' | 'INDEX' | 'CONSTRAINT' | 'DATA' | 'OTHER';
+  target?: string;
+  details?: string;
+  sql: string;
+  columnChanges?: ColumnDetails[];
 }

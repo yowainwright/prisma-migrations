@@ -214,10 +214,41 @@ module.exports = {
 | `createTable`     | `boolean`           | `true`                     | Whether to auto-create the migrations table |
 | `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'`                     | Format for new migration files              |
 | `extension`       | `string`            | `'.ts'`                    | File extension for new migrations           |
+| `prismaClient`    | `PrismaClient`      | `undefined`                | Custom PrismaClient instance (for monorepos)|
 
 ### 3. Environment Variables
 
 Set `DATABASE_URL` environment variable for database connection.
+
+### 4. Monorepo Support
+
+The package now includes enhanced support for monorepo structures. It automatically searches for Prisma Client in multiple locations:
+
+- Current working directory
+- Parent directories (up to 5 levels)
+- Common monorepo locations
+- Generated client paths (`node_modules/.prisma/client`)
+
+#### Custom PrismaClient Instance
+
+For complex monorepo setups, you can provide your own PrismaClient instance:
+
+```javascript
+// prisma-migrations.config.mjs
+import { PrismaClient } from '../../../node_modules/@prisma/client';
+
+export default {
+  migrationsDir: "./migrations",
+  schemaPath: "./prisma/schema.prisma",
+  tableName: "_prisma_migrations",
+  prismaClient: new PrismaClient(), // Provide your own instance
+};
+```
+
+This is particularly useful when:
+- Your Prisma Client is generated in a non-standard location
+- You're using a workspace with multiple Prisma schemas
+- You need custom PrismaClient configuration
 
 ---
 

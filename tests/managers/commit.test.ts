@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it, before } from "node:test";
-import { CommitManager } from "../src/commit-manager";
+import { CommitManager } from "../../src/managers/commit";
 
 describe("CommitManager", () => {
   let commitManager: CommitManager;

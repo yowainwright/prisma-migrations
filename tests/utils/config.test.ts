@@ -1,11 +1,25 @@
-import { test, describe } from "node:test";
+import { test, describe, before, after } from "node:test";
 import assert from "node:assert";
 import { join } from "node:path";
-import { ConfigManager } from "../src/config";
+import { ConfigManager } from "../../src/utils/config";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 
 describe("ConfigManager", () => {
-  const testDir = join(process.cwd(), "fixtures");
+  let testDir: string;
   const originalCwd = process.cwd();
+
+  before(() => {
+    testDir = mkdtempSync(join(tmpdir(), 'config-test-'));
+    const packageJson = {
+      name: "test-package",
+      prismaMigrations: {
+        migrationsDir: "./custom-migrations",
+        tableName: "custom_migrations_table"
+      }
+    };
+    writeFileSync(join(testDir, 'package.json'), JSON.stringify(packageJson, null, 2));
+  });
 
   test("should load default configuration", () => {
     const configManager = new ConfigManager();
@@ -18,7 +32,6 @@ describe("ConfigManager", () => {
   });
 
   test("should load configuration from package.json", async () => {
-    // Change to the fixtures directory that already has a package.json
     process.chdir(testDir);
 
     const configManager = new ConfigManager();
@@ -28,7 +41,6 @@ describe("ConfigManager", () => {
     assert.strictEqual(config.tableName, "custom_migrations_table");
     assert.strictEqual(config.schemaPath, "./prisma/schema.prisma"); // default value
 
-    // Restore original directory
     process.chdir(originalCwd);
   });
 
@@ -76,5 +88,10 @@ describe("ConfigManager", () => {
     if (originalEnv) {
       process.env.DATABASE_URL = originalEnv;
     }
+  });
+
+  after(() => {
+    process.chdir(originalCwd);
+    rmSync(testDir, { recursive: true, force: true });
   });
 });

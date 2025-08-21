@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { VersionMigrationMapping, MigrationManifest } from "./types";
-import { CommitManager } from "./commit-manager";
+import { VersionMigrationMapping, MigrationManifest } from "../utils/types";
+import { CommitManager } from "./commit";
 
 export class VersionManager {
   private manifestPath: string;
@@ -20,7 +20,7 @@ export class VersionManager {
       try {
         const content = readFileSync(this.manifestPath, "utf-8");
         const manifest = JSON.parse(content);
-        // Convert date strings back to Date objects
+
         manifest.lastUpdated = new Date(manifest.lastUpdated);
         manifest.versions = manifest.versions.map((v: any) => ({
           ...v,
@@ -42,9 +42,6 @@ export class VersionManager {
     writeFileSync(this.manifestPath, JSON.stringify(this.manifest, null, 2));
   }
 
-  /**
-   * Register a version with its associated migrations
-   */
   public registerVersion(
     version: string,
     migrations: string[],
@@ -69,7 +66,6 @@ export class VersionManager {
       this.manifest.versions.push(versionMapping);
     }
 
-    // Sort versions (assuming semantic versioning)
     this.manifest.versions.sort((a, b) =>
       this.compareVersions(a.version, b.version),
     );
@@ -77,9 +73,6 @@ export class VersionManager {
     this.saveManifest();
   }
 
-  /**
-   * Get all migrations that need to be applied/rolled back between versions or commits
-   */
   public getMigrationsBetween(
     from: string | undefined,
     to: string,
@@ -108,12 +101,10 @@ export class VersionManager {
       toMigrations = new Set(toVersionData.migrations);
     }
 
-    // Migrations to run: in target version/commit but not in current version/commit
     const migrationsToRun = Array.from(toMigrations).filter(
       (m) => !fromMigrations.has(m),
     );
 
-    // Migrations to rollback: in current version/commit but not in target version/commit
     const migrationsToRollback = Array.from(fromMigrations).filter(
       (m) => !toMigrations.has(m),
     );
@@ -124,13 +115,9 @@ export class VersionManager {
     };
   }
 
-  /**
-   * Get migrations for a specific commit by finding the closest version
-   */
   private getCommitMigrations(commit: string): string[] {
     const info = this.commitManager.getCommitInfo(commit);
 
-    // Find the most recent version/tag reachable from this commit
     const version = info.branch
       ? this.commitManager.getLatestTag(commit)
       : null;
@@ -146,47 +133,29 @@ export class VersionManager {
     return versionData.migrations;
   }
 
-  /**
-   * Get version data by version string
-   */
   public getVersionData(version: string): VersionMigrationMapping | null {
     return this.manifest.versions.find((v) => v.version === version) || null;
   }
 
-  /**
-   * Get all registered versions
-   */
   public getAllVersions(): VersionMigrationMapping[] {
     return [...this.manifest.versions];
   }
 
-  /**
-   * Get current version from manifest
-   */
   public getCurrentVersion(): string | undefined {
     return this.manifest.currentVersion;
   }
 
-  /**
-   * Set current version
-   */
   public setCurrentVersion(version: string): void {
     this.manifest.currentVersion = version;
     this.manifest.lastUpdated = new Date();
     this.saveManifest();
   }
 
-  /**
-   * Get the latest version based on semantic versioning
-   */
   public getLatestVersion(): string | undefined {
     if (this.manifest.versions.length === 0) return undefined;
     return this.manifest.versions[this.manifest.versions.length - 1].version;
   }
 
-  /**
-   * Compare two semantic versions
-   */
   private compareVersions(a: string, b: string): number {
     const parseVersion = (version: string) => {
       const parts = version.split(".").map(Number);
@@ -209,9 +178,6 @@ export class VersionManager {
     return versionA.patch - versionB.patch;
   }
 
-  /**
-   * Validate that all migrations for a version exist
-   */
   public validateVersionMigrations(
     version: string,
     existingMigrations: string[],
@@ -225,9 +191,6 @@ export class VersionManager {
     );
   }
 
-  /**
-   * Generate a deployment plan between versions
-   */
   public generateDeploymentPlan(
     fromVersion: string | undefined,
     toVersion: string,
@@ -250,7 +213,6 @@ export class VersionManager {
       order: number;
     }> = [];
 
-    // Rollbacks first (in reverse order)
     migrationsToRollback.reverse().forEach((migration, index) => {
       plan.push({
         action: "rollback",
@@ -259,7 +221,6 @@ export class VersionManager {
       });
     });
 
-    // Then run new migrations (in forward order)
     migrationsToRun.forEach((migration, index) => {
       plan.push({
         action: "run",

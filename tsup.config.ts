@@ -1,7 +1,6 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig([
-  // Library build (dual format)
   {
     entry: ["src/index.ts"],
     format: ["esm", "cjs"],
@@ -22,7 +21,6 @@ export default defineConfig([
     ],
     outDir: "dist",
   },
-  // CLI build (dual format for broader compatibility)
   {
     entry: ["src/cli.ts"],
     format: ["esm", "cjs"],

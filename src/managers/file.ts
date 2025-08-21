@@ -12,7 +12,7 @@ import {
   MigrationTemplate,
   MigrationConfig,
   FunctionMigrationTemplate,
-} from "./types";
+} from "../utils/types";
 
 export class FileManager {
   private migrationsDir: string;
@@ -110,7 +110,6 @@ export class FileManager {
     if (migrationFile.type === "sql") {
       return this.parseSqlMigrationContent(migrationFile.content);
     } else {
-      // For JS/TS files, we'll need to execute them to get the SQL
       return this.parseJsMigrationContent(migrationFile);
     }
   }
@@ -132,8 +131,6 @@ export class FileManager {
     up: string;
     down: string;
   } {
-    // For JS/TS migrations, we need to load the module and execute the functions
-    // This will be handled by the DatabaseAdapter when it needs to execute migrations
     return {
       up: "",
       down: "",
@@ -145,16 +142,14 @@ export class FileManager {
   }
 
   private formatJsMigrationContent(
-    name: string,
+    _name: string,
     format: "js" | "ts",
     _template?: FunctionMigrationTemplate,
   ): string {
-    // Always use the default template for now
-    return this.generatePrismaMigrationTemplate(name, format);
+    return this.generatePrismaMigrationTemplate(format);
   }
 
   private generatePrismaMigrationTemplate(
-    name: string,
     format: "js" | "ts",
   ): string {
     const isTypeScript = format === "ts";
@@ -162,77 +157,17 @@ export class FileManager {
     if (isTypeScript) {
       return `import { PrismaClient } from '@prisma/client';
 
-/**
- * Migration: ${name}
- * Created at: ${new Date().toISOString()}
- */
-
 export async function up(prisma: PrismaClient): Promise<void> {
-  // Add your migration logic here
-  // Example - Raw SQL:
-  // await prisma.$executeRaw\`
-  //   CREATE TABLE users (
-  //     id SERIAL PRIMARY KEY,
-  //     email VARCHAR(255) UNIQUE NOT NULL,
-  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  //   )
-  // \`;
-  
-  // Example - Using Prisma operations:
-  // await prisma.user.createMany({
-  //   data: [
-  //     { email: 'admin@example.com' },
-  //     { email: 'user@example.com' }
-  //   ]
-  // });
 }
 
 export async function down(prisma: PrismaClient): Promise<void> {
-  // Add your rollback logic here
-  // Example:
-  // await prisma.$executeRaw\`DROP TABLE IF EXISTS users\`;
 }
 `;
     } else {
-      return `// @ts-check
-
-/**
- * Migration: ${name}
- * Created at: ${new Date().toISOString()}
- */
-
-/**
- * @param {import('@prisma/client').PrismaClient} prisma
- */
-exports.up = async function(prisma) {
-  // Add your migration logic here
-  // Example - Raw SQL:
-  // await prisma.$executeRaw\`
-  //   CREATE TABLE users (
-  //     id SERIAL PRIMARY KEY,
-  //     email VARCHAR(255) UNIQUE NOT NULL,
-  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  //   )
-  // \`;
-  
-  // Example - Using Prisma operations:
-  // await prisma.user.createMany({
-  //   data: [
-  //     { email: 'admin@example.com' },
-  //     { email: 'user@example.com' }
-  //   ]
-  // });
+      return `exports.up = async function(prisma) {
 };
 
-/**
- * @param {import('@prisma/client').PrismaClient} prisma
- */
 exports.down = async function(prisma) {
-  // Add your rollback logic here
-  // Example:
-  // await prisma.$executeRaw\`DROP TABLE IF EXISTS users\`;
 };
 `;
     }

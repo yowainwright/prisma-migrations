@@ -2,8 +2,8 @@ import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { existsSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { FileManager } from "../src/file-manager";
-import { MigrationConfig } from "../src/types";
+import { FileManager } from "../../src/managers/file";
+import { MigrationConfig } from "../../src/utils/types";
 
 describe("FileManager", () => {
   const testDir = join(process.cwd(), "test-migrations");

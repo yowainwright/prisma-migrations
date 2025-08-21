@@ -1,19 +1,22 @@
-export { MigrationManager } from "./migration-manager";
-export { ConfigManager } from "./config";
-export { FileManager } from "./file-manager";
-export { DatabaseAdapter } from "./database-adapter";
-export { VersionManager } from "./version-manager";
-export { CommitManager } from "./commit-manager";
+export { MigrationManager } from "./managers/migration";
+export { ConfigManager } from "./utils/config";
+export { FileManager } from "./managers/file";
+export { DatabaseAdapter } from "./adapters/database";
+export { VersionManager } from "./managers/version";
+export { CommitManager } from "./managers/commit";
+export { DiffGenerator } from "./api/diff";
 
-export * from "./types";
+export { 
+  createMigrationContext,
+  defineMigration,
+  sql,
+  type MigrationContext,
+  type Migration,
+  type MigrationFunction,
+  type PrismaClientLike
+} from "./api/migration";
 
-// Re-export for convenience
-import { MigrationManager } from "./migration-manager";
+export * from "./utils/types";
+
+import { MigrationManager } from "./managers/migration";
 export default MigrationManager;
-
-// Export types for easier usage
-export type {
-  PrismaMigration,
-  FunctionMigrationTemplate,
-  MigrationContext,
-} from "./types";

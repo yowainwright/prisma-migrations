@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { MigrationManager } from "../src/migration-manager";
+import { MigrationManager } from "../../src/managers/migration";
 
 describe("MigrationManager", () => {
   test("should handle creation when Prisma client is not available", () => {

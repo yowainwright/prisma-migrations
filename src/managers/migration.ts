@@ -1,7 +1,10 @@
-import { ConfigManager } from "./config";
-import { FileManager } from "./file-manager";
-import { DatabaseAdapter } from "./database-adapter";
-import { VersionManager } from "./version-manager";
+import { ConfigManager } from "../utils/config";
+import { FileManager } from "./file";
+import { DatabaseAdapter } from "../adapters/database";
+import { VersionManager } from "./version";
+import { DiffGenerator } from "../api/diff";
+import { createLogger } from "../utils/logger";
+import type { PrismaClientLike } from "../api/migration";
 import {
   Migration,
   MigrationResult,
@@ -14,39 +17,49 @@ import {
   VersionMigrationOptions,
   VersionMigrationResult,
   VersionMigrationMapping,
-} from "./types";
+} from "../utils/types";
+
+const logger = createLogger('MigrationManager');
 
 export class MigrationManager {
   private config: ConfigManager;
   private fileManager: FileManager;
   private dbAdapter: DatabaseAdapter;
   private versionManager: VersionManager;
+  private diffGenerator: DiffGenerator;
 
   constructor(configPath?: string) {
     this.config = new ConfigManager(configPath);
-    // Initialize with default config, will be updated when needed
     const config = this.config.getConfig();
-    const { migrationsDir, tableName } = config;
+    const { migrationsDir, tableName, prismaClient } = config;
     this.fileManager = new FileManager(migrationsDir, config);
     this.versionManager = new VersionManager(migrationsDir);
+    this.diffGenerator = new DiffGenerator();
 
     const databaseUrl = this.config.getDatabaseUrl();
-    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
+    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName, prismaClient as PrismaClientLike | undefined);
   }
 
   private async ensureConfigLoaded(): Promise<void> {
     const config = await this.config.getConfigAsync();
-    const { migrationsDir, tableName } = config;
+    const { migrationsDir, tableName, prismaClient } = config;
     this.fileManager = new FileManager(migrationsDir, config);
     this.versionManager = new VersionManager(migrationsDir);
 
     const databaseUrl = this.config.getDatabaseUrl();
-    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName);
+    this.dbAdapter = new DatabaseAdapter(databaseUrl, tableName, prismaClient as PrismaClientLike | undefined);
   }
 
   public async initialize(): Promise<void> {
-    await this.dbAdapter.connect();
-    await this.dbAdapter.ensureMigrationsTable();
+    try {
+      logger.info('Initializing migration manager...');
+      await this.dbAdapter.connect();
+      await this.dbAdapter.ensureMigrationsTable();
+      logger.info('Migration manager initialized successfully');
+    } catch (error) {
+      logger.error({ error }, 'Failed to initialize');
+      throw error;
+    }
   }
 
   public async destroy(): Promise<void> {
@@ -60,12 +73,10 @@ export class MigrationManager {
 
     const { name, template } = options;
 
-    // Validate migration name
     if (!name || name.trim().length === 0) {
       throw new Error("Migration name cannot be empty");
     }
 
-    // Check if migration with same name exists
     const existingMigration = this.fileManager.getMigrationByName(name);
     if (existingMigration) {
       throw new Error(`Migration with name '${name}' already exists`);
@@ -76,8 +87,8 @@ export class MigrationManager {
 
   public async runMigrations(
     options: RunMigrationOptions = {},
-  ): Promise<MigrationResult> {
-    const { to, steps, dryRun = false, force = false } = options;
+  ): Promise<MigrationResult & { diff?: string }> {
+    const { to, steps, dryRun = false, force = false, explain = false } = options;
 
     try {
       await this.initialize();
@@ -85,7 +96,6 @@ export class MigrationManager {
       let migrationsToRun: MigrationFile[] = [];
 
       if (to) {
-        // Run up to specific migration
         const targetMigration =
           this.fileManager.getMigrationFile(to) ||
           this.fileManager.getMigrationByName(to);
@@ -94,11 +104,16 @@ export class MigrationManager {
         }
         migrationsToRun = this.getMigrationsUpTo(targetMigration.timestamp);
       } else if (steps) {
-        // Run specific number of migrations
         migrationsToRun = this.getMigrationsToRun(steps);
       } else {
-        // Run all pending migrations
         migrationsToRun = this.getAllPendingMigrations();
+      }
+
+      let diff: string | undefined;
+      if (dryRun || explain) {
+        diff = migrationsToRun.map(migration => 
+          this.diffGenerator.formatDiff(migration, 'up')
+        ).join('\n\n');
       }
 
       if (dryRun) {
@@ -111,6 +126,7 @@ export class MigrationManager {
             timestamp: new Date(),
             applied: false,
           })),
+          diff,
         };
       }
 
@@ -152,6 +168,7 @@ export class MigrationManager {
       return {
         success: true,
         migrations: appliedMigrations,
+        diff,
       };
     } catch (error) {
       return {
@@ -166,8 +183,8 @@ export class MigrationManager {
 
   public async rollbackMigrations(
     options: RollbackMigrationOptions = {},
-  ): Promise<MigrationResult> {
-    const { to, steps, dryRun = false, force = false } = options;
+  ): Promise<MigrationResult & { diff?: string }> {
+    const { to, steps, dryRun = false, force = false, explain = false } = options;
 
     try {
       await this.initialize();
@@ -176,7 +193,6 @@ export class MigrationManager {
       let migrationsToRollback: Migration[] = [];
 
       if (to) {
-        // Rollback to specific migration
         const targetMigration =
           this.fileManager.getMigrationFile(to) ||
           this.fileManager.getMigrationByName(to);
@@ -188,20 +204,31 @@ export class MigrationManager {
           targetMigration.timestamp,
         );
       } else if (steps) {
-        // Rollback specific number of migrations
         migrationsToRollback = appliedMigrations.slice(-steps).reverse();
       } else {
-        // Rollback last migration
         const lastMigration = await this.dbAdapter.getLastMigration();
         if (lastMigration) {
           migrationsToRollback = [lastMigration];
         }
       }
 
+      let diff: string | undefined;
+      if (dryRun || explain) {
+        const migrationFiles = migrationsToRollback.map(m => {
+          const file = this.fileManager.getMigrationFile(m.id);
+          if (!file) throw new Error(`Migration file not found for ${m.id}`);
+          return file;
+        });
+        diff = migrationFiles.map(migration => 
+          this.diffGenerator.formatDiff(migration, 'down')
+        ).join('\n\n');
+      }
+
       if (dryRun) {
         return {
           success: true,
           migrations: migrationsToRollback,
+          diff,
         };
       }
 
@@ -252,6 +279,7 @@ export class MigrationManager {
       return {
         success: true,
         migrations: rolledBackMigrations,
+        diff,
       };
     } catch (error) {
       return {
@@ -344,11 +372,6 @@ export class MigrationManager {
     return appliedMigrations.slice(targetIndex + 1).reverse();
   }
 
-  // Version-based migration management methods
-
-  /**
-   * Register a version with its associated migrations
-   */
   public registerVersion(
     version: string,
     migrations: string[],
@@ -363,9 +386,6 @@ export class MigrationManager {
     );
   }
 
-  /**
-   * Deploy to a specific version
-   */
   public async deployToVersion(
     options: VersionMigrationOptions,
   ): Promise<VersionMigrationResult> {
@@ -384,7 +404,7 @@ export class MigrationManager {
           currentVersion,
           toVersion,
         );
-        console.log(plan.summary);
+        logger.info({ summary: plan.summary }, 'Version deployment plan');
 
         return {
           success: true,
@@ -398,7 +418,6 @@ export class MigrationManager {
       const migrationsRun: Migration[] = [];
       const migrationsRolledBack: Migration[] = [];
 
-      // First, rollback migrations that are not in the target version
       for (const migrationId of migrationsToRollback.reverse()) {
         const migrationFile = this.fileManager.getMigrationFile(migrationId);
         if (!migrationFile) {
@@ -433,7 +452,6 @@ export class MigrationManager {
         });
       }
 
-      // Then, run migrations that are in the target version but not currently applied
       for (const migrationId of migrationsToRun) {
         const migrationFile = this.fileManager.getMigrationFile(migrationId);
         if (!migrationFile) {
@@ -466,7 +484,6 @@ export class MigrationManager {
         });
       }
 
-      // Update current version
       this.versionManager.setCurrentVersion(toVersion);
 
       return {
@@ -490,9 +507,6 @@ export class MigrationManager {
     }
   }
 
-  /**
-   * Get deployment plan between versions
-   */
   public getDeploymentPlan(
     fromVersion: string | undefined,
     toVersion: string,
@@ -507,30 +521,18 @@ export class MigrationManager {
     return this.versionManager.generateDeploymentPlan(fromVersion, toVersion);
   }
 
-  /**
-   * Get all registered versions
-   */
   public getAllVersions(): VersionMigrationMapping[] {
     return this.versionManager.getAllVersions();
   }
 
-  /**
-   * Get current version
-   */
   public getCurrentVersion(): string | undefined {
     return this.versionManager.getCurrentVersion();
   }
 
-  /**
-   * Set current version
-   */
   public setCurrentVersion(version: string): void {
     this.versionManager.setCurrentVersion(version);
   }
 
-  /**
-   * Validate version migrations
-   */
   public validateVersionMigrations(version: string): boolean {
     const allMigrations = this.fileManager.readMigrationFiles();
     const migrationIds = allMigrations.map((m) => m.timestamp);

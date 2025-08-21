@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "node --import tsx --test tests/commit-manager.test.ts tests/config.test.ts tests/database-adapter.test.ts tests/e2e.test.ts tests/file-manager.test.ts tests/index.test.ts tests/migration-manager.test.ts tests/version-manager.test.ts",
+    "test": "node --import tsx --test tests/**/*.test.ts e2e/e2e.test.ts",
     "test:watch": "node --test --watch",
     "test:e2e": "npm run build && node --test e2e/test.js e2e/test-cjs.js",
     "test:e2e:esm": "npm run build && node --test e2e/test.js",
@@ -51,9 +51,14 @@
   "dependencies": {
     "@prisma/client": "^6.11.1",
     "chalk": "^5.0.0",
+    "cli-table3": "^0.6.5",
     "commander": "^11.0.0",
+    "diff": "^8.0.2",
     "fs-extra": "^11.0.0",
-    "inquirer": "^9.0.0"
+    "inquirer": "^9.0.0",
+    "node-sql-parser": "^5.3.11",
+    "pino": "^9.9.0",
+    "pino-pretty": "^13.1.1"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.0",
