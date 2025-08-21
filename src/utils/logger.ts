@@ -11,23 +11,29 @@ export function setGlobalLogger(logger: Logger): void {
 }
 
 export function getDefaultLogger(): Logger {
-  return pino({
+  const pinoOptions: any = {
     level: logLevel,
-    transport: !isProduction
-      ? {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            ignore: "pid,hostname",
-            translateTime: "SYS:standard",
-            singleLine: false,
-          },
-        }
-      : undefined,
     base: {
       package: "prisma-migrations",
     },
-  }) as Logger;
+  };
+
+  if (!isProduction) {
+    pinoOptions.transport = {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        ignore: "pid,hostname",
+        translateTime: "SYS:standard",
+        singleLine: false,
+        destination: 2,
+      },
+    };
+  } else {
+    pinoOptions.destination = pino.destination(2);
+  }
+
+  return pino(pinoOptions) as Logger;
 }
 
 export const logger: Logger = globalLogger || getDefaultLogger();
