@@ -104,8 +104,8 @@ export interface MigrationStatus {
 
 export interface VersionMigrationMapping {
   version: string;
-  commit?: string; // Optional commit hash
-  migrations: string[]; // Array of migration IDs/timestamps
+  commit?: string;
+  migrations: string[];
   description?: string;
   createdAt: Date;
 }
