@@ -55,7 +55,7 @@
     "commander": "^11.0.0",
     "diff": "^8.0.2",
     "fs-extra": "^11.0.0",
-    "inquirer": "^9.0.0",
+    "inquirer": "^12.9.3",
     "node-sql-parser": "^5.3.11",
     "pino": "^9.9.0",
     "pino-pretty": "^13.1.1"
