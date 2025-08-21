@@ -24,7 +24,7 @@ export class DatabaseAdapter {
     customLogger?: Logger,
   ) {
     this.logger = createLogger("DatabaseAdapter", customLogger);
-    
+
     if (customPrismaClient) {
       this.logger.debug("Using provided PrismaClient instance");
       this.prisma = customPrismaClient;
@@ -86,7 +86,10 @@ export class DatabaseAdapter {
           ) {
             const prismaModule = require(genPath);
             if (prismaModule.PrismaClient) {
-              this.logger.debug({ path: genPath }, "Found generated PrismaClient");
+              this.logger.debug(
+                { path: genPath },
+                "Found generated PrismaClient",
+              );
               return prismaModule.PrismaClient;
             }
           }
