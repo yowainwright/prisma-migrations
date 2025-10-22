@@ -17,16 +17,23 @@
     "prisma-migrations": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "node --import tsx --test tests/**/*.test.ts e2e/e2e.test.ts",
+    "build": "turbo run build build-lib",
+    "build-lib": "tsup",
+    "build-app": "npm run --prefix app build",
+    "dev": "turbo run dev",
+    "dev-lib": "tsup --watch",
+    "dev-app": "npm run --prefix app dev",
+    "preview": "npm run --prefix app preview",
+    "test": "turbo run test-lib",
+    "test-lib": "node --import tsx --test tests/**/*.test.ts e2e/e2e.test.ts",
     "test:watch": "node --test --watch",
     "test:e2e": "npm run build && node --test e2e/test.js e2e/test-cjs.js",
     "test:e2e:esm": "npm run build && node --test e2e/test.js",
     "test:e2e:cjs": "npm run build && node --test e2e/test-cjs.js",
     "test:docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
     "test:docker:clean": "docker-compose -f docker-compose.test.yml down -v",
-    "lint": "npx -y oxlint src tests e2e",
+    "lint": "turbo run lint-lib",
+    "lint-lib": "npx -y oxlint src tests e2e",
     "lint:fix": "npx -y oxlint src tests e2e --fix",
     "format": "npx -y prettier --write src tests e2e",
     "format:check": "npx -y prettier --check src tests e2e",
@@ -61,6 +68,7 @@
     "pino-pretty": "^13.1.1"
   },
   "devDependencies": {
+    "turbo": "^2.5.5",
     "@types/fs-extra": "^11.0.0",
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
@@ -86,5 +94,9 @@
   "bugs": {
     "url": "https://github.com/yowainwright/prisma-migrations/issues"
   },
-  "homepage": "https://github.com/yowainwright/prisma-migrations#readme"
+  "homepage": "https://github.com/yowainwright/prisma-migrations#readme",
+  "workspaces": [
+    "app"
+  ],
+  "packageManager": "npm@11.5.2"
 }

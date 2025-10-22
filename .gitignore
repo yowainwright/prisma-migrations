@@ -148,4 +148,6 @@ test-resolution.js
 test-*.mjs
 test-*.cjs
 migrations
+.claude
+.turbo/
 
