@@ -106,7 +106,7 @@ export class ConfigManager {
     this.config = { ...this.config, ...updates };
   }
 
-  public getDatabaseUrl(): string {
+  public getDatabaseUrl(required: boolean = true): string | null {
     if (this.config.databaseUrl) {
       return this.config.databaseUrl;
     }
@@ -130,8 +130,12 @@ export class ConfigManager {
       } catch {}
     }
 
-    throw new Error(
-      "Database URL not found. Please set DATABASE_URL environment variable or configure it in your config file.",
-    );
+    if (required) {
+      throw new Error(
+        "Database URL not found. Please set DATABASE_URL environment variable or configure it in your config file.",
+      );
+    }
+
+    return null;
   }
 }

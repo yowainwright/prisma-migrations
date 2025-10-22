@@ -1,30 +1,33 @@
-import { test, describe } from "node:test";
+import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { MigrationManager } from "../../src/managers/migration";
 
 describe("MigrationManager", () => {
-  test("should handle creation when Prisma client is not available", () => {
-    let caughtError = false;
-    try {
-      const manager = new MigrationManager();
-      assert.ok(manager);
-    } catch (error) {
-      caughtError = true;
-      assert.ok(error.message.includes("Database URL not found"));
+  let originalDatabaseUrl: string | undefined;
+
+  beforeEach(() => {
+    originalDatabaseUrl = process.env.DATABASE_URL;
+    delete process.env.DATABASE_URL;
+  });
+
+  afterEach(() => {
+    if (originalDatabaseUrl) {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    } else {
+      delete process.env.DATABASE_URL;
     }
-    assert.ok(caughtError, "Expected error when DATABASE_URL is not set");
+  });
+
+  test("should handle creation when Prisma client is not available", () => {
+    const manager = new MigrationManager();
+    assert.ok(manager);
+    assert.ok(manager instanceof MigrationManager);
   });
 
   test("should handle creation with custom config path", () => {
-    let caughtError = false;
-    try {
-      const manager = new MigrationManager("./custom-config.js");
-      assert.ok(manager);
-    } catch (error) {
-      caughtError = true;
-      assert.ok(error.message.includes("Database URL not found"));
-    }
-    assert.ok(caughtError, "Expected error when DATABASE_URL is not set");
+    const manager = new MigrationManager("./custom-config.js");
+    assert.ok(manager);
+    assert.ok(manager instanceof MigrationManager);
   });
 
   test("should handle basic object instantiation", () => {
@@ -36,14 +39,9 @@ describe("MigrationManager", () => {
   });
 
   test("should handle version registration without database connection", () => {
-    // Test version management functionality that doesn't require database
-    try {
-      new MigrationManager();
-      // This should fail due to missing DATABASE_URL
-      assert.fail("Expected constructor to throw an error");
-    } catch (error) {
-      assert.ok(error.message.includes("Database URL not found"));
-    }
+    const manager = new MigrationManager();
+    assert.ok(manager);
+    assert.ok(manager instanceof MigrationManager);
   });
 
   test("should validate migration manager methods exist", () => {
@@ -69,22 +67,22 @@ describe("MigrationManager", () => {
   });
 
   test("should handle createMigration validation", async () => {
+    const manager = new MigrationManager();
+    assert.ok(manager);
+
     try {
-      new MigrationManager();
-      // This should fail due to missing DATABASE_URL before we can test createMigration
-      assert.fail("Expected constructor to throw an error");
+      await manager.createMigration({ name: "" });
+      assert.fail("Expected error for empty migration name");
     } catch (error) {
-      assert.ok(error.message.includes("Database URL not found"));
+      assert.ok(error.message.includes("cannot be empty"));
     }
   });
 
   test("should handle testConnection gracefully", async () => {
-    try {
-      new MigrationManager();
-      // This should fail due to missing DATABASE_URL
-      assert.fail("Expected constructor to throw an error");
-    } catch (error) {
-      assert.ok(error.message.includes("Database URL not found"));
-    }
+    const manager = new MigrationManager();
+    assert.ok(manager);
+
+    const result = await manager.testConnection();
+    assert.strictEqual(typeof result, "boolean");
   });
 });

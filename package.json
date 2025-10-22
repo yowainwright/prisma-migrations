@@ -64,16 +64,17 @@
     "fs-extra": "^11.0.0",
     "inquirer": "^12.9.3",
     "node-sql-parser": "^5.3.11",
+    "p-map": "^7.0.3",
     "pino": "^9.9.0",
     "pino-pretty": "^13.1.1"
   },
   "devDependencies": {
-    "turbo": "^2.5.5",
     "@types/fs-extra": "^11.0.0",
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
     "prisma": "^6.11.1",
     "tsup": "^8.5.0",
+    "turbo": "^2.5.8",
     "typescript": "^5.0.0"
   },
   "optionalDependencies": {
