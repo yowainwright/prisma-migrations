@@ -1,9 +1,9 @@
-import { readdir } from 'fs/promises';
-import { join } from 'path';
-import { pathToFileURL } from 'url';
-import type { PrismaClient, MigrationsConfig, MigrationFile } from '../types';
-import { logger } from '../logger';
-import { Discovery } from '../discovery';
+import { readdir } from "fs/promises";
+import { join } from "path";
+import { pathToFileURL } from "url";
+import type { PrismaClient, MigrationsConfig, MigrationFile } from "../types";
+import { logger } from "../logger";
+import { Discovery } from "../discovery";
 
 export class Migrations {
   private prisma: PrismaClient;
@@ -33,21 +33,25 @@ export class Migrations {
     logger.debug(`Found ${applied.length} applied migrations`);
     const all = await this.getAllMigrations();
     logger.debug(`Found ${all.length} total migrations`);
-    const pending = all.filter(m => !applied.includes(m.id));
+    const pending = all.filter((m) => !applied.includes(m.id));
     logger.debug(`Found ${pending.length} pending migrations`);
 
     let toRun = pending;
     if (steps) toRun = pending.slice(0, steps);
     logger.debug(`Will run ${toRun.length} migrations`);
 
-    await toRun.reduce(async (prev: Promise<void>, migration: MigrationFile) => {
-      await prev;
-      logger.info(`Running ${migration.id}_${migration.name}...`);
-      const mod = await import(pathToFileURL(migration.path).href);
-      await mod.up(this.prisma);
-      await this.prisma.$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
-      logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-    }, Promise.resolve());
+    await toRun.reduce(
+      async (prev: Promise<void>, migration: MigrationFile) => {
+        await prev;
+        logger.info(`Running ${migration.id}_${migration.name}...`);
+        const mod = await import(pathToFileURL(migration.path).href);
+        await mod.up(this.prisma);
+        await this.prisma
+          .$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
+        logger.info(`✓ Applied ${migration.id}_${migration.name}`);
+      },
+      Promise.resolve(),
+    );
 
     return toRun.length;
   }
@@ -69,7 +73,8 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       const mod = await import(pathToFileURL(migration.path).href);
       await mod.down(this.prisma);
-      await this.prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
+      await this.prisma
+        .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
       logger.info(`✓ Rolled back ${id}_${migration.name}`);
     }, Promise.resolve());
 
@@ -80,9 +85,9 @@ export class Migrations {
     const applied = await this.getApplied();
     const all = await this.getAllMigrations();
 
-    logger.info('\nMigration Status:\n');
+    logger.info("\nMigration Status:\n");
     for (const migration of all) {
-      const status = applied.includes(migration.id) ? '✓' : '✗';
+      const status = applied.includes(migration.id) ? "✓" : "✗";
       logger.info(`${status} ${migration.id}_${migration.name}`);
     }
   }
@@ -90,13 +95,13 @@ export class Migrations {
   async pending(): Promise<MigrationFile[]> {
     const applied = await this.getApplied();
     const all = await this.getAllMigrations();
-    return all.filter(m => !applied.includes(m.id));
+    return all.filter((m) => !applied.includes(m.id));
   }
 
   async applied(): Promise<MigrationFile[]> {
     const appliedIds = await this.getApplied();
     const all = await this.getAllMigrations();
-    return all.filter(m => appliedIds.includes(m.id));
+    return all.filter((m) => appliedIds.includes(m.id));
   }
 
   async latest(): Promise<MigrationFile | null> {
@@ -110,14 +115,18 @@ export class Migrations {
     const count = applied.length;
     const reversed = applied.toReversed();
 
-    await reversed.reduce(async (prev: Promise<void>, migration: MigrationFile) => {
-      await prev;
-      logger.info(`Rolling back ${migration.id}_${migration.name}...`);
-      const mod = await import(pathToFileURL(migration.path).href);
-      await mod.down(this.prisma);
-      await this.prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
-      logger.info(`✓ Rolled back ${migration.id}_${migration.name}`);
-    }, Promise.resolve());
+    await reversed.reduce(
+      async (prev: Promise<void>, migration: MigrationFile) => {
+        await prev;
+        logger.info(`Rolling back ${migration.id}_${migration.name}...`);
+        const mod = await import(pathToFileURL(migration.path).href);
+        await mod.down(this.prisma);
+        await this.prisma
+          .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
+        logger.info(`✓ Rolled back ${migration.id}_${migration.name}`);
+      },
+      Promise.resolve(),
+    );
 
     return count;
   }
@@ -138,25 +147,31 @@ export class Migrations {
     logger.debug(`Found ${applied.length} applied migrations`);
     const all = await this.getAllMigrations();
     logger.debug(`Found ${all.length} total migrations`);
-    const pending = all.filter(m => !applied.includes(m.id));
+    const pending = all.filter((m) => !applied.includes(m.id));
     logger.debug(`Found ${pending.length} pending migrations`);
 
-    const targetIndex = pending.findIndex(m => m.id === migrationId);
+    const targetIndex = pending.findIndex((m) => m.id === migrationId);
     if (targetIndex === -1) {
-      throw new Error(`Migration ${migrationId} not found in pending migrations`);
+      throw new Error(
+        `Migration ${migrationId} not found in pending migrations`,
+      );
     }
 
     const toRun = pending.slice(0, targetIndex + 1);
     logger.debug(`Will run ${toRun.length} migrations up to ${migrationId}`);
 
-    await toRun.reduce(async (prev: Promise<void>, migration: MigrationFile) => {
-      await prev;
-      logger.info(`Running ${migration.id}_${migration.name}...`);
-      const mod = await import(pathToFileURL(migration.path).href);
-      await mod.up(this.prisma);
-      await this.prisma.$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
-      logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-    }, Promise.resolve());
+    await toRun.reduce(
+      async (prev: Promise<void>, migration: MigrationFile) => {
+        await prev;
+        logger.info(`Running ${migration.id}_${migration.name}...`);
+        const mod = await import(pathToFileURL(migration.path).href);
+        await mod.up(this.prisma);
+        await this.prisma
+          .$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
+        logger.info(`✓ Applied ${migration.id}_${migration.name}`);
+      },
+      Promise.resolve(),
+    );
 
     return toRun.length;
   }
@@ -167,11 +182,15 @@ export class Migrations {
 
     const targetIndex = appliedIds.indexOf(migrationId);
     if (targetIndex === -1) {
-      throw new Error(`Migration ${migrationId} not found in applied migrations`);
+      throw new Error(
+        `Migration ${migrationId} not found in applied migrations`,
+      );
     }
 
     const toRollback = appliedIds.slice(targetIndex + 1);
-    logger.debug(`Will rollback ${toRollback.length} migrations down to ${migrationId}`);
+    logger.debug(
+      `Will rollback ${toRollback.length} migrations down to ${migrationId}`,
+    );
     const reversed = toRollback.toReversed();
 
     await reversed.reduce(async (prev: Promise<void>, id: string) => {
@@ -184,7 +203,8 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       const mod = await import(pathToFileURL(migration.path).href);
       await mod.down(this.prisma);
-      await this.prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
+      await this.prisma
+        .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
       logger.info(`✓ Rolled back ${id}_${migration.name}`);
     }, Promise.resolve());
 
@@ -195,7 +215,7 @@ export class Migrations {
     const result = await this.prisma.$queryRaw<Array<{ id: string }>>`
       SELECT id FROM _prisma_migrations ORDER BY applied_at ASC
     `;
-    return result.map(r => r.id);
+    return result.map((r) => r.id);
   }
 
   private async getAllMigrations(): Promise<MigrationFile[]> {
@@ -206,20 +226,20 @@ export class Migrations {
     logger.debug(`Found ${entries.length} entries in migrations directory`);
 
     const migrations = entries
-      .filter(entry => {
+      .filter((entry) => {
         const isDirectory = entry.isDirectory();
         logger.debug(`Entry ${entry.name} is directory: ${isDirectory}`);
         return isDirectory;
       })
-      .filter(entry => {
+      .filter((entry) => {
         const hasValidFormat = entry.name.match(/^(\d+)_(.+)$/) !== null;
         logger.debug(`Entry ${entry.name} matches format: ${hasValidFormat}`);
         return hasValidFormat;
       })
-      .map(entry => {
+      .map((entry) => {
         const match = entry.name.match(/^(\d+)_(.+)$/);
         const [, id, name] = match!;
-        const migrationPath = join(migrationsDir, entry.name, 'migration.ts');
+        const migrationPath = join(migrationsDir, entry.name, "migration.ts");
         logger.debug(`Mapped migration: ${id}_${name} at ${migrationPath}`);
         return { id, name, path: migrationPath };
       })
@@ -231,6 +251,6 @@ export class Migrations {
 
   private async findMigration(id: string): Promise<MigrationFile | null> {
     const all = await this.getAllMigrations();
-    return all.find(m => m.id === id) || null;
+    return all.find((m) => m.id === id) || null;
   }
 }

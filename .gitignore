@@ -156,6 +156,7 @@ test-*.cjs
 e2e/generated/
 e2e/node_modules/
 e2e/migrations/
+e2e/prisma/
 
 # Test migrations (but not src/migrations source code)
 /migrations
