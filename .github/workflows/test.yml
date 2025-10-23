@@ -13,26 +13,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "24"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Check formatting
-        run: npx -y prettier --check src tests e2e
+        run: bunx prettier --check src tests e2e
 
       - name: Lint code
-        run: npx -y oxlint src tests e2e
+        run: bunx oxlint src tests e2e
 
       - name: Type check
-        run: npx -y tsc --noEmit
+        run: bunx tsc --noEmit
 
       - name: Check build
-        run: npm run build
+        run: bun run build
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -40,23 +39,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "24"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Build project
-        run: npm run build
+        run: bun run build
 
       - name: Generate Prisma client
-        run: npx prisma generate || echo "Prisma schema not found, skipping generate"
+        run: bunx prisma generate || echo "Prisma schema not found, skipping generate"
 
       - name: Run unit tests
-        run: npm test
+        run: bun test
 
   cross-node-compatibility:
     runs-on: ubuntu-latest
@@ -68,26 +66,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Check formatting
-        run: npx -y prettier --check src tests e2e
+        run: bunx prettier --check src tests e2e
 
       - name: Lint code
-        run: npx -y oxlint src tests e2e
+        run: bunx oxlint src tests e2e
 
       - name: Type check
-        run: npx -y tsc --noEmit
+        run: bunx tsc --noEmit
 
       - name: Build project
-        run: npm run build
+        run: bun run build
 
       - name: Test CLI functionality (basic smoke test)
         run: |
@@ -123,20 +125,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Install specific Prisma version
-        run: npm install @prisma/client@${{ matrix.prisma-version }}
+        run: bun add @prisma/client@${{ matrix.prisma-version }}
 
       - name: Build project
-        run: npm run build
+        run: bun run build
 
       - name: Wait for PostgreSQL
         run: |
@@ -152,4 +158,4 @@ jobs:
       - name: Run end-to-end tests
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-        run: npm run test:e2e
+        run: bun run test:e2e
