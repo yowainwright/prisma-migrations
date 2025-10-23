@@ -5,6 +5,7 @@ export interface PrismaClient {
     ...values: any[]
   ): Promise<T>;
   $raw(value: string): any;
+  $disconnect(): Promise<void>;
 }
 
 export type MigrationFunction = (prisma: PrismaClient) => Promise<void>;

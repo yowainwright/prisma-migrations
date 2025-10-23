@@ -1,6 +1,5 @@
 import fastGlob from "fast-glob";
 import type { PrismaClient, MigrationsConfig } from "../types";
-import { logger } from "../logger";
 
 export class Discovery {
   private cwd: string;
@@ -10,8 +9,7 @@ export class Discovery {
   }
 
   async findPrismaClient(config?: MigrationsConfig): Promise<PrismaClient> {
-    const hasClient = config?.prismaClient !== undefined;
-    if (hasClient) {
+    if (config?.prismaClient) {
       return config.prismaClient;
     }
 
@@ -36,8 +34,7 @@ export class Discovery {
   }
 
   async findMigrationsDir(config?: MigrationsConfig): Promise<string> {
-    const hasDir = config?.migrationsDir !== undefined;
-    if (hasDir) {
+    if (config?.migrationsDir) {
       return config.migrationsDir;
     }
 

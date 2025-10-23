@@ -7,6 +7,7 @@ import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
 import { Discovery } from "../discovery";
 import { setLogLevel } from "../logger";
+import type { MigrationFile } from "../types";
 import boxen from "boxen";
 import chalk from "chalk";
 
@@ -139,7 +140,7 @@ program
         console.log(chalk.green("No pending migrations"));
       } else {
         console.log(chalk.cyan(`\n${pending.length} pending migration(s):\n`));
-        pending.forEach((m) => console.log(`  ${m.id}_${m.name}`));
+        pending.forEach((m: MigrationFile) => console.log(`  ${m.id}_${m.name}`));
       }
       await prisma.$disconnect();
     } catch (error) {
@@ -163,7 +164,7 @@ program
         console.log(chalk.yellow("No applied migrations"));
       } else {
         console.log(chalk.cyan(`\n${applied.length} applied migration(s):\n`));
-        applied.forEach((m) => console.log(`  ✓ ${m.id}_${m.name}`));
+        applied.forEach((m: MigrationFile) => console.log(`  ✓ ${m.id}_${m.name}`));
       }
       await prisma.$disconnect();
     } catch (error) {

@@ -159,21 +159,20 @@ export async function rollbackSteps(
   migrations: Migrations,
   applied: MigrationFile[],
 ): Promise<number> {
-  const { steps } = await inquirer.prompt([
-    {
-      type: "number",
-      name: "steps",
-      message: `How many migrations? (1-${applied.length})`,
-      default: 1,
-      validate: (input: number) => {
-        const isValid = input >= 1 && input <= applied.length;
-        if (!isValid) {
-          return `Please enter a number between 1 and ${applied.length}`;
-        }
-        return true;
-      },
+  const { steps } = await inquirer.prompt({
+    type: "number",
+    name: "steps",
+    message: `How many migrations? (1-${applied.length})`,
+    default: 1,
+    validate: (input: number | undefined) => {
+      if (input === undefined) return "Please enter a number";
+      const isValid = input >= 1 && input <= applied.length;
+      if (!isValid) {
+        return `Please enter a number between 1 and ${applied.length}`;
+      }
+      return true;
     },
-  ]);
+  });
 
   const spinner = ora("Rolling back migrations...").start();
 

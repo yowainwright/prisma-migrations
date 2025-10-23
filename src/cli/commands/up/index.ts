@@ -127,21 +127,20 @@ export async function runStepsMigrations(
   migrations: Migrations,
   pending: MigrationFile[],
 ): Promise<number> {
-  const { steps } = await inquirer.prompt([
-    {
-      type: "number",
-      name: "steps",
-      message: `How many migrations? (1-${pending.length})`,
-      default: 1,
-      validate: (input: number) => {
-        const isValid = input >= 1 && input <= pending.length;
-        if (!isValid) {
-          return `Please enter a number between 1 and ${pending.length}`;
-        }
-        return true;
-      },
+  const { steps } = await inquirer.prompt({
+    type: "number",
+    name: "steps",
+    message: `How many migrations? (1-${pending.length})`,
+    default: 1,
+    validate: (input: number | undefined) => {
+      if (input === undefined) return "Please enter a number";
+      const isValid = input >= 1 && input <= pending.length;
+      if (!isValid) {
+        return `Please enter a number between 1 and ${pending.length}`;
+      }
+      return true;
     },
-  ]);
+  });
 
   const spinner = ora("Running migrations...").start();
 
