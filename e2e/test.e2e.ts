@@ -16,6 +16,7 @@ const migrationsDir = join(e2eDir, "migrations");
 const cliPath = join(process.cwd(), "dist", "cli.js");
 
 const DATABASE_URL =
+  process.env.DATABASE_URL ||
   "postgresql://test:test@localhost:5434/prisma_migrations_test";
 
 function runCLI(

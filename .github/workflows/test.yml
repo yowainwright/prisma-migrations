@@ -155,7 +155,19 @@ jobs:
             sleep 2
           done
 
+      - name: Install E2E dependencies
+        run: |
+          cd e2e
+          bun install
+
+      - name: Generate Prisma Client for E2E
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          cd e2e
+          bunx prisma generate --schema=schema.prisma
+
       - name: Run end-to-end tests
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-        run: bun run test:e2e
+        run: bun test ./e2e/test.e2e.ts
