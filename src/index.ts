@@ -1,2 +1,7 @@
-export { Migrations } from './migrations';
-export type { Migration, MigrationFunction, PrismaClient, MigrationsConfig } from './types';
+export { Migrations } from "./migrations";
+export type {
+  Migration,
+  MigrationFunction,
+  PrismaClient,
+  MigrationsConfig,
+} from "./types";

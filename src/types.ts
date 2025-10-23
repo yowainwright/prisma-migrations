@@ -1,6 +1,9 @@
 export interface PrismaClient {
   $executeRaw(query: TemplateStringsArray, ...values: any[]): Promise<number>;
-  $queryRaw<T = unknown>(query: TemplateStringsArray, ...values: any[]): Promise<T>;
+  $queryRaw<T = unknown>(
+    query: TemplateStringsArray,
+    ...values: any[]
+  ): Promise<T>;
   $raw(value: string): any;
 }
 
@@ -20,5 +23,5 @@ export interface MigrationFile {
 export interface MigrationsConfig {
   migrationsDir?: string;
   prismaClient?: PrismaClient;
-  logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+  logLevel?: "silent" | "error" | "warn" | "info" | "debug" | "trace";
 }

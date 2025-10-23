@@ -1,13 +1,13 @@
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 export async function init() {
-  const migrationsDir = join(process.cwd(), 'prisma', 'migrations');
+  const migrationsDir = join(process.cwd(), "prisma", "migrations");
 
   await mkdir(migrationsDir, { recursive: true });
 
   const timestamp = Date.now().toString();
-  const migrationName = 'initial_migration';
+  const migrationName = "initial_migration";
   const migrationDir = join(migrationsDir, `${timestamp}_${migrationName}`);
 
   await mkdir(migrationDir, { recursive: true });
@@ -23,7 +23,7 @@ export async function down(prisma: PrismaClient) {
 }
 `;
 
-  await writeFile(join(migrationDir, 'migration.ts'), migrationContent);
+  await writeFile(join(migrationDir, "migration.ts"), migrationContent);
 
   console.log(`✓ Created migration: ${timestamp}_${migrationName}`);
   console.log(`  Location: ${migrationDir}`);

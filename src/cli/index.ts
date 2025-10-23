@@ -1,65 +1,72 @@
-import { Command } from 'commander';
-import { up } from './commands/up';
-import { down } from './commands/down';
-import { init } from './commands/init';
-import { create } from './commands/create';
-import { loadConfig } from '../config';
-import { Migrations } from '../migrations';
-import { Discovery } from '../discovery';
-import { setLogLevel } from '../logger';
-import boxen from 'boxen';
-import chalk from 'chalk';
+import { Command } from "commander";
+import { up } from "./commands/up";
+import { down } from "./commands/down";
+import { init } from "./commands/init";
+import { create } from "./commands/create";
+import { loadConfig } from "../config";
+import { Migrations } from "../migrations";
+import { Discovery } from "../discovery";
+import { setLogLevel } from "../logger";
+import boxen from "boxen";
+import chalk from "chalk";
 
-console.log(boxen(chalk.cyan.bold('Prisma Migrations'), {
-  padding: 1,
-  margin: 1,
-  borderStyle: 'round',
-  borderColor: 'cyan'
-}));
+console.log(
+  boxen(chalk.cyan.bold("Prisma Migrations"), {
+    padding: 1,
+    margin: 1,
+    borderStyle: "round",
+    borderColor: "cyan",
+  }),
+);
 
 const program = new Command();
 
 program
-  .name('prisma-migrations')
-  .description('Simple up/down migrations for Prisma')
-  .version('1.0.0')
-  .option('-v, --verbose', 'Enable verbose logging')
-  .option('--log-level <level>', 'Set log level (silent, error, warn, info, debug, trace)');
+  .name("prisma-migrations")
+  .description("Simple up/down migrations for Prisma")
+  .version("1.0.0")
+  .option("-v, --verbose", "Enable verbose logging")
+  .option(
+    "--log-level <level>",
+    "Set log level (silent, error, warn, info, debug, trace)",
+  );
 
 program
-  .command('init')
-  .description('Initialize migrations directory')
+  .command("init")
+  .description("Initialize migrations directory")
   .action(async () => {
     try {
       await init();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('create [name]')
-  .description('Create a new migration')
+  .command("create [name]")
+  .description("Create a new migration")
   .action(async (name) => {
     try {
       await create(name);
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('up')
-  .description('Run pending migrations')
-  .option('-s, --steps <number>', 'Number of migrations to run')
-  .option('-i, --interactive', 'Interactive mode')
+  .command("up")
+  .description("Run pending migrations")
+  .option("-s, --steps <number>", "Number of migrations to run")
+  .option("-i, --interactive", "Interactive mode")
   .action(async (options, command) => {
     const discovery = new Discovery();
     try {
       const parentOpts = command.parent.opts();
-      const logLevel = parentOpts.verbose ? 'debug' : (parentOpts.logLevel || 'silent');
+      const logLevel = parentOpts.verbose
+        ? "debug"
+        : parentOpts.logLevel || "silent";
       setLogLevel(logLevel);
 
       const config = await loadConfig();
@@ -69,21 +76,23 @@ program
       await up(prisma, steps, config, interactive);
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('down')
-  .description('Rollback migrations')
-  .option('-s, --steps <number>', 'Number of migrations to rollback', '1')
-  .option('-i, --interactive', 'Interactive mode')
+  .command("down")
+  .description("Rollback migrations")
+  .option("-s, --steps <number>", "Number of migrations to rollback", "1")
+  .option("-i, --interactive", "Interactive mode")
   .action(async (options, command) => {
     const discovery = new Discovery();
     try {
       const parentOpts = command.parent.opts();
-      const logLevel = parentOpts.verbose ? 'debug' : (parentOpts.logLevel || 'silent');
+      const logLevel = parentOpts.verbose
+        ? "debug"
+        : parentOpts.logLevel || "silent";
       setLogLevel(logLevel);
 
       const config = await loadConfig();
@@ -93,14 +102,14 @@ program
       await down(prisma, steps, config, interactive);
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('status')
-  .description('Show migration status')
+  .command("status")
+  .description("Show migration status")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -110,14 +119,14 @@ program
       await migrations.status();
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('pending')
-  .description('List pending migrations')
+  .command("pending")
+  .description("List pending migrations")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -127,21 +136,21 @@ program
       const pending = await migrations.pending();
 
       if (pending.length === 0) {
-        console.log(chalk.green('No pending migrations'));
+        console.log(chalk.green("No pending migrations"));
       } else {
         console.log(chalk.cyan(`\n${pending.length} pending migration(s):\n`));
-        pending.forEach(m => console.log(`  ${m.id}_${m.name}`));
+        pending.forEach((m) => console.log(`  ${m.id}_${m.name}`));
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('applied')
-  .description('List applied migrations')
+  .command("applied")
+  .description("List applied migrations")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -151,21 +160,21 @@ program
       const applied = await migrations.applied();
 
       if (applied.length === 0) {
-        console.log(chalk.yellow('No applied migrations'));
+        console.log(chalk.yellow("No applied migrations"));
       } else {
         console.log(chalk.cyan(`\n${applied.length} applied migration(s):\n`));
-        applied.forEach(m => console.log(`  ✓ ${m.id}_${m.name}`));
+        applied.forEach((m) => console.log(`  ✓ ${m.id}_${m.name}`));
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('latest')
-  .description('Show the latest applied migration')
+  .command("latest")
+  .description("Show the latest applied migration")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -175,21 +184,21 @@ program
       const latest = await migrations.latest();
 
       if (!latest) {
-        console.log(chalk.yellow('No migrations applied yet'));
+        console.log(chalk.yellow("No migrations applied yet"));
       } else {
-        console.log(chalk.cyan('Latest migration:'));
+        console.log(chalk.cyan("Latest migration:"));
         console.log(`  ✓ ${latest.id}_${latest.name}`);
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('reset')
-  .description('Rollback all migrations')
+  .command("reset")
+  .description("Rollback all migrations")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -200,14 +209,14 @@ program
       console.log(chalk.green(`\n✓ Rolled back ${count} migration(s)`));
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('fresh')
-  .description('Rollback all migrations and re-run them')
+  .command("fresh")
+  .description("Rollback all migrations and re-run them")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -215,17 +224,21 @@ program
       const prisma = await discovery.findPrismaClient(config);
       const migrations = new Migrations(prisma, config);
       const count = await migrations.fresh();
-      console.log(chalk.green(`\n✓ Fresh migration complete. Applied ${count} migration(s)`));
+      console.log(
+        chalk.green(
+          `\n✓ Fresh migration complete. Applied ${count} migration(s)`,
+        ),
+      );
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
 
 program
-  .command('refresh')
-  .description('Rollback all migrations and re-run them (alias for fresh)')
+  .command("refresh")
+  .description("Rollback all migrations and re-run them (alias for fresh)")
   .action(async () => {
     const discovery = new Discovery();
     try {
@@ -233,10 +246,14 @@ program
       const prisma = await discovery.findPrismaClient(config);
       const migrations = new Migrations(prisma, config);
       const result = await migrations.refresh();
-      console.log(chalk.green(`\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`));
+      console.log(
+        chalk.green(
+          `\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`,
+        ),
+      );
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      console.error(chalk.red("Error:"), error);
       process.exit(1);
     }
   });
