@@ -149,7 +149,6 @@ test-resolution.cjs
 test-resolution.js
 test-*.mjs
 test-*.cjs
-migrations
 .claude
 .turbo/
 
@@ -157,4 +156,7 @@ migrations
 e2e/generated/
 e2e/node_modules/
 e2e/migrations/
+
+# Test migrations (but not src/migrations source code)
+/migrations
 
