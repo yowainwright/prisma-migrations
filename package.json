@@ -3,18 +3,17 @@
   "version": "0.0.9",
   "description": "A Node.js library to manage Prisma ORM migrations like other ORMs",
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
   },
   "bin": {
-    "prisma-migrations": "dist/cli.cjs"
+    "prisma-migrations": "dist/cli.js"
   },
   "scripts": {
     "build": "turbo run build build-lib",
@@ -27,7 +26,7 @@
     "test": "turbo run test-lib",
     "test-lib": "bun test",
     "test:watch": "bun test --watch",
-    "test:e2e": "bun run build && bun test e2e/test.js e2e/test-cjs.js",
+    "test:e2e": "./e2e/run-e2e.sh",
     "test:e2e:esm": "bun run build && bun test e2e/test.js",
     "test:e2e:cjs": "bun run build && bun test e2e/test-cjs.js",
     "test:docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
@@ -37,8 +36,15 @@
     "lint:fix": "bunx -y oxlint src tests e2e --fix",
     "format": "bunx -y prettier --write src tests e2e",
     "format:check": "bunx -y prettier --check src tests e2e",
+    "clean": "bun run clean:dist && bun run clean:turbo",
+    "clean:dist": "rm -rf dist app/dist",
+    "clean:turbo": "rm -rf .turbo app/.turbo",
+    "clean:deps": "rm -rf node_modules app/node_modules bun.lock",
+    "clean:all": "bun run clean && bun run clean:deps",
+    "rebuild": "bun run clean && bun install && bun run build",
     "precommit": "bun run format && bun run lint && bun run build && bun test",
-    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun test"
+    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun test",
+    "prepare": "husky"
   },
   "keywords": [
     "prisma",
@@ -56,23 +62,28 @@
   "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^6.11.1",
-    "chalk": "^5.0.0",
+    "@prisma/client": "^6.18.0",
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
-    "commander": "^11.0.0",
+    "commander": "^14.0.1",
     "diff": "^8.0.2",
+    "fast-glob": "^3.3.3",
     "fs-extra": "^11.0.0",
-    "inquirer": "^12.9.3",
+    "inquirer": "^12.10.0",
+    "lilconfig": "^3.1.3",
     "node-sql-parser": "^5.3.11",
+    "ora": "^9.0.0",
     "p-map": "^7.0.3",
-    "pino": "^9.9.0",
-    "pino-pretty": "^13.1.1"
+    "pino": "^10.1.0",
+    "pino-pretty": "^13.1.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.0",
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
-    "prisma": "^6.11.1",
+    "husky": "^9.1.7",
+    "prisma": "^6.18.0",
     "tsup": "^8.5.0",
     "turbo": "^2.5.8",
     "typescript": "^5.0.0"
