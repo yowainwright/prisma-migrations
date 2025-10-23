@@ -28,6 +28,12 @@ This library complements Prisma by providing the migration management patterns d
 
 ```bash
 npm install prisma-migrations
+# or
+bun add prisma-migrations
+# or
+yarn add prisma-migrations
+# or
+pnpm add prisma-migrations
 ```
 
 ## Compatibility
@@ -60,69 +66,96 @@ This library is designed to work with modern versions of Prisma and Node.js. Ple
 
 ## Quick Start
 
-### New Classes and Interfaces
-
-#### CommitManager
-
-- Manages git-related actions.
-- **Methods**:
-  - `getCurrentCommit()`: Retrieve current commit.
-  - `getCurrentBranch()`: Retrieve current branch.
-  - `getCommitsBetween(from, to)`: Get commits between references.
-
-#### VersionManager
-
-- Manages version-based migrations.
-- **Methods**:
-  - `registerVersion(version, migrations)`: Register a version.
-  - `getMigrationsBetween(from, to)`: Determine migrations to run or rollback.
-  - `generateDeploymentPlan(fromVersion, toVersion)`: Generate a plan between versions.
-
-### Interfaces
-
-- **VersionMigrationMapping**: Information associated with migrations for a version.
-- **VersionMigrationOptions**: Options for managing versions.
-- **VersionMigrationResult**: Result structure for version operations.
-
 ### CLI Usage
 
 ```bash
+# Initialize migrations directory
+prisma-migrations init
+
 # Create a new migration
 prisma-migrations create add_users_table
 
 # Run all pending migrations
 prisma-migrations up
 
-# Run migrations with options
+# Run specific number of migrations
 prisma-migrations up --steps 3
-prisma-migrations up --dry-run
 
-# Rollback migrations
+# Interactive mode (select which migrations to run)
+prisma-migrations up --interactive
+
+# Rollback last migration
 prisma-migrations down
+
+# Rollback specific number of migrations
 prisma-migrations down --steps 2
+
+# Interactive rollback
+prisma-migrations down --interactive
 
 # Check migration status
 prisma-migrations status
+
+# List pending migrations
+prisma-migrations pending
+
+# List applied migrations
+prisma-migrations applied
+
+# Show latest applied migration
+prisma-migrations latest
+
+# Rollback all migrations
+prisma-migrations reset
+
+# Rollback all and re-run (fresh start)
+prisma-migrations fresh
+
+# Enable verbose logging
+prisma-migrations --verbose up
 ```
 
 ### Programmatic Usage
 
 ```javascript
-import { MigrationManager } from "prisma-migrations";
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
-const manager = new MigrationManager();
-
-// Create a new migration
-await manager.createMigration({ name: "add_users_table" });
+const prisma = new PrismaClient();
+const migrations = new Migrations(prisma, {
+  migrationsDir: "./migrations",
+});
 
 // Run all pending migrations
-await manager.runMigrations();
+const count = await migrations.up();
+console.log(`Applied ${count} migrations`);
 
 // Rollback last migration
-await manager.rollbackMigrations();
+await migrations.down();
+
+// Rollback last 2 migrations
+await migrations.down(2);
 
 // Get migration status
-const status = await manager.getMigrationStatus();
+await migrations.status();
+
+// Get pending migrations
+const pending = await migrations.pending();
+
+// Get applied migrations
+const applied = await migrations.applied();
+
+// Get latest migration
+const latest = await migrations.latest();
+
+// Reset all migrations
+await migrations.reset();
+
+// Fresh start (reset and re-run)
+await migrations.fresh();
+
+// Disconnect
+await prisma.$disconnect();
 ```
 
 ## Migration Files
@@ -260,13 +293,25 @@ This is particularly useful when:
 
 ### CLI Commands
 
-#### `prisma-migrations create <name>`
+#### `prisma-migrations init`
+
+Initialize migrations directory with the first migration.
+
+**Example:**
+
+```bash
+prisma-migrations init
+```
+
+---
+
+#### `prisma-migrations create [name]`
 
 Create a new migration file.
 
 **Parameters:**
 
-- `<name>`: Migration name (string)
+- `[name]`: Optional migration name (string)
 
 **Example:**
 
@@ -279,13 +324,12 @@ prisma-migrations create "update user schema"
 
 #### `prisma-migrations up [options]`
 
-Run all pending migrations or specific migrations.
+Run pending migrations.
 
 **Options:**
 
-- `-t, --to <timestamp>`: Run up to a specific migration
 - `-s, --steps <number>`: Run a specific number of migrations
-- `-d, --dry-run`: Preview migrations without applying
+- `-i, --interactive`: Interactive mode to select which migrations to run
 
 **Examples:**
 
@@ -293,14 +337,11 @@ Run all pending migrations or specific migrations.
 # Run all pending migrations
 prisma-migrations up
 
-# Run up to a specific migration
-prisma-migrations up --to 20231201120000
-
 # Run next 3 migrations
 prisma-migrations up --steps 3
 
-# Preview without applying
-prisma-migrations up --dry-run
+# Interactive mode
+prisma-migrations up --interactive
 ```
 
 ---
@@ -311,9 +352,8 @@ Rollback migrations.
 
 **Options:**
 
-- `-t, --to <timestamp>`: Rollback to a specific migration
-- `-s, --steps <number>`: Rollback a specific number of migrations
-- `-d, --dry-run`: Preview rollback without applying
+- `-s, --steps <number>`: Rollback a specific number of migrations (default: 1)
+- `-i, --interactive`: Interactive mode to select which migrations to rollback
 
 **Examples:**
 
@@ -321,21 +361,18 @@ Rollback migrations.
 # Rollback last migration
 prisma-migrations down
 
-# Rollback to a specific migration
-prisma-migrations down --to 20231201120000
-
 # Rollback last 2 migrations
 prisma-migrations down --steps 2
 
-# Preview rollback
-prisma-migrations down --dry-run
+# Interactive rollback
+prisma-migrations down --interactive
 ```
 
 ---
 
 #### `prisma-migrations status`
 
-Get the status of all migrations.
+Show migration status (displays all migrations and whether they're applied).
 
 **Example:**
 
@@ -343,274 +380,123 @@ Get the status of all migrations.
 prisma-migrations status
 ```
 
-**Output:**
-
-```
-add_users_table [applied] - 2023-12-01T12:00:00.000Z
-add_posts_table [pending] - Pending
-update_users_schema [applied] - 2023-12-01T13:00:00.000Z
-```
-
 ---
 
-#### `prisma-migrations test`
+#### `prisma-migrations pending`
 
-Test database connection.
+List all pending (not yet applied) migrations.
 
 **Example:**
 
 ```bash
-prisma-migrations test
+prisma-migrations pending
+```
+
+---
+
+#### `prisma-migrations applied`
+
+List all applied migrations.
+
+**Example:**
+
+```bash
+prisma-migrations applied
+```
+
+---
+
+#### `prisma-migrations latest`
+
+Show the latest applied migration.
+
+**Example:**
+
+```bash
+prisma-migrations latest
+```
+
+---
+
+#### `prisma-migrations reset`
+
+Rollback all applied migrations.
+
+**Example:**
+
+```bash
+prisma-migrations reset
+```
+
+---
+
+#### `prisma-migrations fresh`
+
+Rollback all migrations and re-run them (fresh start).
+
+**Example:**
+
+```bash
+prisma-migrations fresh
+```
+
+---
+
+#### `prisma-migrations refresh`
+
+Alias for `fresh` command.
+
+**Example:**
+
+```bash
+prisma-migrations refresh
 ```
 
 ---
 
 ### Programmatic API
 
-#### `MigrationManager(configPath?)`
+The `Migrations` class provides the core functionality for managing migrations programmatically.
 
-Main class for managing migrations programmatically.
-
-**Parameters:**
-
-- `configPath?`: Optional path to configuration file (string)
-
-**Example:**
-
-```javascript
-import { MigrationManager } from "prisma-migrations";
-
-const manager = new MigrationManager("./custom-config.js");
-```
-
----
-
-#### `manager.createMigration(options)`
-
-Create a new migration file.
+#### `new Migrations(prisma, config?)`
 
 **Parameters:**
 
-- `options`: CreateMigrationOptions object
-  - `name`: Migration name (string)
-  - `directory?`: Optional custom directory (string)
-  - `template?`: Optional custom template (MigrationTemplate)
-
-**Returns:** `Promise<MigrationFile>`
-
-**Example:**
-
-```javascript
-const migration = await manager.createMigration({
-  name: "add_users_table",
-  template: {
-    up: "CREATE TABLE users (id SERIAL PRIMARY KEY);",
-    down: "DROP TABLE users;",
-  },
-});
-```
-
----
-
-#### `manager.runMigrations(options?)`
-
-Run pending migrations.
-
-**Parameters:**
-
-- `options?`: RunMigrationOptions object
-  - `to?`: Run up to specific migration (string)
-  - `steps?`: Number of migrations to run (number)
-  - `dryRun?`: Preview without applying (boolean)
-  - `force?`: Force run even if already applied (boolean)
-
-**Returns:** `Promise<MigrationResult>`
-
-**Example:**
-
-```javascript
-// Run all pending migrations
-const result = await manager.runMigrations();
-
-// Run with options
-const result = await manager.runMigrations({
-  steps: 3,
-  dryRun: true,
-});
-```
-
----
-
-#### `manager.rollbackMigrations(options?)`
-
-Rollback applied migrations.
-
-**Parameters:**
-
-- `options?`: RollbackMigrationOptions object
-  - `to?`: Rollback to specific migration (string)
-  - `steps?`: Number of migrations to rollback (number)
-  - `dryRun?`: Preview without applying (boolean)
-  - `force?`: Force rollback even without down script (boolean)
-
-**Returns:** `Promise<MigrationResult>`
-
-**Example:**
-
-```javascript
-// Rollback last migration
-const result = await manager.rollbackMigrations();
-
-// Rollback with options
-const result = await manager.rollbackMigrations({
-  steps: 2,
-  dryRun: true,
-});
-```
-
----
-
-#### `manager.getMigrationStatus()`
-
-Get status of all migrations.
-
-**Returns:** `Promise<MigrationStatus[]>`
-
-**Example:**
-
-```javascript
-const statuses = await manager.getMigrationStatus();
-statuses.forEach((status) => {
-  console.log(`${status.name} [${status.status}]`);
-});
-```
-
----
-
-#### `manager.getMigrationState()`
-
-Get detailed migration state information.
-
-**Returns:** `Promise<MigrationState>`
-
-**Example:**
-
-```javascript
-const state = await manager.getMigrationState();
-console.log("Applied:", state.applied.length);
-console.log("Pending:", state.pending.length);
-```
-
----
-
-#### `manager.testConnection()`
-
-Test database connection.
-
-**Returns:** `Promise<boolean>`
-
-**Example:**
-
-```javascript
-const isConnected = await manager.testConnection();
-if (isConnected) {
-  console.log("Database connection successful");
-}
-```
-
----
-
-### Configuration Classes
-
-#### `ConfigManager(configPath?)`
-
-Manages configuration loading and access.
+- `prisma`: PrismaClient instance
+- `config?`: Optional MigrationsConfig object
+  - `migrationsDir?`: Directory containing migrations (default: discovered automatically)
 
 **Methods:**
 
-- `getConfig()`: Get current configuration
-- `updateConfig(updates)`: Update configuration
-- `getDatabaseUrl()`: Get database URL from various sources
+- `up(steps?)`: Run pending migrations, optionally limiting to N steps
+- `down(steps?)`: Rollback migrations (default: 1)
+- `status()`: Display migration status (logs to console)
+- `pending()`: Returns array of pending migrations
+- `applied()`: Returns array of applied migrations
+- `latest()`: Returns the latest applied migration or null
+- `reset()`: Rollback all migrations
+- `fresh()`: Rollback all and re-run
+- `refresh()`: Alias for fresh()
+- `upTo(migrationId)`: Run migrations up to specific ID
+- `downTo(migrationId)`: Rollback down to specific ID
 
----
-
-#### `FileManager(migrationsDir)`
-
-Manages migration file operations.
-
-**Methods:**
-
-- `createMigrationFile(name, template?)`: Create new migration file
-- `readMigrationFiles()`: Read all migration files
-- `getMigrationFile(timestamp)`: Get specific migration file
-- `getMigrationByName(name)`: Find migration by name
-- `parseMigrationContent(content)`: Parse UP/DOWN sections
-
----
-
-#### `DatabaseAdapter(databaseUrl, tableName?)`
-
-Handles database operations and migration tracking.
-
-**Methods:**
-
-- `connect()`: Connect to database
-- `disconnect()`: Disconnect from database
-- `getAppliedMigrations()`: Get all applied migrations
-- `recordMigration(id, name)`: Record migration as applied
-- `removeMigration(id)`: Remove migration record
-- `executeMigration(sql)`: Execute migration SQL
-
----
-
-### Type Definitions
-
-#### `MigrationConfig`
+**Example:**
 
 ```typescript
-interface MigrationConfig {
-  migrationsDir: string;
-  schemaPath: string;
-  databaseUrl?: string;
-  tableName?: string;
-  createTable?: boolean;
-}
-```
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
-#### `Migration`
+const prisma = new PrismaClient();
+const migrations = new Migrations(prisma);
 
-```typescript
-interface Migration {
-  id: string;
-  name: string;
-  filename: string;
-  timestamp: Date;
-  applied: boolean;
-  appliedAt?: Date;
-  rollback?: string;
-}
-```
+// Run up to 3 migrations
+await migrations.up(3);
 
-#### `MigrationResult`
+// Get pending migrations
+const pending = await migrations.pending();
+console.log(`${pending.length} migrations pending`);
 
-```typescript
-interface MigrationResult {
-  success: boolean;
-  migrations: Migration[];
-  error?: string;
-}
-```
-
-#### `MigrationStatus`
-
-```typescript
-interface MigrationStatus {
-  id: string;
-  name: string;
-  status: "pending" | "applied" | "error";
-  appliedAt?: Date;
-  error?: string;
-}
+await prisma.$disconnect();
 ```
 
 ---
@@ -701,74 +587,43 @@ npm install tsx
 
 ---
 
-## Version-Based Migration Management
-
-Manage migrations using git commits or semantic versioning for deployment and rollback scenarios.
-
-### Git Commit-Based Migrations
-
-```javascript
-// Deploy to specific commit
-const manager = new MigrationManager();
-const commitSha = "abc123";
-const migrations = await manager.getMigrationsByCommit(commitSha);
-await manager.runMigrations({ to: migrations[migrations.length - 1].id });
-
-// Rollback to previous commit
-const previousCommit = "def456";
-const targetMigrations = await manager.getMigrationsByCommit(previousCommit);
-await manager.rollbackMigrations({
-  to: targetMigrations[targetMigrations.length - 1].id,
-});
-```
-
-### Semantic Versioning
-
-```javascript
-// Register version with migrations
-const manager = new MigrationManager();
-await manager.registerVersion("1.2.0", ["20231201120000", "20231201130000"]);
-
-// Deploy to version
-await manager.deployToVersion("1.2.0");
-
-// Rollback to previous version
-await manager.rollbackToVersion("1.1.0");
-```
-
-### CLI Usage
-
-```bash
-# Deploy to git commit
-prisma-migrations up --commit abc123
-
-# Rollback to commit
-prisma-migrations down --commit def456
-
-# Deploy to version
-prisma-migrations up --version 1.2.0
-
-# Rollback to version
-prisma-migrations down --version 1.1.0
-```
-
----
 
 ## Development
 
-Use [Corepack](https://nodejs.org/api/corepack.html) to manage Yarn and ensure you have the latest Node and npm.
+This project uses [Bun](https://bun.sh) for development. Install Bun if you haven't already:
 
 ```bash
-corepack enable
-npm install
+curl -fsSL https://bun.sh/install | bash
+```
+
+Then install dependencies:
+
+```bash
+bun install
 ```
 
 ### Key Tasks
 
-- `npm run build` - Build the TypeScript source
-- `npm test` - Run unit tests
-- `npm run test:docker` - Run end-to-end tests in Docker
-- `npm run lint` - Run oxlint on source code
-- `npm run format` - Format code with prettier
+- `bun run build` - Build the TypeScript source
+- `bun test` - Run unit tests
+- `bun run test:e2e` - Run end-to-end tests with Docker
+- `bunx oxlint src tests e2e` - Lint source code
+- `bunx prettier --write src tests e2e` - Format code with prettier
 
-Use `npm run` commands for task execution.
+### Running E2E Tests
+
+The E2E tests run against a real PostgreSQL database in Docker:
+
+```bash
+# Run E2E tests (automatically starts Docker)
+./e2e/run-e2e.sh
+
+# Or use the npm script
+bun run test:e2e
+```
+
+E2E tests cover:
+- CLI commands (init, create, up, down, status, pending, applied, latest, reset, fresh, refresh)
+- Database operations with real PostgreSQL
+- Migration file discovery and execution
+- Error handling and rollback scenarios

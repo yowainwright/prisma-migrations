@@ -65,6 +65,8 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
+# Bun lockfile (keep bun.lock tracked in git)
+
 # dotenv environment variable files
 .env
 .env.*
@@ -147,5 +149,15 @@ test-resolution.cjs
 test-resolution.js
 test-*.mjs
 test-*.cjs
-migrations
+.claude
+.turbo/
+
+# E2E test generated files
+e2e/generated/
+e2e/node_modules/
+e2e/migrations/
+e2e/prisma/
+
+# Test migrations (but not src/migrations source code)
+/migrations
 
