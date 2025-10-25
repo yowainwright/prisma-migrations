@@ -71,6 +71,10 @@ footer {
   color: inherit;
 }
 
+.bg-transparent {
+  background-color: transparent !important;
+}
+
 .bg-base-100 {
   background-color: var(--b1) !important;
 }

@@ -80,7 +80,7 @@ export default function Search({ searchData }: SearchProps) {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 100);
         }}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-base-200/50 hover:bg-base-200 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80"
+        className="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +97,7 @@ export default function Search({ searchData }: SearchProps) {
           />
         </svg>
         <span className="flex-1 text-left">Search documentation...</span>
-        <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-base-300/50 rounded">
+        <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-primary/10 rounded">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
