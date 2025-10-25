@@ -1,0 +1,415 @@
+<!DOCTYPE html><html lang="en" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="description" content="Prisma Migrations - Manage and apply database schema changes safely and efficiently with Prisma"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.14.8"><title>Writing Migrations</title><style>.sidebar-content[data-astro-cid-kslwx6uo]{transition:max-height .3s ease-out}.sidebar-chevron[data-astro-cid-kslwx6uo]{transition:transform .2s ease}[data-astro-cid-sckkx6r4]{scroll-behavior:smooth}
+</style>
+<link rel="stylesheet" href="/prisma-migrations/_astro/index.CYEJQF_K.css"></head> <body data-astro-cid-sckkx6r4> <div class="flex flex-col min-h-screen" data-astro-cid-sckkx6r4> <div class="drawer lg:drawer-open flex-1" data-astro-cid-sckkx6r4> <input id="my-drawer-2" type="checkbox" class="drawer-toggle" data-astro-cid-sckkx6r4> <div class="drawer-content flex flex-col" data-astro-cid-sckkx6r4> <header class="sticky top-0 z-30"> <nav class="navbar min-h-0 bg-base-100/80 backdrop-blur-3xl justify-center items-center py-2 px-4 sm:px-6 md:px-20 border-b border-primary"> <div class="navbar-start"> <label for="my-drawer-2" class="btn btn-square btn-ghost text-base px-3 py-3 h-12 lg:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </label> <style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var A=Object.defineProperty;var g=(i,o,a)=>o in i?A(i,o,{enumerable:!0,configurable:!0,writable:!0,value:a}):i[o]=a;var d=(i,o,a)=>g(i,typeof o!="symbol"?o+"":o,a);{let i={0:t=>m(t),1:t=>a(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(a(t)),5:t=>new Set(a(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>1/0*t},o=t=>{let[l,e]=t;return l in i?i[l](e):void 0},a=t=>t.map(o),m=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([l,e])=>[l,o(e)]));class y extends HTMLElement{constructor(){super(...arguments);d(this,"Component");d(this,"hydrator");d(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let c=this.querySelectorAll("astro-slot"),n={},h=this.querySelectorAll("template[data-astro-template]");for(let r of h){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("data-astro-template")||"default"]=r.innerHTML,r.remove())}for(let r of c){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("name")||"default"]=r.innerHTML)}let p;try{p=this.hasAttribute("props")?m(JSON.parse(this.getAttribute("props"))):{}}catch(r){let s=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(s+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${s}`,this.getAttribute("props"),r),r}let u;await this.hydrator(this)(this.Component,p,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});d(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),c.disconnect(),this.childrenConnectedCallback()},c=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});c.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}async start(){let e=JSON.parse(this.getAttribute("opts")),c=this.getAttribute("client");if(Astro[c]===void 0){window.addEventListener(`astro:${c}`,()=>this.start(),{once:!0});return}try{await Astro[c](async()=>{let n=this.getAttribute("renderer-url"),[h,{default:p}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),u=this.getAttribute("component-export")||"default";if(!u.includes("."))this.Component=h[u];else{this.Component=h;for(let f of u.split("."))this.Component=this.Component[f]}return this.hydrator=p,this.hydrate},e,this)}catch(n){console.error(`[astro-island] Error hydrating ${this.getAttribute("component-url")}`,n)}}attributeChangedCallback(){this.hydrate()}}d(y,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",y)}})();</script><astro-island uid="ZhvS2P" prefix="r2" component-url="/prisma-migrations/_astro/Search.CvNGIbz4.js" component-export="default" renderer-url="/prisma-migrations/_astro/client.A0G2FHT8.js" props="{&quot;searchData&quot;:[1,[[0,{&quot;title&quot;:[0,&quot;API Reference&quot;],&quot;description&quot;:[0,&quot;Complete reference for Prisma Migrations CLI and Node.js API&quot;],&quot;content&quot;:[0,&quot;Prisma Migrations provides both a CLI interface and a programmatic Node.js API.  CLI Commands All CLI commands use the following format:   Initialize migrations directory with first migration file. Output:   Run pending migrations. Options: -  - Number of migrations to run -  or  - Interactive selection mode Output:   Show migration status (which migrations are applied/pending).   List all applied migrations. Output:   Rollback all migrations.   Alias for  command. --||  Methods   Run pending mi&quot;],&quot;slug&quot;:[0,&quot;api-reference&quot;]}],[0,{&quot;title&quot;:[0,&quot;Introduction to Prisma Migrations&quot;],&quot;description&quot;:[0,&quot;Simple, powerful migration management for Prisma with rollback support and programmatic control&quot;],&quot;content&quot;:[0,&quot;What is Prisma Migrations? Prisma Migrations adds the rollback functionality and programmatic control that Prisma&#39;s native migrations lack, while maintaining 100% compatibility with Prisma&#39;s standard migration system. Write your migrations in TypeScript or JavaScript with full type safety and run them from your code.  Why Prisma Migrations?  The Problem Prisma&#39;s native  is excellent for forward migrations, but has critical limitations: - No rollback support: Once a migration is applied, there&#39;s &quot;],&quot;slug&quot;:[0,&quot;introduction&quot;]}],[0,{&quot;title&quot;:[0,&quot;Installation &amp; Quick Start&quot;],&quot;description&quot;:[0,&quot;Get started with Prisma Migrations in minutes&quot;],&quot;content&quot;:[0,&quot;Installation Install Prisma Migrations in your project:  Quick Start  1. Initialize Your Migrations Create your first migration file: This creates a migration directory structure:  2. Create a Migration Generate a new migration file: This creates:  3. Write Your Migration Edit the generated migration file with TypeScript:  4. Run Migrations Apply all pending migrations:  5. Rollback (When Needed) Undo the last migration: Roll back multiple migrations:  Using with Existing Prisma Projects Prisma &quot;],&quot;slug&quot;:[0,&quot;setup&quot;]}],[0,{&quot;title&quot;:[0,&quot;Writing Migrations&quot;],&quot;description&quot;:[0,&quot;Learn how to write effective database migrations with Prisma Migrations&quot;],&quot;content&quot;:[0,&quot;This guide covers how to write migrations in TypeScript or JavaScript with full type safety.  Migration File Structure Each migration is stored in its own directory with a  (or ) file: The migration file exports two functions: -  - Applies the migration -  - Rolls back the migration  Basic Migration Template  TypeScript  JavaScript  Writing SQL Migrations Use  for SQL statements:  Using Prisma Client Operations You can use any Prisma Client method in migrations:  Common Migration Patterns  Creat&quot;],&quot;slug&quot;:[0,&quot;workspaces&quot;]}]]]}" ssr client="load" opts="{&quot;name&quot;:&quot;Search&quot;,&quot;value&quot;:true}" await-children><button class="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80 border border-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span class="flex-1 text-left">Search documentation...</span><kbd class="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-primary/10 rounded"><span class="text-xs">⌘</span>K</kbd></button><!--astro:end--></astro-island> </div> <div class="navbar-end"> <a class="btn btn-ghost btn-square text-base px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10" href="https://github.com/yowainwright/prisma-migrations" aria-label="github"> <astro-island uid="Z2rt1MI" prefix="r3" component-url="/prisma-migrations/_astro/si.X8dkXN5h.js" component-export="SiGithub" renderer-url="/prisma-migrations/_astro/client.A0G2FHT8.js" props="{&quot;className&quot;:[0,&quot;h-6 w-6&quot;]}" ssr client="load" opts="{&quot;name&quot;:&quot;SiGithub&quot;,&quot;value&quot;:true}" await-children><svg stroke="currentColor" fill="currentColor" stroke-width="0" role="img" viewBox="0 0 24 24" class="h-6 w-6" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg><!--astro:end--></astro-island> </a> </div> </nav> </header> <div class="flex-1" data-astro-cid-sckkx6r4>  <div class="flex flex-col lg:flex-row p-4 sm:p-6 md:p-10 md:pt-10 xl:gap-20"> <article class="flex flex-col w-full lg:max-w-3xl"> <div class="text-sm breadcrumbs pt-0 pb-4"> <ul> <li><a href="/prisma-migrations" class="hover:text-primary">Home</a></li> <li class="text-primary">Writing Migrations</li> </ul> </div> <section class="prose prose-lg mb-10 max-w-none prose-pre:max-w-[90vw] prose-pre:overflow-x-auto prose-ul:list-disc prose-ul:ml-6 prose-ol:list-decimal prose-ol:ml-6 prose-li:ml-2"> <div> <h1>Writing Migrations</h1> <p>Learn how to write effective database migrations with Prisma Migrations</p> </div> <div class="divider my-5"></div> <p>This guide covers how to write migrations in TypeScript or JavaScript with full type safety.</p>
+<h2 id="migration-file-structure">Migration File Structure</h2>
+<p>Each migration is stored in its own directory with a <code>migration.ts</code> (or <code>migration.js</code>) file:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>prisma/migrations/</span></span>
+<span class="line"><span>└── [timestamp]_migration_name/</span></span>
+<span class="line"><span>    └── migration.ts</span></span></code></pre>
+<p>The migration file exports two functions:</p>
+<ul>
+<li><code>up()</code> - Applies the migration</li>
+<li><code>down()</code> - Rolls back the migration</li>
+</ul>
+<h2 id="basic-migration-template">Basic Migration Template</h2>
+<h3 id="typescript">TypeScript</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#F97583"> type</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Your migration code here</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Your rollback code here</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="javascript">JavaScript</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#79B8FF">exports</span><span style="color:#E1E4E8">.</span><span style="color:#B392F0">up</span><span style="color:#F97583"> =</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Your migration code here</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#79B8FF">exports</span><span style="color:#E1E4E8">.</span><span style="color:#B392F0">down</span><span style="color:#F97583"> =</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Your rollback code here</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span></code></pre>
+<h2 id="writing-sql-migrations">Writing SQL Migrations</h2>
+<p>Use <code>$executeRaw</code> for SQL statements:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#F97583"> type</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE TABLE users (</span></span>
+<span class="line"><span style="color:#9ECBFF">      id SERIAL PRIMARY KEY,</span></span>
+<span class="line"><span style="color:#9ECBFF">      email VARCHAR(255) UNIQUE NOT NULL,</span></span>
+<span class="line"><span style="color:#9ECBFF">      name VARCHAR(255),</span></span>
+<span class="line"><span style="color:#9ECBFF">      created_at TIMESTAMP DEFAULT NOW()</span></span>
+<span class="line"><span style="color:#9ECBFF">    )</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP TABLE IF EXISTS users`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h2 id="using-prisma-client-operations">Using Prisma Client Operations</h2>
+<p>You can use any Prisma Client method in migrations:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#F97583"> type</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Create table with raw SQL</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE TABLE users (</span></span>
+<span class="line"><span style="color:#9ECBFF">      id SERIAL PRIMARY KEY,</span></span>
+<span class="line"><span style="color:#9ECBFF">      email VARCHAR(255) UNIQUE NOT NULL,</span></span>
+<span class="line"><span style="color:#9ECBFF">      role VARCHAR(50) DEFAULT &#39;user&#39;</span></span>
+<span class="line"><span style="color:#9ECBFF">    )</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Seed initial data using Prisma Client</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.user.</span><span style="color:#B392F0">createMany</span><span style="color:#E1E4E8">({</span></span>
+<span class="line"><span style="color:#E1E4E8">    data: [</span></span>
+<span class="line"><span style="color:#E1E4E8">      { email: </span><span style="color:#9ECBFF">&#39;admin@example.com&#39;</span><span style="color:#E1E4E8">, role: </span><span style="color:#9ECBFF">&#39;admin&#39;</span><span style="color:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#E1E4E8">      { email: </span><span style="color:#9ECBFF">&#39;user@example.com&#39;</span><span style="color:#E1E4E8">, role: </span><span style="color:#9ECBFF">&#39;user&#39;</span><span style="color:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#E1E4E8">    ],</span></span>
+<span class="line"><span style="color:#E1E4E8">  });</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP TABLE IF EXISTS users`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h2 id="common-migration-patterns">Common Migration Patterns</h2>
+<h3 id="creating-tables">Creating Tables</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE TABLE posts (</span></span>
+<span class="line"><span style="color:#9ECBFF">      id SERIAL PRIMARY KEY,</span></span>
+<span class="line"><span style="color:#9ECBFF">      title VARCHAR(255) NOT NULL,</span></span>
+<span class="line"><span style="color:#9ECBFF">      content TEXT,</span></span>
+<span class="line"><span style="color:#9ECBFF">      author_id INTEGER REFERENCES users(id),</span></span>
+<span class="line"><span style="color:#9ECBFF">      published BOOLEAN DEFAULT false,</span></span>
+<span class="line"><span style="color:#9ECBFF">      created_at TIMESTAMP DEFAULT NOW(),</span></span>
+<span class="line"><span style="color:#9ECBFF">      updated_at TIMESTAMP DEFAULT NOW()</span></span>
+<span class="line"><span style="color:#9ECBFF">    )</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Create indexes</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE INDEX idx_posts_author_id ON posts(author_id)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE INDEX idx_posts_published ON posts(published)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP TABLE IF EXISTS posts`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="adding-columns">Adding Columns</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ADD COLUMN last_login TIMESTAMP</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ADD COLUMN is_active BOOLEAN DEFAULT true</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    DROP COLUMN last_login</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    DROP COLUMN is_active</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="modifying-columns">Modifying Columns</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Change column type</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN email TYPE TEXT</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Add constraint</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN name SET NOT NULL</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Set default value</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN role SET DEFAULT &#39;member&#39;</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN email TYPE VARCHAR(255)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN name DROP NOT NULL</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN role DROP DEFAULT</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="data-migrations">Data Migrations</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Migrate existing data</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> users</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$queryRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    SELECT id, name FROM users WHERE email IS NULL</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  for</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">const</span><span style="color:#79B8FF"> user</span><span style="color:#F97583"> of</span><span style="color:#E1E4E8"> users) {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">      UPDATE users</span></span>
+<span class="line"><span style="color:#9ECBFF">      SET email = ${`${</span><span style="color:#E1E4E8">user</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">name</span><span style="color:#9ECBFF">}@example.com`}</span></span>
+<span class="line"><span style="color:#9ECBFF">      WHERE id = ${</span><span style="color:#E1E4E8">user</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">id</span><span style="color:#9ECBFF">}</span></span>
+<span class="line"><span style="color:#9ECBFF">    `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Now make email required</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN email SET NOT NULL</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER COLUMN email DROP NOT NULL</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="creating-indexes">Creating Indexes</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE INDEX idx_users_email ON users(email)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE INDEX idx_users_created_at ON users(created_at)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Unique index</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    CREATE UNIQUE INDEX idx_users_username ON users(username)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP INDEX IF EXISTS idx_users_email`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP INDEX IF EXISTS idx_users_created_at`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP INDEX IF EXISTS idx_users_username`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-always-write-down-migrations">1. Always Write Down Migrations</h3>
+<p>Every <code>up()</code> should have a corresponding <code>down()</code> that reverses it:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// ✓ Good</span></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`CREATE TABLE foo (...)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP TABLE IF EXISTS foo`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// ✗ Bad - Empty down function</span></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Nothing here!</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="2-use-transactions-for-complex-migrations">2. Use Transactions for Complex Migrations</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$transaction</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">async</span><span style="color:#E1E4E8"> (</span><span style="color:#FFAB70">tx</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">=&gt;</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> tx.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`CREATE TABLE foo (id SERIAL PRIMARY KEY)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> tx.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`CREATE TABLE bar (id SERIAL PRIMARY KEY)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> tx.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`ALTER TABLE bar ADD FOREIGN KEY (foo_id) REFERENCES foo(id)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">  });</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="3-handle-data-migrations-safely">3. Handle Data Migrations Safely</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Get existing data</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> users</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> prisma.user.</span><span style="color:#B392F0">findMany</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Transform and update</span></span>
+<span class="line"><span style="color:#F97583">  for</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">const</span><span style="color:#79B8FF"> user</span><span style="color:#F97583"> of</span><span style="color:#E1E4E8"> users) {</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">user.displayName) {</span></span>
+<span class="line"><span style="color:#F97583">      await</span><span style="color:#E1E4E8"> prisma.user.</span><span style="color:#B392F0">update</span><span style="color:#E1E4E8">({</span></span>
+<span class="line"><span style="color:#E1E4E8">        where: { id: user.id },</span></span>
+<span class="line"><span style="color:#E1E4E8">        data: { displayName: user.email.</span><span style="color:#B392F0">split</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;@&#39;</span><span style="color:#E1E4E8">)[</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">] }</span></span>
+<span class="line"><span style="color:#E1E4E8">      });</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="4-use-descriptive-migration-names">4. Use Descriptive Migration Names</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># ✓ Good</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> create</span><span style="color:#9ECBFF"> add_user_email_verification</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> create</span><span style="color:#9ECBFF"> modify_posts_add_published_at</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># ✗ Bad</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> create</span><span style="color:#9ECBFF"> update</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> create</span><span style="color:#9ECBFF"> changes</span></span></code></pre>
+<h3 id="5-test-migrations-thoroughly">5. Test Migrations Thoroughly</h3>
+<p>Test both up and down:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># Test up</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> up</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Verify changes</span></span>
+<span class="line"><span style="color:#B392F0">psql</span><span style="color:#79B8FF"> -d</span><span style="color:#9ECBFF"> mydb</span><span style="color:#79B8FF"> -c</span><span style="color:#9ECBFF"> &quot;\d users&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Test down</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> down</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Verify rollback</span></span>
+<span class="line"><span style="color:#B392F0">psql</span><span style="color:#79B8FF"> -d</span><span style="color:#9ECBFF"> mydb</span><span style="color:#79B8FF"> -c</span><span style="color:#9ECBFF"> &quot;\d users&quot;</span></span></code></pre>
+<h2 id="advanced-patterns">Advanced Patterns</h2>
+<h3 id="conditional-migrations">Conditional Migrations</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Check if column exists</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> result</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$queryRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    SELECT column_name</span></span>
+<span class="line"><span style="color:#9ECBFF">    FROM information_schema.columns</span></span>
+<span class="line"><span style="color:#9ECBFF">    WHERE table_name=&#39;users&#39; AND column_name=&#39;email&#39;</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (result.</span><span style="color:#79B8FF">length</span><span style="color:#F97583"> ===</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">      ALTER TABLE users ADD COLUMN email VARCHAR(255)</span></span>
+<span class="line"><span style="color:#9ECBFF">    `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="multi-step-migrations">Multi-Step Migrations</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Step 1: Add new column</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users ADD COLUMN new_email VARCHAR(255)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Step 2: Copy data</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    UPDATE users SET new_email = old_email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Step 3: Drop old column</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users DROP COLUMN old_email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Step 4: Rename new column</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users RENAME COLUMN new_email TO email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6A737D">  // Reverse all steps</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users RENAME COLUMN email TO new_email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users ADD COLUMN old_email VARCHAR(255)</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    UPDATE users SET old_email = new_email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">    ALTER TABLE users DROP COLUMN new_email</span></span>
+<span class="line"><span style="color:#9ECBFF">  `</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h3 id="environment-specific-logic">Environment-Specific Logic</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> isDev</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> process.env.</span><span style="color:#79B8FF">NODE_ENV</span><span style="color:#F97583"> ===</span><span style="color:#9ECBFF"> &#39;development&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`CREATE TABLE users (id SERIAL PRIMARY KEY)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Seed data in development only</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (isDev) {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.user.</span><span style="color:#B392F0">createMany</span><span style="color:#E1E4E8">({</span></span>
+<span class="line"><span style="color:#E1E4E8">      data: [</span></span>
+<span class="line"><span style="color:#E1E4E8">        { email: </span><span style="color:#9ECBFF">&#39;dev@example.com&#39;</span><span style="color:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#E1E4E8">        { email: </span><span style="color:#9ECBFF">&#39;test@example.com&#39;</span><span style="color:#E1E4E8"> }</span></span>
+<span class="line"><span style="color:#E1E4E8">      ]</span></span>
+<span class="line"><span style="color:#E1E4E8">    });</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<h2 id="database-specific-examples">Database-Specific Examples</h2>
+<h3 id="postgresql">PostgreSQL</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// JSON columns</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  ALTER TABLE users ADD COLUMN metadata JSONB DEFAULT &#39;{}&#39;</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Arrays</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  ALTER TABLE users ADD COLUMN tags TEXT[] DEFAULT ARRAY[]::TEXT[]</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Full-text search</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  ALTER TABLE posts ADD COLUMN search_vector TSVECTOR</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  CREATE INDEX idx_posts_search ON posts USING GIN(search_vector)</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<h3 id="mysql">MySQL</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// JSON columns</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  ALTER TABLE users ADD COLUMN metadata JSON</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Fulltext index</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#9ECBFF">  ALTER TABLE posts ADD FULLTEXT INDEX idx_posts_content (content)</span></span>
+<span class="line"><span style="color:#9ECBFF">`</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="migration-failed-mid-way">Migration Failed Mid-Way</h3>
+<p>If a migration fails partway through:</p>
+<ol>
+<li>Check your database state</li>
+<li>Fix the migration code</li>
+<li>Either:
+<ul>
+<li>Manually clean up partial changes and retry</li>
+<li>Or write a new migration to continue from current state</li>
+</ul>
+</li>
+</ol>
+<h3 id="type-errors">Type Errors</h3>
+<p>If you get TypeScript errors, ensure you’re importing the correct PrismaClient type:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// ✓ Correct</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#F97583"> type</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// ✗ Wrong</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<h3 id="down-migration-doesnt-work">Down Migration Doesn’t Work</h3>
+<p>Make sure your down() properly reverses up():</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// Test both directions</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">down</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">(); </span><span style="color:#6A737D">// Should work again</span></span></code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Learn about <a href="/prisma-migrations/docs/advanced-features">Advanced Features</a> like interactive mode</li>
+<li>Explore the <a href="/prisma-migrations/docs/api-reference">API Reference</a> for programmatic usage</li>
+<li>Check <a href="/prisma-migrations/docs/troubleshooting">Troubleshooting</a> for common issues</li>
+</ul> </section> <div class="divider"></div> <div class="flex gap-4"> <a href="/prisma-migrations/docs/setup"> <button class="btn btn-ghost text-base px-6 py-3 h-14 whitespace-nowrap border-0 shadow-none outline-none hover:bg-primary/10 transition"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"> <path fill="currentColor" d="M16.707 19.293 9.414 12l7.293-7.293-1.414-1.414L6.586 12l8.707 8.707 1.414-1.414z"></path> </svg> <span>Installation &amp; Quick Start</span> </button> </a> <a class="ml-auto" href="/prisma-migrations/docs/api-reference"> <button class="btn btn-ghost text-base px-6 py-3 h-14 whitespace-nowrap border-0 shadow-none outline-none hover:bg-primary/10 transition"> <span>API Reference</span> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"> <path fill="currentColor" d="M7.293 4.707 14.586 12l-7.293 7.293 1.414 1.414L17.414 12 8.707 3.293 7.293 4.707z"></path> </svg> </button> </a> </div> </article> <div class="hidden lg:block"> <div class="hidden xl:sticky xl:block xl:top-28 w-64"><nav aria-label="Table of contents"><h2 class="mb-3 text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+On this page
+</h2><ul id="toc-list" class="space-y-2.5"><li><a href="#migration-file-structure" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Migration File Structure</a></li><li><a href="#basic-migration-template" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Basic Migration Template</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#typescript" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">TypeScript</a></li><li><a href="#javascript" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">JavaScript</a></li></ul></li><li><a href="#writing-sql-migrations" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Writing SQL Migrations</a></li><li><a href="#using-prisma-client-operations" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Using Prisma Client Operations</a></li><li><a href="#common-migration-patterns" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Common Migration Patterns</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#creating-tables" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Creating Tables</a></li><li><a href="#adding-columns" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Adding Columns</a></li><li><a href="#modifying-columns" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Modifying Columns</a></li><li><a href="#data-migrations" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Data Migrations</a></li><li><a href="#creating-indexes" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Creating Indexes</a></li></ul></li><li><a href="#best-practices" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Best Practices</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#1-always-write-down-migrations" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">1. Always Write Down Migrations</a></li><li><a href="#2-use-transactions-for-complex-migrations" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">2. Use Transactions for Complex Migrations</a></li><li><a href="#3-handle-data-migrations-safely" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">3. Handle Data Migrations Safely</a></li><li><a href="#4-use-descriptive-migration-names" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">4. Use Descriptive Migration Names</a></li><li><a href="#5-test-migrations-thoroughly" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">5. Test Migrations Thoroughly</a></li></ul></li><li><a href="#advanced-patterns" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Advanced Patterns</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#conditional-migrations" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Conditional Migrations</a></li><li><a href="#multi-step-migrations" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Multi-Step Migrations</a></li><li><a href="#environment-specific-logic" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Environment-Specific Logic</a></li></ul></li><li><a href="#database-specific-examples" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Database-Specific Examples</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#postgresql" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">PostgreSQL</a></li><li><a href="#mysql" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">MySQL</a></li></ul></li><li><a href="#troubleshooting" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Troubleshooting</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#migration-failed-mid-way" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Migration Failed Mid-Way</a></li><li><a href="#type-errors" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Type Errors</a></li><li><a href="#down-migration-doesnt-work" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Down Migration Doesn’t Work</a></li></ul></li><li><a href="#next-steps" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Next Steps</a></li></ul></nav></div>
+
+  <script type="module">function s(){const c=new IntersectionObserver(t=>{t.forEach(o=>{const n=o.target.getAttribute("id"),e=document.querySelector(`a[href="#${n}"]`);o.isIntersecting&&(document.querySelectorAll("[data-toc-link]").forEach(r=>{r.classList.remove("text-[#1D4ED8]","font-medium","border-[#1D4ED8]"),r.classList.add("text-base-content/70","border-transparent")}),e&&(e.classList.remove("text-base-content/70","text-base-content/60","border-transparent"),e.classList.add("text-[#1D4ED8]","font-medium","border-[#1D4ED8]")))})},{rootMargin:"-20% 0% -70% 0%",threshold:0});document.querySelectorAll("h2[id], h3[id], h4[id]").forEach(t=>{c.observe(t)}),document.querySelectorAll("[data-toc-link]").forEach(t=>{t.addEventListener("click",o=>{o.preventDefault();const n=t.getAttribute("href")?.substring(1);if(!n)return;const e=document.getElementById(n);if(e){const d=e.getBoundingClientRect().top+window.pageYOffset+-100;window.scrollTo({top:d,behavior:"smooth"})}})})}document.addEventListener("DOMContentLoaded",s);document.addEventListener("astro:page-load",s);</script> </div> </div>  </div> </div> <div class="drawer-side z-40 border-r border-primary bg-transparent" data-astro-cid-kslwx6uo> <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay" data-astro-cid-kslwx6uo></label> <aside class="bg-transparent min-h-screen w-64 sm:w-72" data-astro-cid-kslwx6uo> <div class="sticky top-0 z-20 bg-base-100/80 backdrop-blur-3xl py-2 px-4 border-b border-primary flex items-center" data-astro-cid-kslwx6uo> <a href="/prisma-migrations" class="btn btn-ghost text-sm px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10" data-astro-cid-kslwx6uo> <h1 class="text-base font-bold gradient-text" data-astro-cid-kslwx6uo>
+Prisma Migrations
+</h1> </a> </div> <div class="bg-transparent px-3 py-4 space-y-3" data-astro-cid-kslwx6uo> <div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="false" data-section-index="0" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Getting Started</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 " fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content hidden" data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/introduction" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Introduction  </span> </a> </li><li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/setup" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Installation &amp; Quick Start  </span> </a> </li> </ul> </div> </div> </div><div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="true" data-section-index="1" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Guides</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content " data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/workspaces" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-[#1D4ED8] bg-[#1D4ED8]/10 before:absolute before:left-[-2px] before:top-0 before:bottom-0 before:w-0.5 before:bg-[#1D4ED8]" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Writing Migrations  </span> </a> </li> </ul> </div> </div> </div><div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="false" data-section-index="2" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Reference</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 " fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content hidden" data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/api-reference" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> API Reference  </span> </a> </li> </ul> </div> </div> </div> </div> </aside> </div> <script type="module">function d(){document.querySelectorAll(".sidebar-toggle").forEach(e=>{e.addEventListener("click",()=>{const t=e.parentElement?.querySelector(".sidebar-content"),n=e.querySelector(".sidebar-chevron"),s=e.getAttribute("aria-expanded")==="true";!t||!n||(e.setAttribute("aria-expanded",(!s).toString()),s?(t.classList.add("hidden"),n.classList.remove("rotate-90")):(t.classList.remove("hidden"),n.classList.add("rotate-90")))})})}document.addEventListener("DOMContentLoaded",d);document.addEventListener("astro:page-load",d);</script>  </div> <footer class="w-full px-4 sm:px-6 md:px-10 xl:px-28 py-6 sm:py-7 flex flex-col gap-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:items-center bg-transparent border-t border-primary"> <div class="flex items-center justify-center sm:justify-start gap-2 order-3 sm:order-1"> <p class="text-base text-center sm:text-left">Copyright © 2025 - All rights reserved</p> </div> <div class="flex items-center justify-center gap-2 order-1 sm:order-2"> <h3 class="text-lg font-bold text-primary">Prisma Migrations</h3> </div> <nav class="flex justify-center sm:justify-end order-2 sm:order-3"> <div class="grid grid-flow-col gap-4"> <a class="btn btn-ghost btn-circle text-base px-3 py-3 h-12 w-12 flex items-center justify-center border-0 shadow-none outline-none hover:bg-primary/10" href="https://github.com/yowainwright/prisma-migrations" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="h-6 w-6"><path d="M7.999 0C3.582 0 0 3.596 0 8.032a8.031 8.031 0 0 0 5.472 7.621c.4.074.546-.174.546-.387 0-.191-.007-.696-.011-1.366-2.225.485-2.695-1.077-2.695-1.077-.363-.928-.888-1.175-.888-1.175-.727-.498.054-.488.054-.488.803.057 1.225.828 1.225.828.714 1.227 1.873.873 2.329.667.072-.519.279-.873.508-1.074-1.776-.203-3.644-.892-3.644-3.969 0-.877.312-1.594.824-2.156-.083-.203-.357-1.02.078-2.125 0 0 .672-.216 2.2.823a7.633 7.633 0 0 1 2.003-.27 7.65 7.65 0 0 1 2.003.271c1.527-1.039 2.198-.823 2.198-.823.436 1.106.162 1.922.08 2.125.513.562.822 1.279.822 2.156 0 3.085-1.87 3.764-3.652 3.963.287.248.543.738.543 1.487 0 1.074-.01 1.94-.01 2.203 0 .215.144.465.55.386A8.032 8.032 0 0 0 16 8.032C16 3.596 12.418 0 7.999 0z" fill="currentColor"></path> </svg> </a> </div> </nav> </footer> </div> </body></html>

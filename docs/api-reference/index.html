@@ -1,0 +1,431 @@
+<!DOCTYPE html><html lang="en" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="description" content="Prisma Migrations - Manage and apply database schema changes safely and efficiently with Prisma"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.14.8"><title>API Reference</title><style>.sidebar-content[data-astro-cid-kslwx6uo]{transition:max-height .3s ease-out}.sidebar-chevron[data-astro-cid-kslwx6uo]{transition:transform .2s ease}[data-astro-cid-sckkx6r4]{scroll-behavior:smooth}
+</style>
+<link rel="stylesheet" href="/prisma-migrations/_astro/index.CYEJQF_K.css"></head> <body data-astro-cid-sckkx6r4> <div class="flex flex-col min-h-screen" data-astro-cid-sckkx6r4> <div class="drawer lg:drawer-open flex-1" data-astro-cid-sckkx6r4> <input id="my-drawer-2" type="checkbox" class="drawer-toggle" data-astro-cid-sckkx6r4> <div class="drawer-content flex flex-col" data-astro-cid-sckkx6r4> <header class="sticky top-0 z-30"> <nav class="navbar min-h-0 bg-base-100/80 backdrop-blur-3xl justify-center items-center py-2 px-4 sm:px-6 md:px-20 border-b border-primary"> <div class="navbar-start"> <label for="my-drawer-2" class="btn btn-square btn-ghost text-base px-3 py-3 h-12 lg:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </label> <style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var A=Object.defineProperty;var g=(i,o,a)=>o in i?A(i,o,{enumerable:!0,configurable:!0,writable:!0,value:a}):i[o]=a;var d=(i,o,a)=>g(i,typeof o!="symbol"?o+"":o,a);{let i={0:t=>m(t),1:t=>a(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(a(t)),5:t=>new Set(a(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>1/0*t},o=t=>{let[l,e]=t;return l in i?i[l](e):void 0},a=t=>t.map(o),m=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([l,e])=>[l,o(e)]));class y extends HTMLElement{constructor(){super(...arguments);d(this,"Component");d(this,"hydrator");d(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let c=this.querySelectorAll("astro-slot"),n={},h=this.querySelectorAll("template[data-astro-template]");for(let r of h){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("data-astro-template")||"default"]=r.innerHTML,r.remove())}for(let r of c){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("name")||"default"]=r.innerHTML)}let p;try{p=this.hasAttribute("props")?m(JSON.parse(this.getAttribute("props"))):{}}catch(r){let s=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(s+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${s}`,this.getAttribute("props"),r),r}let u;await this.hydrator(this)(this.Component,p,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});d(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),c.disconnect(),this.childrenConnectedCallback()},c=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});c.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}async start(){let e=JSON.parse(this.getAttribute("opts")),c=this.getAttribute("client");if(Astro[c]===void 0){window.addEventListener(`astro:${c}`,()=>this.start(),{once:!0});return}try{await Astro[c](async()=>{let n=this.getAttribute("renderer-url"),[h,{default:p}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),u=this.getAttribute("component-export")||"default";if(!u.includes("."))this.Component=h[u];else{this.Component=h;for(let f of u.split("."))this.Component=this.Component[f]}return this.hydrator=p,this.hydrate},e,this)}catch(n){console.error(`[astro-island] Error hydrating ${this.getAttribute("component-url")}`,n)}}attributeChangedCallback(){this.hydrate()}}d(y,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",y)}})();</script><astro-island uid="ZhvS2P" prefix="r2" component-url="/prisma-migrations/_astro/Search.CvNGIbz4.js" component-export="default" renderer-url="/prisma-migrations/_astro/client.A0G2FHT8.js" props="{&quot;searchData&quot;:[1,[[0,{&quot;title&quot;:[0,&quot;API Reference&quot;],&quot;description&quot;:[0,&quot;Complete reference for Prisma Migrations CLI and Node.js API&quot;],&quot;content&quot;:[0,&quot;Prisma Migrations provides both a CLI interface and a programmatic Node.js API.  CLI Commands All CLI commands use the following format:   Initialize migrations directory with first migration file. Output:   Run pending migrations. Options: -  - Number of migrations to run -  or  - Interactive selection mode Output:   Show migration status (which migrations are applied/pending).   List all applied migrations. Output:   Rollback all migrations.   Alias for  command. --||  Methods   Run pending mi&quot;],&quot;slug&quot;:[0,&quot;api-reference&quot;]}],[0,{&quot;title&quot;:[0,&quot;Introduction to Prisma Migrations&quot;],&quot;description&quot;:[0,&quot;Simple, powerful migration management for Prisma with rollback support and programmatic control&quot;],&quot;content&quot;:[0,&quot;What is Prisma Migrations? Prisma Migrations adds the rollback functionality and programmatic control that Prisma&#39;s native migrations lack, while maintaining 100% compatibility with Prisma&#39;s standard migration system. Write your migrations in TypeScript or JavaScript with full type safety and run them from your code.  Why Prisma Migrations?  The Problem Prisma&#39;s native  is excellent for forward migrations, but has critical limitations: - No rollback support: Once a migration is applied, there&#39;s &quot;],&quot;slug&quot;:[0,&quot;introduction&quot;]}],[0,{&quot;title&quot;:[0,&quot;Installation &amp; Quick Start&quot;],&quot;description&quot;:[0,&quot;Get started with Prisma Migrations in minutes&quot;],&quot;content&quot;:[0,&quot;Installation Install Prisma Migrations in your project:  Quick Start  1. Initialize Your Migrations Create your first migration file: This creates a migration directory structure:  2. Create a Migration Generate a new migration file: This creates:  3. Write Your Migration Edit the generated migration file with TypeScript:  4. Run Migrations Apply all pending migrations:  5. Rollback (When Needed) Undo the last migration: Roll back multiple migrations:  Using with Existing Prisma Projects Prisma &quot;],&quot;slug&quot;:[0,&quot;setup&quot;]}],[0,{&quot;title&quot;:[0,&quot;Writing Migrations&quot;],&quot;description&quot;:[0,&quot;Learn how to write effective database migrations with Prisma Migrations&quot;],&quot;content&quot;:[0,&quot;This guide covers how to write migrations in TypeScript or JavaScript with full type safety.  Migration File Structure Each migration is stored in its own directory with a  (or ) file: The migration file exports two functions: -  - Applies the migration -  - Rolls back the migration  Basic Migration Template  TypeScript  JavaScript  Writing SQL Migrations Use  for SQL statements:  Using Prisma Client Operations You can use any Prisma Client method in migrations:  Common Migration Patterns  Creat&quot;],&quot;slug&quot;:[0,&quot;workspaces&quot;]}]]]}" ssr client="load" opts="{&quot;name&quot;:&quot;Search&quot;,&quot;value&quot;:true}" await-children><button class="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80 border border-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span class="flex-1 text-left">Search documentation...</span><kbd class="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-primary/10 rounded"><span class="text-xs">⌘</span>K</kbd></button><!--astro:end--></astro-island> </div> <div class="navbar-end"> <a class="btn btn-ghost btn-square text-base px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10" href="https://github.com/yowainwright/prisma-migrations" aria-label="github"> <astro-island uid="Z2rt1MI" prefix="r3" component-url="/prisma-migrations/_astro/si.X8dkXN5h.js" component-export="SiGithub" renderer-url="/prisma-migrations/_astro/client.A0G2FHT8.js" props="{&quot;className&quot;:[0,&quot;h-6 w-6&quot;]}" ssr client="load" opts="{&quot;name&quot;:&quot;SiGithub&quot;,&quot;value&quot;:true}" await-children><svg stroke="currentColor" fill="currentColor" stroke-width="0" role="img" viewBox="0 0 24 24" class="h-6 w-6" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg><!--astro:end--></astro-island> </a> </div> </nav> </header> <div class="flex-1" data-astro-cid-sckkx6r4>  <div class="flex flex-col lg:flex-row p-4 sm:p-6 md:p-10 md:pt-10 xl:gap-20"> <article class="flex flex-col w-full lg:max-w-3xl"> <div class="text-sm breadcrumbs pt-0 pb-4"> <ul> <li><a href="/prisma-migrations" class="hover:text-primary">Home</a></li> <li class="text-primary">API Reference</li> </ul> </div> <section class="prose prose-lg mb-10 max-w-none prose-pre:max-w-[90vw] prose-pre:overflow-x-auto prose-ul:list-disc prose-ul:ml-6 prose-ol:list-decimal prose-ol:ml-6 prose-li:ml-2"> <div> <h1>API Reference</h1> <p>Complete reference for Prisma Migrations CLI and Node.js API</p> </div> <div class="divider my-5"></div> <p>Prisma Migrations provides both a CLI interface and a programmatic Node.js API.</p>
+<h2 id="cli-commands">CLI Commands</h2>
+<p>All CLI commands use the following format:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#F97583"> &lt;</span><span style="color:#9ECBFF">comman</span><span style="color:#E1E4E8">d</span><span style="color:#F97583">&gt;</span><span style="color:#E1E4E8"> [options]</span></span></code></pre>
+<h3 id="init"><code>init</code></h3>
+<p>Initialize migrations directory with first migration file.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> init</span></span></code></pre>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>✓ Created migration: 1234567890_initial_migration</span></span>
+<span class="line"><span>  Location: ./prisma/migrations/1234567890_initial_migration</span></span></code></pre>
+<hr/>
+<h3 id="create-name"><code>create [name]</code></h3>
+<p>Create a new migration file with optional name.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> create</span><span style="color:#9ECBFF"> add_users_table</span></span></code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>name</code> (optional) - Migration name (kebab-case recommended)</li>
+</ul>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>✓ Created migration: 1234567890_add_users_table</span></span>
+<span class="line"><span>  Location: ./prisma/migrations/1234567890_add_users_table</span></span></code></pre>
+<hr/>
+<h3 id="up-options"><code>up [options]</code></h3>
+<p>Run pending migrations.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># Run all pending migrations</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> up</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Run next 3 migrations</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> up</span><span style="color:#79B8FF"> --steps</span><span style="color:#79B8FF"> 3</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Interactive mode - choose which migrations to run</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> up</span><span style="color:#79B8FF"> --interactive</span></span></code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--steps &lt;number&gt;</code> - Number of migrations to run</li>
+<li><code>--interactive</code> or <code>-i</code> - Interactive selection mode</li>
+</ul>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌──────────┬──────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│ Status   │ Migrations                                       │</span></span>
+<span class="line"><span>├──────────┼──────────────────────────────────────────────────┤</span></span>
+<span class="line"><span>│ ✓        │ 2 migration(s) applied successfully              │</span></span>
+<span class="line"><span>└──────────┴──────────────────────────────────────────────────┘</span></span></code></pre>
+<hr/>
+<h3 id="down-options"><code>down [options]</code></h3>
+<p>Rollback migrations.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># Rollback last migration</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> down</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Rollback last 2 migrations</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> down</span><span style="color:#79B8FF"> --steps</span><span style="color:#79B8FF"> 2</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Interactive mode - choose which migrations to rollback</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> down</span><span style="color:#79B8FF"> --interactive</span></span></code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--steps &lt;number&gt;</code> - Number of migrations to rollback (default: 1)</li>
+<li><code>--interactive</code> or <code>-i</code> - Interactive selection mode</li>
+</ul>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌──────────┬──────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│ Status   │ Migrations                                       │</span></span>
+<span class="line"><span>├──────────┼──────────────────────────────────────────────────┤</span></span>
+<span class="line"><span>│ ↓        │ 1 migration(s) rolled back                       │</span></span>
+<span class="line"><span>└──────────┴──────────────────────────────────────────────────┘</span></span></code></pre>
+<hr/>
+<h3 id="status"><code>status</code></h3>
+<p>Show migration status (which migrations are applied/pending).</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> status</span></span></code></pre>
+<hr/>
+<h3 id="pending"><code>pending</code></h3>
+<p>List all pending (not yet applied) migrations.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> pending</span></span></code></pre>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>3 pending migration(s):</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  1234567890_add_users_table</span></span>
+<span class="line"><span>  1234567891_add_posts_table</span></span>
+<span class="line"><span>  1234567892_add_comments_table</span></span></code></pre>
+<hr/>
+<h3 id="applied"><code>applied</code></h3>
+<p>List all applied migrations.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> applied</span></span></code></pre>
+<p><strong>Output:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>2 applied migration(s):</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  ✓ 1234567889_initial_migration</span></span>
+<span class="line"><span>  ✓ 1234567890_add_users_table</span></span></code></pre>
+<hr/>
+<h3 id="latest"><code>latest</code></h3>
+<p>Show the latest applied migration.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> latest</span></span></code></pre>
+<hr/>
+<h3 id="reset"><code>reset</code></h3>
+<p>Rollback all migrations.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> reset</span></span></code></pre>
+<hr/>
+<h3 id="fresh"><code>fresh</code></h3>
+<p>Rollback all migrations and re-run them (fresh start).</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> fresh</span></span></code></pre>
+<hr/>
+<h3 id="refresh"><code>refresh</code></h3>
+<p>Alias for <code>fresh</code> command.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> refresh</span></span></code></pre>
+<hr/>
+<h3 id="global-options">Global Options</h3>
+<p>These options work with any command:</p>
+<ul>
+<li><code>--verbose</code> or <code>-v</code> - Enable verbose logging</li>
+<li><code>--log-level &lt;level&gt;</code> - Set log level (silent, error, warn, info, debug, trace)</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#9ECBFF"> up</span><span style="color:#79B8FF"> --verbose</span></span>
+<span class="line"><span style="color:#B392F0">npx</span><span style="color:#9ECBFF"> prisma-migrations</span><span style="color:#79B8FF"> --log-level</span><span style="color:#9ECBFF"> debug</span><span style="color:#9ECBFF"> up</span></span></code></pre>
+<h2 id="programmatic-api">Programmatic API</h2>
+<p>Use the migrations system from your Node.js/TypeScript code.</p>
+<h3 id="import">Import</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<h3 id="constructor">Constructor</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma: PrismaClient, config</span><span style="color:#F97583">?:</span><span style="color:#E1E4E8"> MigrationsConfig)</span></span></code></pre>
+<p><strong>Parameters:</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody><tr><td><code>prisma</code></td><td><code>PrismaClient</code></td><td>Yes</td><td>Your Prisma Client instance</td></tr><tr><td><code>config</code></td><td><code>MigrationsConfig</code></td><td>No</td><td>Optional configuration</td></tr></tbody></table>
+<p><strong>Config Options:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">interface</span><span style="color:#B392F0"> MigrationsConfig</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#FFAB70">  migrationsDir</span><span style="color:#F97583">?:</span><span style="color:#79B8FF"> string</span><span style="color:#E1E4E8">;  </span><span style="color:#6A737D">// Default: auto-discovered from ./prisma/migrations</span></span>
+<span class="line"><span style="color:#FFAB70">  logLevel</span><span style="color:#F97583">?:</span><span style="color:#9ECBFF"> &#39;silent&#39;</span><span style="color:#F97583"> |</span><span style="color:#9ECBFF"> &#39;error&#39;</span><span style="color:#F97583"> |</span><span style="color:#9ECBFF"> &#39;warn&#39;</span><span style="color:#F97583"> |</span><span style="color:#9ECBFF"> &#39;info&#39;</span><span style="color:#F97583"> |</span><span style="color:#9ECBFF"> &#39;debug&#39;</span><span style="color:#F97583"> |</span><span style="color:#9ECBFF"> &#39;trace&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma, {</span></span>
+<span class="line"><span style="color:#E1E4E8">  migrationsDir: </span><span style="color:#9ECBFF">&#39;./database/migrations&#39;</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">  logLevel: </span><span style="color:#9ECBFF">&#39;info&#39;</span></span>
+<span class="line"><span style="color:#E1E4E8">});</span></span></code></pre>
+<hr/>
+<h3 id="methods">Methods</h3>
+<h4 id="upsteps-number-promisenumber"><code>up(steps?: number): Promise&lt;number&gt;</code></h4>
+<p>Run pending migrations.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>steps</code> (optional) - Number of migrations to run. If omitted, runs all pending migrations.</li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;number&gt;</code> - Number of migrations applied</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// Run all pending migrations</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> count</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Applied ${</span><span style="color:#E1E4E8">count</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Run next 3 migrations</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">3</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<hr/>
+<h4 id="downsteps-number-promisenumber"><code>down(steps?: number): Promise&lt;number&gt;</code></h4>
+<p>Rollback migrations.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>steps</code> (optional) - Number of migrations to rollback (default: 1)</li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;number&gt;</code> - Number of migrations rolled back</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#6A737D">// Rollback last migration</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">down</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Rollback last 3 migrations</span></span>
+<span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">down</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">3</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<hr/>
+<h4 id="pending-promisemigrationfile"><code>pending(): Promise&lt;MigrationFile[]&gt;</code></h4>
+<p>Get list of pending migrations.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;MigrationFile[]&gt;</code> - Array of pending migration objects</li>
+</ul>
+<p><strong>MigrationFile Interface:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">interface</span><span style="color:#B392F0"> MigrationFile</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#FFAB70">  id</span><span style="color:#F97583">:</span><span style="color:#79B8FF"> string</span><span style="color:#E1E4E8">;      </span><span style="color:#6A737D">// Migration ID (timestamp)</span></span>
+<span class="line"><span style="color:#FFAB70">  name</span><span style="color:#F97583">:</span><span style="color:#79B8FF"> string</span><span style="color:#E1E4E8">;    </span><span style="color:#6A737D">// Migration name</span></span>
+<span class="line"><span style="color:#FFAB70">  path</span><span style="color:#F97583">:</span><span style="color:#79B8FF"> string</span><span style="color:#E1E4E8">;    </span><span style="color:#6A737D">// Full path to migration file</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> pending</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">pending</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`${</span><span style="color:#E1E4E8">pending</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">length</span><span style="color:#9ECBFF">} pending migrations:`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">pending.</span><span style="color:#B392F0">forEach</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">m</span><span style="color:#F97583"> =&gt;</span><span style="color:#E1E4E8"> console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`  ${</span><span style="color:#E1E4E8">m</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">id</span><span style="color:#9ECBFF">}_${</span><span style="color:#E1E4E8">m</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">name</span><span style="color:#9ECBFF">}`</span><span style="color:#E1E4E8">));</span></span></code></pre>
+<hr/>
+<h4 id="applied-promisemigrationfile"><code>applied(): Promise&lt;MigrationFile[]&gt;</code></h4>
+<p>Get list of applied migrations.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;MigrationFile[]&gt;</code> - Array of applied migration objects</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> applied</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">applied</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`${</span><span style="color:#E1E4E8">applied</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">length</span><span style="color:#9ECBFF">} applied migrations`</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<hr/>
+<h4 id="latest-promisemigrationfile--null"><code>latest(): Promise&lt;MigrationFile | null&gt;</code></h4>
+<p>Get the latest applied migration.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;MigrationFile | null&gt;</code> - Latest migration or null if none applied</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> latest</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">latest</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (latest) {</span></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Latest: ${</span><span style="color:#E1E4E8">latest</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">id</span><span style="color:#9ECBFF">}_${</span><span style="color:#E1E4E8">latest</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">name</span><span style="color:#9ECBFF">}`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<hr/>
+<h4 id="status-promisevoid"><code>status(): Promise&lt;void&gt;</code></h4>
+<p>Display migration status (logs to console).</p>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<hr/>
+<h4 id="reset-promisenumber"><code>reset(): Promise&lt;number&gt;</code></h4>
+<p>Rollback all migrations.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;number&gt;</code> - Number of migrations rolled back</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> count</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">reset</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Rolled back ${</span><span style="color:#E1E4E8">count</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<hr/>
+<h4 id="fresh-promisenumber"><code>fresh(): Promise&lt;number&gt;</code></h4>
+<p>Rollback all migrations and re-run them.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;number&gt;</code> - Number of migrations applied after reset</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">fresh</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<hr/>
+<h4 id="refresh-promise-down-number-up-number"><code>refresh(): Promise&lt;{ down: number; up: number }&gt;</code></h4>
+<p>Alias for <code>fresh()</code> but returns detailed counts.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Promise&lt;{ down: number; up: number }&gt;</code> - Number of migrations rolled back and reapplied</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> result</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">refresh</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Rolled back ${</span><span style="color:#E1E4E8">result</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">down</span><span style="color:#9ECBFF">}, applied ${</span><span style="color:#E1E4E8">result</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">up</span><span style="color:#9ECBFF">}`</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<h2 id="complete-example">Complete Example</h2>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> runMigrations</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  try</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#6A737D">    // Check pending migrations</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#79B8FF"> pending</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">pending</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Found ${</span><span style="color:#E1E4E8">pending</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">length</span><span style="color:#9ECBFF">} pending migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">    // Run migrations</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#79B8FF"> applied</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Successfully applied ${</span><span style="color:#E1E4E8">applied</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">    // Verify latest migration</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#79B8FF"> latest</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">latest</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (latest) {</span></span>
+<span class="line"><span style="color:#E1E4E8">      console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Latest migration: ${</span><span style="color:#E1E4E8">latest</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">name</span><span style="color:#9ECBFF">}`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">catch</span><span style="color:#E1E4E8"> (error) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">error</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;Migration failed:&#39;</span><span style="color:#E1E4E8">, error);</span></span>
+<span class="line"><span style="color:#E1E4E8">    process.</span><span style="color:#B392F0">exit</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">finally</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$disconnect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">runMigrations</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="application-startup">Application Startup</h3>
+<p>Run migrations when your app starts:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> bootstrap</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Run pending migrations on startup</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> count</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Applied ${</span><span style="color:#E1E4E8">count</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Start your application</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#B392F0"> startServer</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">bootstrap</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<h3 id="cicd-deployment">CI/CD Deployment</h3>
+<p>Run migrations during deployment:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> deploy</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  try</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#6A737D">    // Check for pending migrations</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#79B8FF"> pending</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">pending</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (pending.</span><span style="color:#79B8FF">length</span><span style="color:#F97583"> ===</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#E1E4E8">      console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;No migrations to run&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">      return</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Running ${</span><span style="color:#E1E4E8">pending</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">length</span><span style="color:#9ECBFF">} migrations...`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;✓ Migrations completed successfully&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">catch</span><span style="color:#E1E4E8"> (error) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">error</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;✗ Migration failed:&#39;</span><span style="color:#E1E4E8">, error);</span></span>
+<span class="line"><span style="color:#E1E4E8">    process.</span><span style="color:#B392F0">exit</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">finally</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$disconnect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">deploy</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<h3 id="safe-rollback">Safe Rollback</h3>
+<p>Rollback with error handling:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> rollbackLastMigration</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  try</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    const</span><span style="color:#79B8FF"> latest</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">latest</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">latest) {</span></span>
+<span class="line"><span style="color:#E1E4E8">      console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;No migrations to rollback&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">      return</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Rolling back: ${</span><span style="color:#E1E4E8">latest</span><span style="color:#9ECBFF">.</span><span style="color:#E1E4E8">name</span><span style="color:#9ECBFF">}`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">down</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;✓ Rollback successful&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">catch</span><span style="color:#E1E4E8"> (error) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    console.</span><span style="color:#B392F0">error</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;✗ Rollback failed:&#39;</span><span style="color:#E1E4E8">, error);</span></span>
+<span class="line"><span style="color:#E1E4E8">    process.</span><span style="color:#B392F0">exit</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  } </span><span style="color:#F97583">finally</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$disconnect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">rollbackLastMigration</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<h3 id="development-reset">Development Reset</h3>
+<p>Fresh start for development:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { Migrations } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { PrismaClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;@prisma/client&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> resetDatabase</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> prisma</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> migrations</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Migrations</span><span style="color:#E1E4E8">(prisma);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;Resetting database...&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Rollback all migrations</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> rolled</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">reset</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Rolled back ${</span><span style="color:#E1E4E8">rolled</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  // Re-run all migrations</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> applied</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> migrations.</span><span style="color:#B392F0">up</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">`Applied ${</span><span style="color:#E1E4E8">applied</span><span style="color:#9ECBFF">} migrations`</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&#39;✓ Database reset complete&#39;</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$disconnect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">resetDatabase</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<h2 id="typescript">TypeScript</h2>
+<p>Prisma Migrations includes full TypeScript support with type safety:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#F97583"> type</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#E1E4E8">  PrismaClient,</span></span>
+<span class="line"><span style="color:#E1E4E8">  MigrationFile,</span></span>
+<span class="line"><span style="color:#E1E4E8">  MigrationFunction,</span></span>
+<span class="line"><span style="color:#E1E4E8">  MigrationsConfig</span></span>
+<span class="line"><span style="color:#E1E4E8">} </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> &#39;prisma-migrations&#39;</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Type-safe migration functions</span></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> up</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">)</span><span style="color:#F97583">:</span><span style="color:#B392F0"> Promise</span><span style="color:#E1E4E8">&lt;</span><span style="color:#79B8FF">void</span><span style="color:#E1E4E8">&gt; {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`CREATE TABLE users (id SERIAL PRIMARY KEY)`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">export</span><span style="color:#F97583"> async</span><span style="color:#F97583"> function</span><span style="color:#B392F0"> down</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">prisma</span><span style="color:#F97583">:</span><span style="color:#B392F0"> PrismaClient</span><span style="color:#E1E4E8">)</span><span style="color:#F97583">:</span><span style="color:#B392F0"> Promise</span><span style="color:#E1E4E8">&lt;</span><span style="color:#79B8FF">void</span><span style="color:#E1E4E8">&gt; {</span></span>
+<span class="line"><span style="color:#F97583">  await</span><span style="color:#E1E4E8"> prisma.</span><span style="color:#B392F0">$executeRaw</span><span style="color:#9ECBFF">`DROP TABLE IF EXISTS users`</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Type-safe configuration</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> config</span><span style="color:#F97583">:</span><span style="color:#B392F0"> MigrationsConfig</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#E1E4E8">  migrationsDir: </span><span style="color:#9ECBFF">&#39;./database/migrations&#39;</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">  logLevel: </span><span style="color:#9ECBFF">&#39;info&#39;</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span></code></pre> </section> <div class="divider"></div> <div class="flex gap-4"> <a href="/prisma-migrations/docs/workspaces"> <button class="btn btn-ghost text-base px-6 py-3 h-14 whitespace-nowrap border-0 shadow-none outline-none hover:bg-primary/10 transition"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"> <path fill="currentColor" d="M16.707 19.293 9.414 12l7.293-7.293-1.414-1.414L6.586 12l8.707 8.707 1.414-1.414z"></path> </svg> <span>Writing Migrations</span> </button> </a>  </div> </article> <div class="hidden lg:block"> <div class="hidden xl:sticky xl:block xl:top-28 w-64"><nav aria-label="Table of contents"><h2 class="mb-3 text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+On this page
+</h2><ul id="toc-list" class="space-y-2.5"><li><a href="#cli-commands" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">CLI Commands</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#init" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">init</a></li><li><a href="#create-name" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">create [name]</a></li><li><a href="#up-options" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">up [options]</a></li><li><a href="#down-options" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">down [options]</a></li><li><a href="#status" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">status</a></li><li><a href="#pending" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">pending</a></li><li><a href="#applied" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">applied</a></li><li><a href="#latest" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">latest</a></li><li><a href="#reset" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">reset</a></li><li><a href="#fresh" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">fresh</a></li><li><a href="#refresh" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">refresh</a></li><li><a href="#global-options" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Global Options</a></li></ul></li><li><a href="#programmatic-api" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Programmatic API</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#import" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Import</a></li><li><a href="#constructor" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Constructor</a></li><li><a href="#methods" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Methods</a></li></ul></li><li><a href="#complete-example" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Complete Example</a></li><li><a href="#usage-examples" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">Usage Examples</a><ul class="mt-2 space-y-2 ml-3"><li><a href="#application-startup" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Application Startup</a></li><li><a href="#cicd-deployment" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">CI/CD Deployment</a></li><li><a href="#safe-rollback" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Safe Rollback</a></li><li><a href="#development-reset" data-toc-link class="block text-base-content/60 hover:text-[#1D4ED8] text-sm transition-colors py-0.5 border-l-2 border-transparent pl-4 -ml-0.5">Development Reset</a></li></ul></li><li><a href="#typescript" data-toc-link class="block text-sm text-base-content/70 hover:text-[#1D4ED8] transition-colors py-1 border-l-2 border-transparent pl-4 -ml-0.5">TypeScript</a></li></ul></nav></div>
+
+  <script type="module">function s(){const c=new IntersectionObserver(t=>{t.forEach(o=>{const n=o.target.getAttribute("id"),e=document.querySelector(`a[href="#${n}"]`);o.isIntersecting&&(document.querySelectorAll("[data-toc-link]").forEach(r=>{r.classList.remove("text-[#1D4ED8]","font-medium","border-[#1D4ED8]"),r.classList.add("text-base-content/70","border-transparent")}),e&&(e.classList.remove("text-base-content/70","text-base-content/60","border-transparent"),e.classList.add("text-[#1D4ED8]","font-medium","border-[#1D4ED8]")))})},{rootMargin:"-20% 0% -70% 0%",threshold:0});document.querySelectorAll("h2[id], h3[id], h4[id]").forEach(t=>{c.observe(t)}),document.querySelectorAll("[data-toc-link]").forEach(t=>{t.addEventListener("click",o=>{o.preventDefault();const n=t.getAttribute("href")?.substring(1);if(!n)return;const e=document.getElementById(n);if(e){const d=e.getBoundingClientRect().top+window.pageYOffset+-100;window.scrollTo({top:d,behavior:"smooth"})}})})}document.addEventListener("DOMContentLoaded",s);document.addEventListener("astro:page-load",s);</script> </div> </div>  </div> </div> <div class="drawer-side z-40 border-r border-primary bg-transparent" data-astro-cid-kslwx6uo> <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay" data-astro-cid-kslwx6uo></label> <aside class="bg-transparent min-h-screen w-64 sm:w-72" data-astro-cid-kslwx6uo> <div class="sticky top-0 z-20 bg-base-100/80 backdrop-blur-3xl py-2 px-4 border-b border-primary flex items-center" data-astro-cid-kslwx6uo> <a href="/prisma-migrations" class="btn btn-ghost text-sm px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10" data-astro-cid-kslwx6uo> <h1 class="text-base font-bold gradient-text" data-astro-cid-kslwx6uo>
+Prisma Migrations
+</h1> </a> </div> <div class="bg-transparent px-3 py-4 space-y-3" data-astro-cid-kslwx6uo> <div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="false" data-section-index="0" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Getting Started</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 " fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content hidden" data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/introduction" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Introduction  </span> </a> </li><li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/setup" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Installation &amp; Quick Start  </span> </a> </li> </ul> </div> </div> </div><div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="false" data-section-index="1" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Guides</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 " fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content hidden" data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/workspaces" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> Writing Migrations  </span> </a> </li> </ul> </div> </div> </div><div class="sidebar-section" data-astro-cid-kslwx6uo> <button class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors" aria-expanded="true" data-section-index="2" data-astro-cid-kslwx6uo> <span data-astro-cid-kslwx6uo>Reference</span> <svg class="sidebar-chevron w-4 h-4 transition-transform duration-200 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-astro-cid-kslwx6uo> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" data-astro-cid-kslwx6uo></path> </svg> </button> <div class="sidebar-content " data-astro-cid-kslwx6uo> <div class="ml-2 mt-1 border-l-2 border-base-content/10" data-astro-cid-kslwx6uo> <ul class="space-y-0.5 py-1" data-astro-cid-kslwx6uo> <li data-astro-cid-kslwx6uo> <a href="/prisma-migrations/docs/api-reference" class="block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative text-[#1D4ED8] bg-[#1D4ED8]/10 before:absolute before:left-[-2px] before:top-0 before:bottom-0 before:w-0.5 before:bg-[#1D4ED8]" data-astro-cid-kslwx6uo> <span class="flex items-center justify-between" data-astro-cid-kslwx6uo> API Reference  </span> </a> </li> </ul> </div> </div> </div> </div> </aside> </div> <script type="module">function d(){document.querySelectorAll(".sidebar-toggle").forEach(e=>{e.addEventListener("click",()=>{const t=e.parentElement?.querySelector(".sidebar-content"),n=e.querySelector(".sidebar-chevron"),s=e.getAttribute("aria-expanded")==="true";!t||!n||(e.setAttribute("aria-expanded",(!s).toString()),s?(t.classList.add("hidden"),n.classList.remove("rotate-90")):(t.classList.remove("hidden"),n.classList.add("rotate-90")))})})}document.addEventListener("DOMContentLoaded",d);document.addEventListener("astro:page-load",d);</script>  </div> <footer class="w-full px-4 sm:px-6 md:px-10 xl:px-28 py-6 sm:py-7 flex flex-col gap-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:items-center bg-transparent border-t border-primary"> <div class="flex items-center justify-center sm:justify-start gap-2 order-3 sm:order-1"> <p class="text-base text-center sm:text-left">Copyright © 2025 - All rights reserved</p> </div> <div class="flex items-center justify-center gap-2 order-1 sm:order-2"> <h3 class="text-lg font-bold text-primary">Prisma Migrations</h3> </div> <nav class="flex justify-center sm:justify-end order-2 sm:order-3"> <div class="grid grid-flow-col gap-4"> <a class="btn btn-ghost btn-circle text-base px-3 py-3 h-12 w-12 flex items-center justify-center border-0 shadow-none outline-none hover:bg-primary/10" href="https://github.com/yowainwright/prisma-migrations" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="h-6 w-6"><path d="M7.999 0C3.582 0 0 3.596 0 8.032a8.031 8.031 0 0 0 5.472 7.621c.4.074.546-.174.546-.387 0-.191-.007-.696-.011-1.366-2.225.485-2.695-1.077-2.695-1.077-.363-.928-.888-1.175-.888-1.175-.727-.498.054-.488.054-.488.803.057 1.225.828 1.225.828.714 1.227 1.873.873 2.329.667.072-.519.279-.873.508-1.074-1.776-.203-3.644-.892-3.644-3.969 0-.877.312-1.594.824-2.156-.083-.203-.357-1.02.078-2.125 0 0 .672-.216 2.2.823a7.633 7.633 0 0 1 2.003-.27 7.65 7.65 0 0 1 2.003.271c1.527-1.039 2.198-.823 2.198-.823.436 1.106.162 1.922.08 2.125.513.562.822 1.279.822 2.156 0 3.085-1.87 3.764-3.652 3.963.287.248.543.738.543 1.487 0 1.074-.01 1.94-.01 2.203 0 .215.144.465.55.386A8.032 8.032 0 0 0 16 8.032C16 3.596 12.418 0 7.999 0z" fill="currentColor"></path> </svg> </a> </div> </nav> </footer> </div> </body></html>
