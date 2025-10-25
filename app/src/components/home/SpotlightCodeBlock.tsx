@@ -68,29 +68,29 @@ const codeLines: CodeLine[] = [
   { prefix: "", content: "" },
   {
     prefix: "",
-    content: "┌──────────┬──────────────────────────────────────────────────┐",
+    content: "┌────────┬─────────────────────┐",
     className: "text-base-content/60",
   },
   {
     prefix: "",
-    content: "│ Status   │ Migrations                                       │",
+    content: "│ Status │ Migrations          │",
     className: "text-base-content/60",
   },
   {
     prefix: "",
-    content: "├──────────┼──────────────────────────────────────────────────┤",
+    content: "├────────┼─────────────────────┤",
     className: "text-base-content/60",
   },
   {
     prefix: "",
-    content: "│ ✓        │ 1 migration(s) applied successfully              │",
+    content: "│ ✓      │ 1 migration applied │",
     className: "text-success",
     spotlight: true,
     delay: 10500,
   },
   {
     prefix: "",
-    content: "└──────────┴──────────────────────────────────────────────────┘",
+    content: "└────────┴─────────────────────┘",
     className: "text-base-content/60",
   },
 ];
@@ -130,34 +130,53 @@ export default function SpotlightCodeBlock() {
   };
 
   return (
-    <div className="mockup-code text-xs sm:text-sm md:text-base relative overflow-hidden">
-      {/* Spotlight gradient effect */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(600px circle at 50% ${(activeIndex / codeLines.length) * 100}%, rgba(29, 78, 216, 0.25), transparent 40%)`,
-          transition: "all 0.5s ease-out",
-        }}
-      />
+    <div className="rounded-lg overflow-hidden shadow-lg max-w-full" style={{ backgroundColor: 'var(--color-code-bg)' }}>
+      {/* Terminal window header */}
+      <div className="px-4 py-2 flex items-center gap-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FF5F56' }}></div>
+        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FFBD2E' }}></div>
+        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#27C93F' }}></div>
+      </div>
 
-      {codeLines.map((line, index) => (
-        <pre
-          key={index}
-          data-prefix={line.prefix}
-          className={line.className}
+      {/* Code block */}
+      <div className="relative overflow-x-auto">
+        {/* Spotlight gradient effect */}
+        <div
+          className="absolute inset-0 pointer-events-none"
           style={{
-            ...line.style,
-            opacity: getLineOpacity(index),
-            transition: "opacity 0.5s ease-out",
-            cursor: line.spotlight ? "pointer" : "default",
+            background: `radial-gradient(600px circle at 50% ${(activeIndex / codeLines.length) * 100}%, rgba(29, 78, 216, 0.15), transparent 40%)`,
+            transition: "all 0.5s ease-out",
           }}
-          onMouseEnter={() => line.spotlight && setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
-          onClick={() => line.spotlight && setActiveIndex(index)}
-        >
-          <code>{line.content}</code>
+        />
+
+        <pre className="p-4 overflow-x-auto" style={{ fontFamily: '"Courier New", Courier, monospace !important', fontSize: '0.875rem', margin: 0, background: 'transparent' }}>
+          {codeLines.map((line, index) => (
+            <div
+              key={index}
+              style={{
+                opacity: getLineOpacity(index),
+                transition: "opacity 0.5s ease-out",
+                cursor: line.spotlight ? "pointer" : "default",
+                fontFamily: 'inherit',
+              }}
+              onMouseEnter={() => line.spotlight && setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              onClick={() => line.spotlight && setActiveIndex(index)}
+            >
+              {line.prefix && (
+                <span style={{ color: 'var(--color-code-comment)', fontFamily: 'inherit' }}>{line.prefix} </span>
+              )}
+              <span style={{
+                color: line.className?.includes('success') ? 'var(--color-code-function)' :
+                       line.className?.includes('info') ? 'var(--color-code-keyword)' :
+                       line.className?.includes('text-base-content/60') ? 'var(--color-code-comment)' :
+                       'var(--color-code-text)',
+                fontFamily: 'inherit'
+              }}>{line.content}</span>
+            </div>
+          ))}
         </pre>
-      ))}
+      </div>
     </div>
   );
 }

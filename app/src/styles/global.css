@@ -7,6 +7,19 @@
 
   --color-yves-klein-blue: #002FA7;
   --color-red-accent: #DC2626;
+
+  /* Code syntax highlighting colors */
+  --color-code-bg: #031030;
+  --color-code-text: #b3d8e5;
+  --color-code-keyword: #569CD6;
+  --color-code-string: #007CF0;
+  --color-code-comment: #6A9955;
+  --color-code-function: #E2657E;
+  --color-code-number: #B5CEA8;
+  --color-code-variable: #007CF0;
+  --color-code-operator: #E194B5;
+  --color-code-punctuation: #FFD700;
+  --color-code-type: #E2657E;
 }
 
 * {
@@ -17,8 +30,22 @@ code, pre {
   font-family: "Courier New", Courier, monospace;
 }
 
-code:not(pre code) {
+.prose pre {
+  background-color: var(--color-code-bg) !important;
+  color: var(--color-code-text) !important;
+}
+
+.prose pre * {
+  font-family: "Courier New", Courier, monospace !important;
+  font-size: 1rem !important;
+}
+
+.prose code:not(pre code) {
   background-color: transparent;
+  border: 1px solid var(--color-yves-klein-blue);
+  padding: 0.125rem 0.25rem;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
 }
 
 .text-xs { font-size: 1rem; }
@@ -46,6 +73,15 @@ html {
   --b2: #F5F5F5;
   --b3: #E5E5E5;
   --bc: #002FA7;
+
+  /* Tailwind prose variables */
+  --tw-prose-body: #002FA7;
+  --tw-prose-headings: #002FA7;
+  --tw-prose-bullets: #002FA7;
+  --tw-prose-counters: #002FA7;
+  --tw-prose-bold: #002FA7;
+  --tw-prose-links: #002FA7;
+  --tw-prose-code: #002FA7;
 }
 
 html,
@@ -77,6 +113,40 @@ footer {
 
 .bg-base-100 {
   background-color: var(--b1) !important;
+}
+
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose ul li {
+  display: list-item !important;
+}
+
+.prose ul li::marker {
+  color: var(--tw-prose-bullets);
+}
+
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose ol li {
+  display: list-item !important;
+}
+
+.prose ol li::marker {
+  color: var(--tw-prose-counters);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--bc);
+  opacity: 0.2;
+  border: none;
+  margin: 1rem 0;
 }
 
 .bg-base-200 {

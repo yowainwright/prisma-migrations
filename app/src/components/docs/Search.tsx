@@ -80,7 +80,7 @@ export default function Search({ searchData }: SearchProps) {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 100);
         }}
-        className="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80"
+        className="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors min-w-[200px] md:min-w-[300px] text-base-content/60 hover:text-base-content/80 border border-primary"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -117,13 +117,13 @@ export default function Search({ searchData }: SearchProps) {
               <div className="flex min-h-full items-start justify-center pt-[10vh] p-4">
                 <div
                   ref={searchRef}
-                  className="relative w-full max-w-2xl bg-base-100 rounded-xl shadow-2xl overflow-hidden border border-base-content/10"
+                  className="relative w-full max-w-2xl bg-base-100 rounded-xl shadow-2xl overflow-hidden border border-primary"
                 >
                   {/* Search Input */}
-                  <div className="flex items-center p-4 border-b border-base-content/10">
+                  <div className="flex items-center p-4 border-b border-primary">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-3 text-[#1D4ED8]"
+                      className="h-5 w-5 mr-3 text-primary"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -141,9 +141,9 @@ export default function Search({ searchData }: SearchProps) {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search documentation..."
-                      className="flex-1 bg-transparent outline-none text-lg placeholder-base-content/50"
+                      className="flex-1 bg-transparent outline-none text-lg placeholder:text-primary"
                     />
-                    <kbd className="px-2 py-1 text-xs font-medium bg-base-200 text-base-content/60 rounded">
+                    <kbd className="px-2 py-1 text-xs font-medium bg-primary/10 text-base-content rounded">
                       ESC
                     </kbd>
                   </div>
@@ -167,8 +167,8 @@ export default function Search({ searchData }: SearchProps) {
                           <a
                             key={result.slug}
                             href={resolveDocsUrl(result.slug)}
-                            className={`block px-4 py-3 rounded-lg hover:bg-base-200/50 transition-all ${
-                              selectedIndex === index ? "bg-base-200/50" : ""
+                            className={`block px-4 py-3 rounded-lg hover:bg-primary/10 transition-all ${
+                              selectedIndex === index ? "bg-primary/10" : ""
                             }`}
                             onClick={() => {
                               setIsOpen(false);
@@ -176,10 +176,10 @@ export default function Search({ searchData }: SearchProps) {
                             }}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-[#1D4ED8]/10">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5 text-[#1D4ED8]"
+                                  className="h-5 w-5 text-primary"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -216,12 +216,12 @@ export default function Search({ searchData }: SearchProps) {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <div className="text-xs font-medium text-base-content/40 uppercase tracking-wider px-4">
+                          <div className="text-sm font-medium text-base-content/70 px-4">
                             Recent
                           </div>
                           <a
                             href={resolveDocsUrl("introduction")}
-                            className="block px-4 py-2 rounded-lg hover:bg-base-200/50 transition-all text-sm"
+                            className="block px-4 py-2 rounded-lg hover:bg-primary/10 transition-all text-sm"
                             onClick={() => setIsOpen(false)}
                           >
                             <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function Search({ searchData }: SearchProps) {
                           </a>
                           <a
                             href={resolveDocsUrl("setup")}
-                            className="block px-4 py-2 rounded-lg hover:bg-base-200/50 transition-all text-sm"
+                            className="block px-4 py-2 rounded-lg hover:bg-primary/10 transition-all text-sm"
                             onClick={() => setIsOpen(false)}
                           >
                             <div className="flex items-center gap-2">

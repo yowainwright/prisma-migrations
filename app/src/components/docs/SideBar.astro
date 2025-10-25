@@ -10,12 +10,12 @@ const expandedSections = SIDEBAR.map((section) => {
 });
 ---
 
-<div class="drawer-side z-40 md:border-r md:border-base-content/10 bg-transparent">
+<div class="drawer-side z-40 border-r border-primary bg-transparent">
   <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
   <aside class="bg-transparent min-h-screen w-64 sm:w-72">
     <div class="sticky top-0 z-20 bg-base-100/80 backdrop-blur-3xl py-2 px-4 border-b border-primary flex items-center">
-      <a href={resolveUrl("")} class="btn btn-ghost text-base px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10">
-        <h1 class="text-lg font-bold gradient-text">
+      <a href={resolveUrl("")} class="btn btn-ghost text-sm px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10">
+        <h1 class="text-base font-bold gradient-text">
           Prisma Migrations
         </h1>
       </a>
@@ -25,7 +25,7 @@ const expandedSections = SIDEBAR.map((section) => {
       {SIDEBAR.map((navItem, index) => (
         <div class="sidebar-section">
           <button
-            class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-base-content/70 uppercase tracking-normal hover:text-base-content transition-colors"
+            class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors"
             aria-expanded={expandedSections[index] ? "true" : "false"}
             data-section-index={index}
           >
