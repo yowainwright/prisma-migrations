@@ -10,17 +10,7 @@ description: "Get started with Prisma Migrations in minutes"
 Install Prisma Migrations in your project:
 
 ```bash
-# npm
 npm install prisma-migrations
-
-# bun
-bun add prisma-migrations
-
-# yarn
-yarn add prisma-migrations
-
-# pnpm
-pnpm add prisma-migrations
 ```
 
 ## Quick Start
@@ -35,7 +25,7 @@ npx prisma-migrations init
 
 This creates a migration directory structure:
 
-```
+```bash
 prisma/migrations/
 └── [timestamp]_initial_migration/
     └── migration.ts
@@ -51,7 +41,7 @@ npx prisma-migrations create add_users_table
 
 This creates:
 
-```
+```bash
 prisma/migrations/
 └── [timestamp]_add_users_table/
     └── migration.ts

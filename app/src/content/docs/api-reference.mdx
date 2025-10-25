@@ -22,7 +22,7 @@ npx prisma-migrations init
 ```
 
 **Output:**
-```
+```bash
 ✓ Created migration: 1234567890_initial_migration
   Location: ./prisma/migrations/1234567890_initial_migration
 ```
@@ -41,7 +41,7 @@ npx prisma-migrations create add_users_table
 - `name` (optional) - Migration name (kebab-case recommended)
 
 **Output:**
-```
+```bash
 ✓ Created migration: 1234567890_add_users_table
   Location: ./prisma/migrations/1234567890_add_users_table
 ```
@@ -68,7 +68,7 @@ npx prisma-migrations up --interactive
 - `--interactive` or `-i` - Interactive selection mode
 
 **Output:**
-```
+```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
 ├──────────┼──────────────────────────────────────────────────┤
@@ -98,7 +98,7 @@ npx prisma-migrations down --interactive
 - `--interactive` or `-i` - Interactive selection mode
 
 **Output:**
-```
+```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
 ├──────────┼──────────────────────────────────────────────────┤
@@ -127,7 +127,7 @@ npx prisma-migrations pending
 ```
 
 **Output:**
-```
+```bash
 3 pending migration(s):
 
   1234567890_add_users_table
@@ -146,7 +146,7 @@ npx prisma-migrations applied
 ```
 
 **Output:**
-```
+```bash
 2 applied migration(s):
 
   ✓ 1234567889_initial_migration

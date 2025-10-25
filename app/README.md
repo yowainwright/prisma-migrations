@@ -20,19 +20,19 @@ Thank you for purchasing this template. I hope you build something great with it
 
 1. Install dependencies
 
-```
+```bash
 bun install
 ```
 
 2. Run the dev server
 
-```
+```bash
 bun run dev
 ```
 
 3. Build for production
 
-```
+```bash
 bun run build
 ```
 

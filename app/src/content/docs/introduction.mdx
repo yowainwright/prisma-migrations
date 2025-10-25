@@ -29,7 +29,7 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 Prisma's native `prisma migrate` is excellent for forward migrations, but has critical limitations:
 
 - **No rollback support**: Once a migration is applied, there's no built-in way to undo it
-- **No programmatic API**: You can't run migrations from your Node.js code
+- **No programmatic API**: You can't run migrations from your JavaScript runtime code
 - **Limited control**: Can't run specific numbers of migrations or interactive selection
 - **SQL-only migrations**: No way to write migrations in TypeScript/JavaScript with type safety
 
@@ -93,7 +93,7 @@ npx prisma-migrations up --interactive
 - **Rollback migrations**: Full `up` and `down` migration support
 - **TypeScript/JavaScript migrations**: Write migrations in TS/JS with full type safety
 - **Programmatic API**: Run migrations from your Node.js code
-- **100% Prisma compatible**: Uses Prisma's standard `_prisma_migrations` table
+- **Prisma compatible**: Uses Prisma's standard `_prisma_migrations` table
 - **Step control**: Run or rollback specific numbers of migrations
 - **Interactive mode**: Select which migrations to apply
 - **Zero configuration**: Works out of the box with any Prisma project
@@ -104,5 +104,4 @@ npx prisma-migrations up --interactive
 - **Type safety**: Full TypeScript support for migration code
 - **Flexibility**: Run migrations programmatically during CI/CD or app startup
 - **Compatible**: Works alongside `prisma migrate` commands
-- **Developer friendly**: Interactive mode for development workflows
-- **Battle tested**: Comprehensive test suite with real database testing
+- **Developer enhanced**: Interactive mode for development workflows
