@@ -44,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build site
-        run: cd site && bun run build
+      - name: Build documentation site
+        run: cd app && bun run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -53,7 +53,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./site/dist
+          path: ./app/dist
 
   deploy:
     environment:

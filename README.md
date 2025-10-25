@@ -1,21 +1,21 @@
 # Prisma Migrations
 
-> Simple, powerful migration management for Prisma with rollback support
+> Migration management for Prisma with rollback support
 
 [![npm version](https://badge.fury.io/js/prisma-migrations.svg)](https://www.npmjs.com/package/prisma-migrations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining 100% compatibility with Prisma's standard migration system.
+Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining compatibility with Prisma's standard migration system.
 
 ## Features
 
-- ✓ **Rollback migrations** - Full `up` and `down` migration support
-- ✓ **TypeScript/JavaScript migrations** - Write migrations in TS/JS with full type safety
-- ✓ **Programmatic API** - Run migrations from your Node.js code
-- ✓ **100% Prisma compatible** - Uses Prisma's standard `_prisma_migrations` table
-- ✓ **Step control** - Run or rollback specific numbers of migrations
-- ✓ **Interactive mode** - Select which migrations to apply
-- ✓ **Zero configuration** - Works out of the box with any Prisma project
+- **Rollback migrations** - `up` and `down` migration support
+- **TypeScript/JavaScript migrations** - Write migrations in TS with type safety
+- **Programmatic API** - Run migrations from your JS Runtime code
+- **Prisma compatible** - Uses Prisma's standard `_prisma_migrations` table
+- **Step control** - Run or rollback specific numbers of migrations
+- **Interactive mode** - Select which migrations to apply
+- **Zero configuration** - Out-of-the-box working Prisma configuration
 
 ---
 
@@ -23,12 +23,6 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 
 ```bash
 npm install prisma-migrations
-# or
-bun add prisma-migrations
-# or
-yarn add prisma-migrations
-# or
-pnpm add prisma-migrations
 ```
 
 ---
@@ -104,7 +98,7 @@ npx prisma-migrations init
 ```
 
 **Output:**
-```
+```bash
 ✓ Created migration: 1234567890_initial_migration
   Location: ./prisma/migrations/1234567890_initial_migration
 ```
@@ -123,7 +117,7 @@ npx prisma-migrations create add_users_table
 - `name` (optional) - Migration name (kebab-case recommended)
 
 **Output:**
-```
+```bash
 ✓ Created migration: 1234567890_add_users_table
   Location: ./prisma/migrations/1234567890_add_users_table
 ```
@@ -150,7 +144,7 @@ npx prisma-migrations up --interactive
 - `--interactive` or `-i` - Interactive selection mode
 
 **Output:**
-```
+```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
 ├──────────┼──────────────────────────────────────────────────┤
@@ -180,7 +174,7 @@ npx prisma-migrations down --interactive
 - `--interactive` or `-i` - Interactive selection mode
 
 **Output:**
-```
+```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
 ├──────────┼──────────────────────────────────────────────────┤
@@ -209,7 +203,7 @@ npx prisma-migrations pending
 ```
 
 **Output:**
-```
+```bash
 3 pending migration(s):
 
   1234567890_add_users_table
@@ -228,7 +222,7 @@ npx prisma-migrations applied
 ```
 
 **Output:**
-```
+```bash
 2 applied migration(s):
 
   ✓ 1234567889_initial_migration
@@ -540,7 +534,7 @@ Migration files are TypeScript (or JavaScript) modules with `up` and `down` func
 
 ### File Structure
 
-```
+```bash
 prisma/migrations/
 └── [timestamp]_migration_name/
     └── migration.ts
@@ -748,13 +742,13 @@ import type {
 
 ### Minimum Requirements
 
-- **Node.js:** 20.0.0+
+- **Node.js:** 20.0.0+, **Bun**
 - **Prisma:** 2.0.0+
 - **Prisma Client:** 4.0.0+
 
 ### Tested With
 
-- **Node.js:** 20.x, 22.x, 24.x
+- **Node.js:** 20.x, 22.x, 24.x, **Bun**
 - **Prisma:** 4.x, 5.x, 6.x
 - **Databases:** PostgreSQL 14+, 15, 16
 
