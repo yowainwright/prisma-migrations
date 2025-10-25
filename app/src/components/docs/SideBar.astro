@@ -3,49 +3,111 @@ import SIDEBAR from "../../constants/sidebar";
 import { resolveUrl } from "../../utils/urlResolver";
 
 const pathname = new URL(Astro.request.url).pathname;
+
+const expandedSections = SIDEBAR.map((section) => {
+  const isActive = section.items.some(item => item.href === pathname);
+  return isActive;
+});
 ---
 
-<div class="drawer-side z-40 md:border-r md:border-base-content/10">
-  <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"
-  ></label>
-  <aside class="bg-base-100 min-h-screen w-72 sm:w-80">
-    <div
-      class="bg-base-100 sticky top-0 z-20 items-center gap-2 bg-opacity-90 px-4 py-2 backdrop-blur lg:flex font-outfit"
-    >
-      <a href={resolveUrl("")} class="btn btn-ghost px-2">
-        <h1
-          class="text-2xl font-bold gradient-text"
-        >
+<div class="drawer-side z-40 border-r border-primary bg-transparent">
+  <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
+  <aside class="bg-transparent min-h-screen w-64 sm:w-72">
+    <div class="sticky top-0 z-20 bg-base-100/80 backdrop-blur-3xl py-2 px-4 border-b border-primary flex items-center">
+      <a href={resolveUrl("")} class="btn btn-ghost text-sm px-3 py-3 h-12 border-0 shadow-none outline-none hover:bg-primary/10">
+        <h1 class="text-base font-bold gradient-text">
           Prisma Migrations
         </h1>
       </a>
     </div>
 
-    <div class="p-4 pt-8">
-      {
-        SIDEBAR.map((navItem) => (
-          <div>
-            <h2 class="mb-4 text-xl font-bold font-outfit">
-              {navItem.title}
-            </h2>
-            <ul class="menu menu-sm p-0 space-y-1">
-              {navItem.items.map((navItem) => (
-                <li>
-                  <a
-                    href={navItem.href}
-                    class={`hover:text-[#1D4ED8] hover:bg-[#1D4ED8]/10 transition ${pathname === navItem.href ? "text-[#1D4ED8] bg-[#1D4ED8]/10" : ""}`}
-                  >
-                    {navItem.title}
-                    {navItem.label && (
-                      <div class="badge badge-primary badge-sm">New</div>
-                    )}
-                  </a>
-                </li>
-              ))}
-            </ul>
+    <div class="bg-transparent px-3 py-4 space-y-3">
+      {SIDEBAR.map((navItem, index) => (
+        <div class="sidebar-section">
+          <button
+            class="sidebar-toggle w-full flex items-center justify-between px-2 py-1.5 text-sm font-medium text-base-content/70 tracking-normal hover:text-base-content transition-colors"
+            aria-expanded={expandedSections[index] ? "true" : "false"}
+            data-section-index={index}
+          >
+            <span>{navItem.title}</span>
+            <svg
+              class={`sidebar-chevron w-4 h-4 transition-transform duration-200 ${expandedSections[index] ? 'rotate-90' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <div class={`sidebar-content ${expandedSections[index] ? '' : 'hidden'}`}>
+            <div class="ml-2 mt-1 border-l-2 border-base-content/10">
+              <ul class="space-y-0.5 py-1">
+                {navItem.items.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      class={`block ml-0 pl-4 pr-3 py-2 text-sm font-bold transition-colors relative ${
+                        pathname === item.href
+                          ? "text-[#1D4ED8] bg-[#1D4ED8]/10 before:absolute before:left-[-2px] before:top-0 before:bottom-0 before:w-0.5 before:bg-[#1D4ED8]"
+                          : "text-base-content/80 hover:text-[#1D4ED8] hover:bg-base-content/5"
+                      }`}
+                    >
+                      <span class="flex items-center justify-between">
+                        {item.title}
+                        {item.label && (
+                          <span class="ml-auto text-xs bg-[#1D4ED8]/20 text-[#1D4ED8] px-1.5 py-0.5 rounded">
+                            New
+                          </span>
+                        )}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        ))
-      }
+        </div>
+      ))}
     </div>
   </aside>
 </div>
+
+<script>
+  function initCollapsibleSidebar() {
+    const toggleButtons = document.querySelectorAll('.sidebar-toggle');
+
+    toggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const section = button.parentElement;
+        const content = section?.querySelector('.sidebar-content');
+        const chevron = button.querySelector('.sidebar-chevron');
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+        if (!content || !chevron) return;
+
+        button.setAttribute('aria-expanded', (!isExpanded).toString());
+
+        if (isExpanded) {
+          content.classList.add('hidden');
+          chevron.classList.remove('rotate-90');
+        } else {
+          content.classList.remove('hidden');
+          chevron.classList.add('rotate-90');
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initCollapsibleSidebar);
+  document.addEventListener('astro:page-load', initCollapsibleSidebar);
+</script>
+
+<style>
+  .sidebar-content {
+    transition: max-height 0.3s ease-out;
+  }
+
+  .sidebar-chevron {
+    transition: transform 0.2s ease;
+  }
+</style>

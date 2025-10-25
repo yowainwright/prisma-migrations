@@ -1,51 +1,173 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes:
-    lofi --default,
-    night --prefersdark;
-}
+@plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-outfit: "Outfit Variable", "sans-serif";
+  --font-family-neuton: "Neuton", serif;
+
+  --color-yves-klein-blue: #002FA7;
+  --color-red-accent: #DC2626;
+
+  /* Code syntax highlighting colors */
+  --color-code-bg: #031030;
+  --color-code-text: #b3d8e5;
+  --color-code-keyword: #569CD6;
+  --color-code-string: #007CF0;
+  --color-code-comment: #6A9955;
+  --color-code-function: #E2657E;
+  --color-code-number: #B5CEA8;
+  --color-code-variable: #007CF0;
+  --color-code-operator: #E194B5;
+  --color-code-punctuation: #FFD700;
+  --color-code-type: #E2657E;
 }
 
-:root {
-  /* Light theme gradients */
-  --blue-teal-gradient: linear-gradient(90deg, #1D4ED8 0%, #3B82F6 35%, #60A5FA 70%, #93C5FD 100%);
-  --blue-teal-gradient-light: linear-gradient(90deg, rgba(29, 78, 216, 0.8) 0%, rgba(59, 130, 246, 0.8) 35%, rgba(96, 165, 250, 0.8) 70%, rgba(147, 197, 253, 0.8) 100%);
-  --blue-teal-text-gradient: linear-gradient(90deg, #1E40AF 0%, #1D4ED8 35%, #3B82F6 70%, #60A5FA 100%);
-  
-  /* Legacy variables for backward compatibility */
-  --purple-gradient: var(--blue-teal-gradient);
-  --purple-dark: #1D4ED8;
+* {
+  font-family: var(--font-family-neuton);
 }
 
-[data-theme="night"] {
-  /* Dark theme gradients - slightly brighter for better contrast */
-  --blue-teal-gradient: linear-gradient(90deg, #3B82F6 0%, #60A5FA 35%, #93C5FD 70%, #BFDBFE 100%);
-  --blue-teal-gradient-light: linear-gradient(90deg, rgba(59, 130, 246, 0.6) 0%, rgba(96, 165, 250, 0.6) 35%, rgba(147, 197, 253, 0.6) 70%, rgba(191, 219, 254, 0.6) 100%);
-  --blue-teal-text-gradient: linear-gradient(90deg, #60A5FA 0%, #3B82F6 35%, #93C5FD 70%, #BFDBFE 100%);
-  
-  /* Legacy variables for backward compatibility */
-  --purple-gradient: var(--blue-teal-gradient);
-  --purple-dark: #3B82F6;
+code, pre {
+  font-family: "Courier New", Courier, monospace;
 }
 
-/* Gradient utility classes */
+.prose pre {
+  background-color: var(--color-code-bg) !important;
+  color: var(--color-code-text) !important;
+}
+
+.prose pre * {
+  font-family: "Courier New", Courier, monospace !important;
+  font-size: 1rem !important;
+}
+
+.prose code:not(pre code) {
+  background-color: transparent;
+  border: 1px solid var(--color-yves-klein-blue);
+  padding: 0.125rem 0.25rem;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.text-xs { font-size: 1rem; }
+.text-sm { font-size: 1.25rem; }
+.text-base { font-size: 1.5rem; }
+.text-lg { font-size: 1.75rem; }
+.text-xl { font-size: 2rem; }
+.text-2xl { font-size: 2.5rem; }
+.text-3xl { font-size: 3rem; }
+.text-4xl { font-size: 3.5rem; }
+.text-5xl { font-size: 4rem; }
+.text-6xl { font-size: 5rem; }
+
+html {
+  /* DaisyUI theme variables */
+  --p: #002FA7;
+  --pc: #FFFFFF;
+  --s: #DC2626;
+  --sc: #FFFFFF;
+  --a: #DC2626;
+  --ac: #FFFFFF;
+  --n: #1F2937;
+  --nc: #FFFFFF;
+  --b1: #FFFFFF;
+  --b2: #F5F5F5;
+  --b3: #E5E5E5;
+  --bc: #002FA7;
+
+  /* Tailwind prose variables */
+  --tw-prose-body: #002FA7;
+  --tw-prose-headings: #002FA7;
+  --tw-prose-bullets: #002FA7;
+  --tw-prose-counters: #002FA7;
+  --tw-prose-bold: #002FA7;
+  --tw-prose-links: #002FA7;
+  --tw-prose-code: #002FA7;
+}
+
+html,
+body {
+  background: linear-gradient(135deg, #FFF9C4 0%, #FFFFFF 15%, #FFEBEE 30%, #FFFFFF 45%, #E3F2FD 60%, #FFFFFF 75%, #FFF9C4 85%, #FFEBEE 100%) !important;
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--bc) !important;
+}
+
+* {
+  color: var(--p);
+}
+
+div,
+section,
+main,
+aside,
+nav,
+header,
+footer {
+  background-color: inherit;
+  color: inherit;
+}
+
+.bg-transparent {
+  background-color: transparent !important;
+}
+
+.bg-base-100 {
+  background-color: var(--b1) !important;
+}
+
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose ul li {
+  display: list-item !important;
+}
+
+.prose ul li::marker {
+  color: var(--tw-prose-bullets);
+}
+
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose ol li {
+  display: list-item !important;
+}
+
+.prose ol li::marker {
+  color: var(--tw-prose-counters);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--bc);
+  opacity: 0.2;
+  border: none;
+  margin: 1rem 0;
+}
+
+.bg-base-200 {
+  background-color: var(--b2) !important;
+}
+
+.bg-base-300 {
+  background-color: var(--b3) !important;
+}
+
+.text-base-content {
+  color: var(--bc) !important;
+}
+
 .gradient-text {
-  background: var(--blue-teal-text-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-yves-klein-blue);
 }
 
 .gradient-bg {
-  background: var(--blue-teal-gradient);
-}
-
-.gradient-bg-light {
-  background: var(--blue-teal-gradient-light);
+  background: var(--color-yves-klein-blue);
+  color: #FFFFFF;
 }
 
 /* Improve mobile responsiveness */

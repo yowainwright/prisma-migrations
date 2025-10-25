@@ -1,378 +1,510 @@
 ---
-title: Workspaces & Monorepos
-description: Using pastoralist in workspace and monorepo environments
+title: Writing Migrations
+description: Learn how to write effective database migrations with Prisma Migrations
 ---
 
-Pastoralist works seamlessly with workspace and monorepo setups. This guide covers how to effectively use pastoralist across multiple packages.
+This guide covers how to write migrations in TypeScript or JavaScript with full type safety.
 
-## How Pastoralist Works in Workspaces
+## Migration File Structure
 
-Pastoralist operates on a single `package.json` at a time. In a workspace setup, you can run it on:
-- The root package.json
-- Individual workspace packages
-- Multiple packages using scripts
+Each migration is stored in its own directory with a `migration.ts` (or `migration.js`) file:
 
-## Basic Usage
-
-### Running on Root Package
-
-```bash
-# Run on the root package.json
-pastoralist
+```
+prisma/migrations/
+└── [timestamp]_migration_name/
+    └── migration.ts
 ```
 
-This will manage overrides in your root `package.json`, which affect all workspaces.
+The migration file exports two functions:
+- `up()` - Applies the migration
+- `down()` - Rolls back the migration
 
-### Running on Workspace Packages
+## Basic Migration Template
 
-```bash
-# Run on a specific workspace package
-pastoralist --path packages/app-a/package.json
+### TypeScript
 
-# Or navigate to the package
-cd packages/app-a
-pastoralist
-```
+```typescript
+import type { PrismaClient } from 'prisma-migrations';
 
-## Common Patterns
+export async function up(prisma: PrismaClient) {
+  // Your migration code here
+}
 
-### Pattern 1: Root-Level Overrides
-
-Most monorepos use root-level overrides that apply to all workspaces:
-
-```json
-// root package.json
-{
-  "name": "my-monorepo",
-  "workspaces": ["packages/*"],
-  "overrides": {
-    "lodash": "4.17.21",
-    "react": "18.2.0"
-  }
+export async function down(prisma: PrismaClient) {
+  // Your rollback code here
 }
 ```
 
-Run pastoralist at the root:
-```bash
-pastoralist
+### JavaScript
+
+```javascript
+exports.up = async function(prisma) {
+  // Your migration code here
+};
+
+exports.down = async function(prisma) {
+  // Your rollback code here
+};
 ```
 
-### Pattern 2: Package-Specific Overrides
+## Writing SQL Migrations
 
-Some packages may need their own overrides:
+Use `$executeRaw` for SQL statements:
 
-```json
-// packages/legacy-app/package.json
-{
-  "name": "legacy-app",
-  "overrides": {
-    "react": "17.0.2"  // This app needs React 17
-  }
+```typescript
+import type { PrismaClient } from 'prisma-migrations';
+
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
 }
 ```
 
-Run pastoralist for this package:
-```bash
-pastoralist --path packages/legacy-app/package.json
-```
+## Using Prisma Client Operations
 
-### Pattern 3: Automated Workspace Management
+You can use any Prisma Client method in migrations:
 
-Create a script to run pastoralist across all workspaces:
+```typescript
+import type { PrismaClient } from 'prisma-migrations';
 
-```json
-// root package.json
-{
-  "scripts": {
-    "pastoralist:all": "npm run pastoralist:root && npm run pastoralist:workspaces",
-    "pastoralist:root": "pastoralist",
-    "pastoralist:workspaces": "lerna run pastoralist --parallel"
-  }
+export async function up(prisma: PrismaClient) {
+  // Create table with raw SQL
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      role VARCHAR(50) DEFAULT 'user'
+    )
+  `;
+
+  // Seed initial data using Prisma Client
+  await prisma.user.createMany({
+    data: [
+      { email: 'admin@example.com', role: 'admin' },
+      { email: 'user@example.com', role: 'user' },
+    ],
+  });
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
 }
 ```
 
-Or with a custom script:
+## Common Migration Patterns
 
-```bash
-#!/bin/bash
-# scripts/update-overrides.sh
+### Creating Tables
 
-echo "Updating root overrides..."
-pastoralist
+```typescript
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE TABLE posts (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT,
+      author_id INTEGER REFERENCES users(id),
+      published BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
-echo "Updating workspace overrides..."
-for pkg in packages/*/package.json; do
-  if grep -q "overrides" "$pkg"; then
-    echo "Updating $pkg..."
-    pastoralist --path "$pkg"
-  fi
-done
-```
+  // Create indexes
+  await prisma.$executeRaw`
+    CREATE INDEX idx_posts_author_id ON posts(author_id)
+  `;
 
-## Integration Strategies
+  await prisma.$executeRaw`
+    CREATE INDEX idx_posts_published ON posts(published)
+  `;
+}
 
-### Strategy 1: Centralized Management (Recommended)
-
-Keep all overrides in the root `package.json`:
-
-**Pros:**
-- Single source of truth
-- Easier to maintain
-- Consistent versions across packages
-
-**Setup:**
-```json
-// root package.json
-{
-  "overrides": {
-    "lodash": "4.17.21"
-  },
-  "scripts": {
-    "postinstall": "pastoralist"
-  }
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
 }
 ```
 
-### Strategy 2: Distributed Management
+### Adding Columns
 
-Allow packages to manage their own overrides:
+```typescript
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ADD COLUMN last_login TIMESTAMP
+  `;
 
-**Pros:**
-- Package autonomy
-- Specific version requirements
-- Gradual migrations
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ADD COLUMN is_active BOOLEAN DEFAULT true
+  `;
+}
 
-**Setup:**
-```json
-// packages/*/package.json
-{
-  "scripts": {
-    "postinstall": "pastoralist"
-  }
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    DROP COLUMN last_login
+  `;
+
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    DROP COLUMN is_active
+  `;
 }
 ```
 
-### Strategy 3: Hybrid Approach
+### Modifying Columns
 
-Combine root overrides with package-specific ones:
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Change column type
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN email TYPE TEXT
+  `;
 
-```json
-// root: security patches
-{
-  "overrides": {
-    "minimist": "1.2.8"  // Security fix
-  }
+  // Add constraint
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN name SET NOT NULL
+  `;
+
+  // Set default value
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN role SET DEFAULT 'member'
+  `;
 }
 
-// packages: feature-specific
-{
-  "overrides": {
-    "react": "17.0.2"  // Compatibility requirement
-  }
-}
-```
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN email TYPE VARCHAR(255)
+  `;
 
-## Real-World Examples
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN name DROP NOT NULL
+  `;
 
-### Example 1: Lerna Monorepo
-
-```json
-{
-  "name": "my-lerna-monorepo",
-  "scripts": {
-    "postinstall": "lerna bootstrap && pastoralist",
-    "update-overrides": "pastoralist && lerna run pastoralist"
-  }
-}
-```
-
-### Example 2: npm Workspaces
-
-```json
-{
-  "name": "my-npm-workspace",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "scripts": {
-    "postinstall": "pastoralist",
-    "check-overrides": "pastoralist --debug"
-  }
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN role DROP DEFAULT
+  `;
 }
 ```
 
-### Example 3: pnpm Workspace
+### Data Migrations
 
-```yaml
-# pnpm-workspace.yaml
-packages:
-  - 'packages/*'
-  - 'apps/*'
-```
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Migrate existing data
+  const users = await prisma.$queryRaw`
+    SELECT id, name FROM users WHERE email IS NULL
+  `;
 
-```json
-// root package.json
-{
-  "scripts": {
-    "postinstall": "pastoralist",
-    "update-all": "pnpm -r exec pastoralist"
+  for (const user of users) {
+    await prisma.$executeRaw`
+      UPDATE users
+      SET email = ${`${user.name}@example.com`}
+      WHERE id = ${user.id}
+    `;
   }
+
+  // Now make email required
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN email SET NOT NULL
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ALTER COLUMN email DROP NOT NULL
+  `;
 }
 ```
 
-### Example 4: Yarn Workspaces
+### Creating Indexes
 
-```json
-{
-  "private": true,
-  "workspaces": {
-    "packages": ["packages/*"]
-  },
-  "scripts": {
-    "postinstall": "pastoralist",
-    "workspaces:update": "yarn workspaces foreach run pastoralist"
-  }
+```typescript
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE INDEX idx_users_email ON users(email)
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX idx_users_created_at ON users(created_at)
+  `;
+
+  // Unique index
+  await prisma.$executeRaw`
+    CREATE UNIQUE INDEX idx_users_username ON users(username)
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_email`;
+  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_created_at`;
+  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_username`;
 }
 ```
 
 ## Best Practices
 
-### 1. Choose a Consistent Strategy
+### 1. Always Write Down Migrations
 
-Decide whether to:
-- Manage all overrides at the root (recommended for most cases)
-- Allow package-specific overrides (for complex requirements)
-- Use a hybrid approach (for gradual migrations)
+Every `up()` should have a corresponding `down()` that reverses it:
 
-### 2. Automate with postinstall
+```typescript
+// ✓ Good
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`CREATE TABLE foo (...)`;
+}
 
-Always add pastoralist to postinstall scripts:
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS foo`;
+}
 
-```json
-{
-  "scripts": {
-    "postinstall": "pastoralist"
+// ✗ Bad - Empty down function
+export async function down(prisma: PrismaClient) {
+  // Nothing here!
+}
+```
+
+### 2. Use Transactions for Complex Migrations
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`CREATE TABLE foo (id SERIAL PRIMARY KEY)`;
+    await tx.$executeRaw`CREATE TABLE bar (id SERIAL PRIMARY KEY)`;
+    await tx.$executeRaw`ALTER TABLE bar ADD FOREIGN KEY (foo_id) REFERENCES foo(id)`;
+  });
+}
+```
+
+### 3. Handle Data Migrations Safely
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Get existing data
+  const users = await prisma.user.findMany();
+
+  // Transform and update
+  for (const user of users) {
+    if (!user.displayName) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { displayName: user.email.split('@')[0] }
+      });
+    }
   }
 }
 ```
 
-### 3. Document Your Strategy
+### 4. Use Descriptive Migration Names
 
-Create a `DEPENDENCIES.md` file:
+```bash
+# ✓ Good
+npx prisma-migrations create add_user_email_verification
+npx prisma-migrations create modify_posts_add_published_at
 
-```markdown
-# Dependency Management
-
-We use pastoralist to manage overrides. Strategy:
-
-1. Security patches: Root package.json
-2. Feature overrides: Package-specific
-3. Run `npm run update-overrides` after changes
+# ✗ Bad
+npx prisma-migrations create update
+npx prisma-migrations create changes
 ```
 
-### 4. CI/CD Integration
+### 5. Test Migrations Thoroughly
 
-Ensure overrides are valid in CI:
+Test both up and down:
 
-```yaml
-- name: Validate overrides
-  run: |
-    npm run pastoralist:all
-    git diff --exit-code
+```bash
+# Test up
+npx prisma-migrations up
+
+# Verify changes
+psql -d mydb -c "\d users"
+
+# Test down
+npx prisma-migrations down
+
+# Verify rollback
+psql -d mydb -c "\d users"
+```
+
+## Advanced Patterns
+
+### Conditional Migrations
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Check if column exists
+  const result = await prisma.$queryRaw`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name='users' AND column_name='email'
+  `;
+
+  if (result.length === 0) {
+    await prisma.$executeRaw`
+      ALTER TABLE users ADD COLUMN email VARCHAR(255)
+    `;
+  }
+}
+```
+
+### Multi-Step Migrations
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Step 1: Add new column
+  await prisma.$executeRaw`
+    ALTER TABLE users ADD COLUMN new_email VARCHAR(255)
+  `;
+
+  // Step 2: Copy data
+  await prisma.$executeRaw`
+    UPDATE users SET new_email = old_email
+  `;
+
+  // Step 3: Drop old column
+  await prisma.$executeRaw`
+    ALTER TABLE users DROP COLUMN old_email
+  `;
+
+  // Step 4: Rename new column
+  await prisma.$executeRaw`
+    ALTER TABLE users RENAME COLUMN new_email TO email
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  // Reverse all steps
+  await prisma.$executeRaw`
+    ALTER TABLE users RENAME COLUMN email TO new_email
+  `;
+
+  await prisma.$executeRaw`
+    ALTER TABLE users ADD COLUMN old_email VARCHAR(255)
+  `;
+
+  await prisma.$executeRaw`
+    UPDATE users SET old_email = new_email
+  `;
+
+  await prisma.$executeRaw`
+    ALTER TABLE users DROP COLUMN new_email
+  `;
+}
+```
+
+### Environment-Specific Logic
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  await prisma.$executeRaw`CREATE TABLE users (id SERIAL PRIMARY KEY)`;
+
+  // Seed data in development only
+  if (isDev) {
+    await prisma.user.createMany({
+      data: [
+        { email: 'dev@example.com' },
+        { email: 'test@example.com' }
+      ]
+    });
+  }
+}
+```
+
+## Database-Specific Examples
+
+### PostgreSQL
+
+```typescript
+// JSON columns
+await prisma.$executeRaw`
+  ALTER TABLE users ADD COLUMN metadata JSONB DEFAULT '{}'
+`;
+
+// Arrays
+await prisma.$executeRaw`
+  ALTER TABLE users ADD COLUMN tags TEXT[] DEFAULT ARRAY[]::TEXT[]
+`;
+
+// Full-text search
+await prisma.$executeRaw`
+  ALTER TABLE posts ADD COLUMN search_vector TSVECTOR
+`;
+
+await prisma.$executeRaw`
+  CREATE INDEX idx_posts_search ON posts USING GIN(search_vector)
+`;
+```
+
+### MySQL
+
+```typescript
+// JSON columns
+await prisma.$executeRaw`
+  ALTER TABLE users ADD COLUMN metadata JSON
+`;
+
+// Fulltext index
+await prisma.$executeRaw`
+  ALTER TABLE posts ADD FULLTEXT INDEX idx_posts_content (content)
+`;
 ```
 
 ## Troubleshooting
 
-### Issue: Overrides Not Applied
+### Migration Failed Mid-Way
 
-**Symptom:** Workspace packages don't respect root overrides
+If a migration fails partway through:
 
-**Solution:** Ensure you're using a package manager that supports workspace overrides:
-- npm 8.3+ ✅
-- yarn 1.x (use resolutions) ✅
-- pnpm (use pnpm.overrides) ✅
+1. Check your database state
+2. Fix the migration code
+3. Either:
+   - Manually clean up partial changes and retry
+   - Or write a new migration to continue from current state
 
-### Issue: Duplicate Appendix Entries
+### Type Errors
 
-**Symptom:** Same override tracked in multiple package.json files
+If you get TypeScript errors, ensure you're importing the correct PrismaClient type:
 
-**Solution:** This is normal! Each package.json maintains its own appendix for clarity.
+```typescript
+// ✓ Correct
+import type { PrismaClient } from 'prisma-migrations';
 
-### Issue: Performance in Large Monorepos
-
-**Symptom:** Pastoralist takes long to run across many packages
-
-**Solution:** Run in parallel:
-```bash
-# Using GNU parallel
-find . -name "package.json" -path "*/node_modules" -prune -o -print | \
-  parallel "pastoralist --path {}"
+// ✗ Wrong
+import { PrismaClient } from '@prisma/client';
 ```
 
-## Migration Guide
+### Down Migration Doesn't Work
 
-### Moving to Centralized Overrides
+Make sure your down() properly reverses up():
 
-1. Collect all overrides:
-```bash
-find . -name "package.json" -not -path "*/node_modules/*" \
-  -exec jq '.overrides // {}' {} \; | jq -s 'add'
-```
-
-2. Add to root package.json
-3. Remove from individual packages
-4. Run pastoralist at root
-
-### Splitting Overrides
-
-1. Identify package-specific needs
-2. Move relevant overrides to packages
-3. Run pastoralist on each package
-4. Update CI/CD scripts
-
-## Advanced Patterns
-
-### Dynamic Override Detection
-
-```javascript
-// scripts/check-overrides.js
-const { execSync } = require('child_process');
-const { readdirSync } = require('fs');
-
-const packages = readdirSync('./packages');
-packages.forEach(pkg => {
-  try {
-    execSync(`pastoralist --path packages/${pkg}/package.json`);
-    console.log(`✅ ${pkg}: overrides updated`);
-  } catch (error) {
-    console.log(`❌ ${pkg}: no overrides or error`);
-  }
-});
-```
-
-### Override Inheritance
-
-Create a base configuration:
-
-```json
-// packages/base-config/overrides.json
-{
-  "lodash": "4.17.21",
-  "minimist": "1.2.8"
-}
-```
-
-Apply to packages:
-```javascript
-// scripts/apply-base-overrides.js
-const base = require('./packages/base-config/overrides.json');
-// Apply base overrides to each package
+```typescript
+// Test both directions
+await migrations.up();
+await migrations.down();
+await migrations.up(); // Should work again
 ```
 
 ## Next Steps
 
-- Set up pastoralist in your workspace
-- Choose a management strategy
-- Add automation scripts
-- Document your approach for the team
+- Learn about [Advanced Features](/prisma-migrations/docs/advanced-features) like interactive mode
+- Explore the [API Reference](/prisma-migrations/docs/api-reference) for programmatic usage
+- Check [Troubleshooting](/prisma-migrations/docs/troubleshooting) for common issues

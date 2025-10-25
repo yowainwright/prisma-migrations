@@ -35,7 +35,7 @@ export const CopyButton = () => {
 
   return (
     <button
-      className="btn btn-ghost btn-square rounded-s-none"
+      className="btn btn-ghost btn-square rounded-s-none border-0 shadow-none outline-none hover:bg-primary/10"
       onClick={handleCopy}
       aria-label="Copy"
     >

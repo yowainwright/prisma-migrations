@@ -1,258 +1,606 @@
 ---
 title: API Reference
-description: Complete reference for pastoralist CLI and Node.js API
+description: Complete reference for Prisma Migrations CLI and Node.js API
 ---
 
-Pastoralist provides both a CLI interface and a Node.js API for programmatic usage.
+Prisma Migrations provides both a CLI interface and a programmatic Node.js API.
 
-## CLI
+## CLI Commands
 
-### `pastoralist`
-
-Run pastoralist on the current directory's package.json.
+All CLI commands use the following format:
 
 ```bash
-npx pastoralist
+npx prisma-migrations <command> [options]
 ```
 
-### `pastoralist --path <path>`
+### `init`
 
-Run pastoralist on a specific package.json file.
-
-**params:**
-- `<path>`: path to a package.json file
+Initialize migrations directory with first migration file.
 
 ```bash
-# Run on a specific package
-npx pastoralist --path packages/app/package.json
-
-# Run on a nested project
-npx pastoralist --path ./nested/project/package.json
+npx prisma-migrations init
 ```
 
-### `pastoralist --depPaths [paths...]`
+**Output:**
+```
+✓ Created migration: 1234567890_initial_migration
+  Location: ./prisma/migrations/1234567890_initial_migration
+```
 
-Run pastoralist on multiple package.json files using glob patterns.
+---
 
-**params:**
-- `[paths...]`: array of glob patterns
+### `create [name]`
+
+Create a new migration file with optional name.
 
 ```bash
-# Run on all packages in monorepo
-npx pastoralist --depPaths "packages/*/package.json"
-
-# Run on multiple directories
-npx pastoralist --depPaths "packages/*/package.json" "apps/*/package.json"
+npx prisma-migrations create add_users_table
 ```
 
-### `pastoralist --ignore [patterns...]`
+**Arguments:**
+- `name` (optional) - Migration name (kebab-case recommended)
 
-Exclude files matching glob patterns.
+**Output:**
+```
+✓ Created migration: 1234567890_add_users_table
+  Location: ./prisma/migrations/1234567890_add_users_table
+```
 
-**params:**
-- `[patterns...]`: array of glob patterns to ignore
+---
+
+### `up [options]`
+
+Run pending migrations.
 
 ```bash
-# Ignore test directories
-npx pastoralist --ignore "**/test/**" "**/dist/**"
+# Run all pending migrations
+npx prisma-migrations up
 
-# Ignore specific packages
-npx pastoralist --depPaths "**/*package.json" --ignore "**/node_modules/**" "**/legacy/**"
+# Run next 3 migrations
+npx prisma-migrations up --steps 3
+
+# Interactive mode - choose which migrations to run
+npx prisma-migrations up --interactive
 ```
 
-### `pastoralist --root <root>`
+**Options:**
+- `--steps <number>` - Number of migrations to run
+- `--interactive` or `-i` - Interactive selection mode
 
-Set the root directory for all operations.
+**Output:**
+```
+┌──────────┬──────────────────────────────────────────────────┐
+│ Status   │ Migrations                                       │
+├──────────┼──────────────────────────────────────────────────┤
+│ ✓        │ 2 migration(s) applied successfully              │
+└──────────┴──────────────────────────────────────────────────┘
+```
 
-**params:**
-- `<root>`: root directory path
+---
+
+### `down [options]`
+
+Rollback migrations.
 
 ```bash
-# Run from different directory
-npx pastoralist --root /path/to/project
+# Rollback last migration
+npx prisma-migrations down
 
-# Combine with other options
-npx pastoralist --root ../my-project --path package.json
+# Rollback last 2 migrations
+npx prisma-migrations down --steps 2
+
+# Interactive mode - choose which migrations to rollback
+npx prisma-migrations down --interactive
 ```
 
-### `pastoralist --debug`
+**Options:**
+- `--steps <number>` - Number of migrations to rollback (default: 1)
+- `--interactive` or `-i` - Interactive selection mode
 
-Enable detailed debug output.
+**Output:**
+```
+┌──────────┬──────────────────────────────────────────────────┐
+│ Status   │ Migrations                                       │
+├──────────┼──────────────────────────────────────────────────┤
+│ ↓        │ 1 migration(s) rolled back                       │
+└──────────┴──────────────────────────────────────────────────┘
+```
+
+---
+
+### `status`
+
+Show migration status (which migrations are applied/pending).
 
 ```bash
-# Run with debug logging
-npx pastoralist --debug
-
-# Debug specific package
-npx pastoralist --path packages/app/package.json --debug
+npx prisma-migrations status
 ```
 
-## Node.js API
+---
 
-### Installation
+### `pending`
+
+List all pending (not yet applied) migrations.
 
 ```bash
-npm install pastoralist
+npx prisma-migrations pending
 ```
 
-### `update(options)`
+**Output:**
+```
+3 pending migration(s):
 
-Update package.json overrides and manage the appendix.
-
-**params:**
-- `options`: configuration object (optional)
-  - `path`: path to package.json (default: './package.json')
-  - `depPaths`: array of glob patterns for multiple files
-  - `ignore`: array of glob patterns to ignore
-  - `root`: root directory path
-  - `debug`: enable debug logging
-
-```javascript
-import { update } from 'pastoralist';
-
-// Basic usage
-await update();
-
-// With specific path
-await update({
-  path: './packages/app/package.json'
-});
-
-// With debug mode
-await update({
-  debug: true
-});
-
-// Multiple packages
-await update({
-  depPaths: ['packages/*/package.json'],
-  ignore: ['**/test/**']
-});
+  1234567890_add_users_table
+  1234567891_add_posts_table
+  1234567892_add_comments_table
 ```
 
-### `logger(config)`
+---
 
-Create a logger instance for custom debugging.
+### `applied`
 
-**params:**
-- `config`: logger configuration
-  - `file`: source file name
-  - `isLogging`: enable/disable logging
+List all applied migrations.
 
-```javascript
-import { logger } from 'pastoralist';
-
-// Create logger
-const log = logger({
-  file: 'my-script.js',
-  isLogging: true
-});
-
-// Use logger
-log.debug('method-name', 'action', { data: 'value' });
-log.error('method-name', 'error', { error: err });
+```bash
+npx prisma-migrations applied
 ```
 
-## Examples
+**Output:**
+```
+2 applied migration(s):
 
-### Build Tool Integration
-
-```javascript
-import { update } from 'pastoralist';
-
-// Ensure overrides are up-to-date before building
-await update();
-console.log('✓ Package overrides verified');
+  ✓ 1234567889_initial_migration
+  ✓ 1234567890_add_users_table
 ```
 
-### Workspace Automation
+---
 
-```javascript
-import { update } from 'pastoralist';
-import glob from 'glob';
+### `latest`
 
-// Update all workspace packages
-const packages = glob.sync('packages/*/package.json');
+Show the latest applied migration.
 
-for (const pkgPath of packages) {
-  await update({ path: pkgPath });
-  console.log(`✓ Updated ${pkgPath}`);
+```bash
+npx prisma-migrations latest
+```
+
+---
+
+### `reset`
+
+Rollback all migrations.
+
+```bash
+npx prisma-migrations reset
+```
+
+---
+
+### `fresh`
+
+Rollback all migrations and re-run them (fresh start).
+
+```bash
+npx prisma-migrations fresh
+```
+
+---
+
+### `refresh`
+
+Alias for `fresh` command.
+
+```bash
+npx prisma-migrations refresh
+```
+
+---
+
+### Global Options
+
+These options work with any command:
+
+- `--verbose` or `-v` - Enable verbose logging
+- `--log-level <level>` - Set log level (silent, error, warn, info, debug, trace)
+
+**Example:**
+```bash
+npx prisma-migrations up --verbose
+npx prisma-migrations --log-level debug up
+```
+
+## Programmatic API
+
+Use the migrations system from your Node.js/TypeScript code.
+
+### Import
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+```
+
+### Constructor
+
+```typescript
+new Migrations(prisma: PrismaClient, config?: MigrationsConfig)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `prisma` | `PrismaClient` | Yes | Your Prisma Client instance |
+| `config` | `MigrationsConfig` | No | Optional configuration |
+
+**Config Options:**
+
+```typescript
+interface MigrationsConfig {
+  migrationsDir?: string;  // Default: auto-discovered from ./prisma/migrations
+  logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 }
 ```
 
-### CI/CD Validation
+**Example:**
 
-```javascript
-import { update } from 'pastoralist';
-import { execSync } from 'child_process';
+```typescript
+const prisma = new PrismaClient();
+const migrations = new Migrations(prisma, {
+  migrationsDir: './database/migrations',
+  logLevel: 'info'
+});
+```
 
-// Check if overrides are up-to-date
-const before = execSync('git status --porcelain').toString();
-await update();
-const after = execSync('git status --porcelain').toString();
+---
 
-if (before !== after) {
-  console.error('❌ Package.json overrides need updating');
-  process.exit(1);
+### Methods
+
+#### `up(steps?: number): Promise<number>`
+
+Run pending migrations.
+
+**Parameters:**
+- `steps` (optional) - Number of migrations to run. If omitted, runs all pending migrations.
+
+**Returns:**
+- `Promise<number>` - Number of migrations applied
+
+**Example:**
+
+```typescript
+// Run all pending migrations
+const count = await migrations.up();
+console.log(`Applied ${count} migrations`);
+
+// Run next 3 migrations
+await migrations.up(3);
+```
+
+---
+
+#### `down(steps?: number): Promise<number>`
+
+Rollback migrations.
+
+**Parameters:**
+- `steps` (optional) - Number of migrations to rollback (default: 1)
+
+**Returns:**
+- `Promise<number>` - Number of migrations rolled back
+
+**Example:**
+
+```typescript
+// Rollback last migration
+await migrations.down();
+
+// Rollback last 3 migrations
+await migrations.down(3);
+```
+
+---
+
+#### `pending(): Promise<MigrationFile[]>`
+
+Get list of pending migrations.
+
+**Returns:**
+- `Promise<MigrationFile[]>` - Array of pending migration objects
+
+**MigrationFile Interface:**
+
+```typescript
+interface MigrationFile {
+  id: string;      // Migration ID (timestamp)
+  name: string;    // Migration name
+  path: string;    // Full path to migration file
 }
 ```
 
-### Custom Logger
+**Example:**
 
-```javascript
-import { update, logger } from 'pastoralist';
-
-// Create custom logger
-const log = logger({
-  file: 'my-script.js',
-  isLogging: process.env.DEBUG === 'true'
-});
-
-// Log custom events
-log.debug('custom-action', 'starting', { time: Date.now() });
-
-await update({ debug: true });
-
-log.debug('custom-action', 'completed', { time: Date.now() });
+```typescript
+const pending = await migrations.pending();
+console.log(`${pending.length} pending migrations:`);
+pending.forEach(m => console.log(`  ${m.id}_${m.name}`));
 ```
 
-### Error Handling
+---
 
-```javascript
-import { update } from 'pastoralist';
+#### `applied(): Promise<MigrationFile[]>`
 
-try {
-  await update({ path: './package.json' });
-} catch (error) {
-  if (error.code === 'ENOENT') {
-    console.error('Package.json not found');
-  } else {
-    console.error('Unexpected error:', error);
+Get list of applied migrations.
+
+**Returns:**
+- `Promise<MigrationFile[]>` - Array of applied migration objects
+
+**Example:**
+
+```typescript
+const applied = await migrations.applied();
+console.log(`${applied.length} applied migrations`);
+```
+
+---
+
+#### `latest(): Promise<MigrationFile | null>`
+
+Get the latest applied migration.
+
+**Returns:**
+- `Promise<MigrationFile | null>` - Latest migration or null if none applied
+
+**Example:**
+
+```typescript
+const latest = await migrations.latest();
+if (latest) {
+  console.log(`Latest: ${latest.id}_${latest.name}`);
+}
+```
+
+---
+
+#### `status(): Promise<void>`
+
+Display migration status (logs to console).
+
+**Example:**
+
+```typescript
+await migrations.status();
+```
+
+---
+
+#### `reset(): Promise<number>`
+
+Rollback all migrations.
+
+**Returns:**
+- `Promise<number>` - Number of migrations rolled back
+
+**Example:**
+
+```typescript
+const count = await migrations.reset();
+console.log(`Rolled back ${count} migrations`);
+```
+
+---
+
+#### `fresh(): Promise<number>`
+
+Rollback all migrations and re-run them.
+
+**Returns:**
+- `Promise<number>` - Number of migrations applied after reset
+
+**Example:**
+
+```typescript
+await migrations.fresh();
+```
+
+---
+
+#### `refresh(): Promise<{ down: number; up: number }>`
+
+Alias for `fresh()` but returns detailed counts.
+
+**Returns:**
+- `Promise<{ down: number; up: number }>` - Number of migrations rolled back and reapplied
+
+**Example:**
+
+```typescript
+const result = await migrations.refresh();
+console.log(`Rolled back ${result.down}, applied ${result.up}`);
+```
+
+## Complete Example
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+async function runMigrations() {
+  const prisma = new PrismaClient();
+  const migrations = new Migrations(prisma);
+
+  try {
+    // Check pending migrations
+    const pending = await migrations.pending();
+    console.log(`Found ${pending.length} pending migrations`);
+
+    // Run migrations
+    const applied = await migrations.up();
+    console.log(`Successfully applied ${applied} migrations`);
+
+    // Verify latest migration
+    const latest = await migrations.latest();
+    if (latest) {
+      console.log(`Latest migration: ${latest.name}`);
+    }
+  } catch (error) {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
   }
 }
+
+runMigrations();
 ```
 
-## Environment Variables
+## Usage Examples
 
-### `DEBUG=pastoralist*`
+### Application Startup
 
-Enable debug output (equivalent to --debug flag).
+Run migrations when your app starts:
 
-```bash
-DEBUG=pastoralist* npx pastoralist
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function bootstrap() {
+  const migrations = new Migrations(prisma);
+
+  // Run pending migrations on startup
+  const count = await migrations.up();
+  console.log(`Applied ${count} migrations`);
+
+  // Start your application
+  await startServer();
+}
+
+bootstrap();
+```
+
+### CI/CD Deployment
+
+Run migrations during deployment:
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+async function deploy() {
+  const prisma = new PrismaClient();
+  const migrations = new Migrations(prisma);
+
+  try {
+    // Check for pending migrations
+    const pending = await migrations.pending();
+
+    if (pending.length === 0) {
+      console.log('No migrations to run');
+      return;
+    }
+
+    console.log(`Running ${pending.length} migrations...`);
+    await migrations.up();
+    console.log('✓ Migrations completed successfully');
+  } catch (error) {
+    console.error('✗ Migration failed:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+deploy();
+```
+
+### Safe Rollback
+
+Rollback with error handling:
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+async function rollbackLastMigration() {
+  const prisma = new PrismaClient();
+  const migrations = new Migrations(prisma);
+
+  try {
+    const latest = await migrations.latest();
+    if (!latest) {
+      console.log('No migrations to rollback');
+      return;
+    }
+
+    console.log(`Rolling back: ${latest.name}`);
+    await migrations.down();
+    console.log('✓ Rollback successful');
+  } catch (error) {
+    console.error('✗ Rollback failed:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+rollbackLastMigration();
+```
+
+### Development Reset
+
+Fresh start for development:
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+async function resetDatabase() {
+  const prisma = new PrismaClient();
+  const migrations = new Migrations(prisma);
+
+  console.log('Resetting database...');
+
+  // Rollback all migrations
+  const rolled = await migrations.reset();
+  console.log(`Rolled back ${rolled} migrations`);
+
+  // Re-run all migrations
+  const applied = await migrations.up();
+  console.log(`Applied ${applied} migrations`);
+
+  console.log('✓ Database reset complete');
+
+  await prisma.$disconnect();
+}
+
+resetDatabase();
 ```
 
 ## TypeScript
 
-Pastoralist includes full TypeScript support.
+Prisma Migrations includes full TypeScript support with type safety:
 
 ```typescript
-import { update, Options } from 'pastoralist';
+import type {
+  PrismaClient,
+  MigrationFile,
+  MigrationFunction,
+  MigrationsConfig
+} from 'prisma-migrations';
 
-const options: Options = {
-  path: './package.json',
-  debug: true
+// Type-safe migration functions
+export async function up(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`CREATE TABLE users (id SERIAL PRIMARY KEY)`;
+}
+
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+}
+
+// Type-safe configuration
+const config: MigrationsConfig = {
+  migrationsDir: './database/migrations',
+  logLevel: 'info'
 };
-
-await update(options);
 ```

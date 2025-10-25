@@ -1,67 +1,134 @@
 ---
-title: Setup
-description: "Quick and easy setup guide for Pastoralist CLI"
+title: Installation & Quick Start
+description: "Get started with Prisma Migrations in minutes"
 ---
 
 <section>
 
-## Getting Started
+## Installation
 
-1. Install Pastoralist globally:
-   ```bash
-   bun add -g pastoralist
-   ```
-
-2. Run it in your project:
-   ```bash
-   pastoralist
-   ```
-
-3. That's it! Pastoralist will automatically:
-   - Scan for overrides and resolutions
-   - Check for updates
-   - Update your package.json
-   - Track everything in the appendix
-
-## Setup
-
-Okay! Hopefully the breakdowns above were clear enough on why you might want to use Pastoralist!
-Please submit a [pull request](https://github.com/yowainwright/pastoralist/pulls) or [issue](https://github.com/yowainwright/pastoralist/issues) if it wasn't!
-
-Now for the super simple setup!
-
-1. Install
+Install Prisma Migrations in your project:
 
 ```bash
-bun add pastoralist --dev
-# pastoralist does not expect to be a dependency! It's a tool!!!
+# npm
+npm install prisma-migrations
+
+# bun
+bun add prisma-migrations
+
+# yarn
+yarn add prisma-migrations
+
+# pnpm
+pnpm add prisma-migrations
 ```
 
-2. run
+## Quick Start
+
+### 1. Initialize Your Migrations
+
+Create your first migration file:
 
 ```bash
-pastoralist
-# => That's it! Check out your package.json
-# Pastoralist will automatically detect and track:
-# - Overrides and resolutions
-# - Patches (from patch-package and similar tools)
-# - All dependency types (dependencies, devDependencies, peerDependencies)
+npx prisma-migrations init
 ```
 
-3. (recommended) add Pastoralist to a postInstall script
+This creates a migration directory structure:
 
-```js
-// package.json
-{
-  "scripts": {
-    "postinstall": "pastoralist"
-  }
+```
+prisma/migrations/
+└── [timestamp]_initial_migration/
+    └── migration.ts
+```
+
+### 2. Create a Migration
+
+Generate a new migration file:
+
+```bash
+npx prisma-migrations create add_users_table
+```
+
+This creates:
+
+```
+prisma/migrations/
+└── [timestamp]_add_users_table/
+    └── migration.ts
+```
+
+### 3. Write Your Migration
+
+Edit the generated migration file with TypeScript:
+
+```typescript
+// prisma/migrations/[timestamp]_add_users_table/migration.ts
+import type { PrismaClient } from 'prisma-migrations';
+
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
 }
 ```
 
-In the near future, Pastoralist will fully support a config file but this is it for now!
+### 4. Run Migrations
 
-Read on to understand what is going on under the hood of Pastoralist!
+Apply all pending migrations:
+
+```bash
+npx prisma-migrations up
+```
+
+### 5. Rollback (When Needed)
+
+Undo the last migration:
+
+```bash
+npx prisma-migrations down
+```
+
+Roll back multiple migrations:
+
+```bash
+npx prisma-migrations down --steps 3
+```
+
+## Using with Existing Prisma Projects
+
+Prisma Migrations works seamlessly with existing Prisma projects! It uses the same `_prisma_migrations` table that Prisma's native migrations use.
+
+### If You Already Have Migrations
+
+You can add Prisma Migrations to an existing project:
+
+1. Install the package
+2. Run `npx prisma-migrations status` to see existing migrations
+3. Create new migrations with `npx prisma-migrations create`
+4. Your new migrations will work alongside existing Prisma migrations
+
+### Compatibility
+
+- Uses Prisma's standard `_prisma_migrations` table
+- Works with `prisma migrate` commands
+- No conflicts with existing migration workflows
+- Fully compatible with Prisma Client
+
+## Next Steps
+
+- Learn about [CLI commands](/prisma-migrations/docs/api-reference) for migration management
+- Explore [programmatic API](/prisma-migrations/docs/api-reference#programmatic-api) for running migrations from code
+- See [advanced features](/prisma-migrations/docs/advanced-features) like interactive mode and step control
+- Check [troubleshooting](/prisma-migrations/docs/troubleshooting) for common issues
 
 ---
 

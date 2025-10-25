@@ -47,7 +47,7 @@ export class Migrations {
         const mod = await import(pathToFileURL(migration.path).href);
         await mod.up(this.prisma);
         await this.prisma
-          .$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
+          .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, '', NOW(), ${migration.name}, NULL, NOW(), 1)`;
         logger.info(`✓ Applied ${migration.id}_${migration.name}`);
       },
       Promise.resolve(),
@@ -167,7 +167,7 @@ export class Migrations {
         const mod = await import(pathToFileURL(migration.path).href);
         await mod.up(this.prisma);
         await this.prisma
-          .$executeRaw`INSERT INTO _prisma_migrations (id, name) VALUES (${migration.id}, ${migration.name})`;
+          .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, '', NOW(), ${migration.name}, NULL, NOW(), 1)`;
         logger.info(`✓ Applied ${migration.id}_${migration.name}`);
       },
       Promise.resolve(),
@@ -213,7 +213,7 @@ export class Migrations {
 
   private async getApplied(): Promise<string[]> {
     const result = await this.prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM _prisma_migrations ORDER BY applied_at ASC
+      SELECT id FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY finished_at ASC
     `;
     return result.map((r) => r.id);
   }

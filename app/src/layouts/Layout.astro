@@ -2,7 +2,12 @@
 import SideBar from "../components/docs/SideBar.astro";
 import DocsHeader from "../components/docs/DocsHeader.astro";
 import Footer from "../components/common/Footer.astro";
-import "@fontsource-variable/outfit";
+import "@fontsource/neuton/200.css";
+import "@fontsource/neuton/300.css";
+import "@fontsource/neuton/400.css";
+import "@fontsource/neuton/700.css";
+import "@fontsource/neuton/800.css";
+import "@fontsource/neuton/400-italic.css";
 import "../styles/global.css";
 
 interface Props {
@@ -19,7 +24,6 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
     <meta charset="UTF-8" />
     <meta name="description" content="Prisma Migrations - Manage and apply database schema changes safely and efficiently with Prisma" />
     <meta name="viewport" content="width=device-width" />
-    <!-- favicon will be added later -->
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>

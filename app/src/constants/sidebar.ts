@@ -9,12 +9,8 @@ const SIDEBAR = [
         href: resolveDocsUrl("introduction"),
       },
       {
-        title: "Setup",
+        title: "Installation & Quick Start",
         href: resolveDocsUrl("setup"),
-      },
-      {
-        title: "Interactive Codelab",
-        href: resolveDocsUrl("codelab"),
       },
     ],
   },
@@ -22,16 +18,8 @@ const SIDEBAR = [
     title: "Guides",
     items: [
       {
-        title: "Workspaces & Monorepos",
+        title: "Writing Migrations",
         href: resolveDocsUrl("workspaces"),
-      },
-      {
-        title: "Advanced Features",
-        href: resolveDocsUrl("advanced-features"),
-      },
-      {
-        title: "Architecture",
-        href: resolveDocsUrl("architecture"),
       },
     ],
   },
@@ -41,10 +29,6 @@ const SIDEBAR = [
       {
         title: "API Reference",
         href: resolveDocsUrl("api-reference"),
-      },
-      {
-        title: "Troubleshooting & FAQ",
-        href: resolveDocsUrl("troubleshooting"),
       },
     ],
   },
