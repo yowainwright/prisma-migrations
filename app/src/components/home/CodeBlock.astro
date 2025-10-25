@@ -8,24 +8,24 @@ import { resolveDocsUrl } from "../../utils/urlResolver";
     <SpotlightCodeBlock client:load />
   </div>
 
-  <div class="xl:max-w-xl flex flex-col justify-center font-outfit order-1 xl:order-2">
+  <div class="xl:max-w-xl flex flex-col justify-center order-1 xl:order-2">
     <h1 class="mt-8 xl:mt-0 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">
       Works <span class="gradient-text">Seamlessly</span> with Your Workflow
     </h1>
 
-    <p class="mt-4 sm:mt-6 text-base sm:text-lg">
-      Prisma Migrations integrates perfectly into your development process. Run it as part of
-      your CI/CD pipeline, include it in your pre-commit hooks, or use it manually
-      whenever you need to manage your database schema changes.
+    <p class="mt-4 sm:mt-6 text-base">
+      Prisma Migrations integrates perfectly into your development process. Run migrations
+      programmatically during deployments, rollback changes when needed, or use the CLI
+      for interactive development. Full TypeScript support with type safety.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
       <a href={resolveDocsUrl("introduction")} class="w-full sm:w-auto">
-        <button class="btn btn-lg sm:btn-md text-white border-0 hover:opacity-90 w-full sm:w-auto gradient-bg"> Get Started </button>
+        <button class="btn text-base px-6 py-3 h-14 whitespace-nowrap text-white border-0 shadow-none outline-none hover:opacity-90 w-full sm:w-auto gradient-bg"> Get Started </button>
       </a>
 
       <a href={resolveDocsUrl("setup")} class="w-full sm:w-auto">
-        <button class="btn btn-lg sm:btn-md btn-outline w-full sm:w-auto"> View Setup Guide </button>
+        <button class="btn text-base px-6 py-3 h-14 whitespace-nowrap btn-outline border-0 shadow-none outline-none hover:bg-primary/10 w-full sm:w-auto"> View Setup Guide </button>
       </a>
     </div>
   </div>

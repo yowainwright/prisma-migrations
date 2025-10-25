@@ -43,14 +43,14 @@ if (currentSectionIndex !== undefined) {
   {
     prevItem?.href && (
       <a class="mr-auto flex" href={prevItem?.href}>
-        <button class="btn rounded-full">
+        <button class="btn text-base px-6 py-3 h-14 whitespace-nowrap rounded-full border-0 shadow-none outline-none hover:bg-primary/10">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
             <path
               fill="currentColor"
               d="M16.707 19.293 9.414 12l7.293-7.293-1.414-1.414L6.586 12l8.707 8.707 1.414-1.414z"
             />
           </svg>
-          <span class="text-xs md:text-sm font-medium">{prevItem?.title}</span>
+          <span class="font-medium">{prevItem?.title}</span>
         </button>
       </a>
     )
@@ -59,8 +59,8 @@ if (currentSectionIndex !== undefined) {
   {
     nextItem?.href && (
       <a class="ml-auto flex" href={nextItem?.href}>
-        <button class="btn rounded-full">
-          <span class="text-xs md:text-sm font-medium">{nextItem?.title}</span>
+        <button class="btn text-base px-6 py-3 h-14 whitespace-nowrap rounded-full border-0 shadow-none outline-none hover:bg-primary/10">
+          <span class="font-medium">{nextItem?.title}</span>
 
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
             <path

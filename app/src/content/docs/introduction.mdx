@@ -1,14 +1,14 @@
 ---
-title: Introduction to Pastoralist
-description: "Pastoralist is a dependency management tool that keeps your package.json overrides, resolutions, and patches up-to-date automatically"
+title: Introduction to Prisma Migrations
+description: "Simple, powerful migration management for Prisma with rollback support and programmatic control"
 ---
 
 <div className="flex flex-wrap gap-2 mb-8">
-  <a href="https://badge.fury.io/js/pastoralist" target="_blank" rel="noopener noreferrer">
-    <img src="https://badge.fury.io/js/pastoralist.svg" alt="npm version" />
+  <a href="https://badge.fury.io/js/prisma-migrations" target="_blank" rel="noopener noreferrer">
+    <img src="https://badge.fury.io/js/prisma-migrations.svg" alt="npm version" />
   </a>
-  <a href="https://github.com/yowainwright/pastoralist" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/github/stars/yowainwright/pastoralist?style=social" alt="GitHub stars" />
+  <a href="https://github.com/yowainwright/prisma-migrations" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/github/stars/yowainwright/prisma-migrations?style=social" alt="GitHub stars" />
   </a>
   <a href="https://www.typescriptlang.org/" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready" />
@@ -18,53 +18,91 @@ description: "Pastoralist is a dependency management tool that keeps your packag
   </a>
 </div>
 
-## What is Pastoralist?
+## What is Prisma Migrations?
 
-Pastoralist is a command-line tool that automatically manages and updates your package.json overrides, resolutions, and patches. It ensures that your dependency overrides stay up-to-date with the latest versions, saving you time and reducing potential security vulnerabilities.
+Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining 100% compatibility with Prisma's standard migration system. Write your migrations in TypeScript or JavaScript with full type safety and run them from your code.
 
-## Why is Pastoralist Awesome?
+## Why Prisma Migrations?
 
 ### The Problem
 
-When working with Node.js projects, you often need to override specific package versions due to:
-- Security vulnerabilities in transitive dependencies
-- Bug fixes that haven't been merged upstream
-- Breaking changes you need to avoid
-- Custom patches for specific use cases
+Prisma's native `prisma migrate` is excellent for forward migrations, but has critical limitations:
 
-However, managing these overrides manually is tedious and error-prone:
+- **No rollback support**: Once a migration is applied, there's no built-in way to undo it
+- **No programmatic API**: You can't run migrations from your Node.js code
+- **Limited control**: Can't run specific numbers of migrations or interactive selection
+- **SQL-only migrations**: No way to write migrations in TypeScript/JavaScript with type safety
 
-```json
-{
-  "overrides": {
-    "lodash": "4.17.19",
-    "minimist": "1.2.5",
-    "node-fetch": "2.6.7"
-  }
-}
-```
-
-Over time, these overrides become outdated, and you might miss important security updates or bug fixes.
+When you need to rollback a migration in production or run migrations programmatically during deployment, you're stuck with manual SQL or third-party tools that don't integrate with Prisma.
 
 ### The Solution
 
-Pastoralist automates this process by:
-- Scanning your package.json for overrides, resolutions, and patches
-- Checking for newer versions of overridden packages
-- Updating them automatically while maintaining compatibility
-- Removing overrides that are no longer needed
+Prisma Migrations extends Prisma with powerful features while staying 100% compatible:
 
-With one simple command, you can ensure all your overrides are current:
+```typescript
+// Write migrations in TypeScript with full type safety
+import type { PrismaClient } from 'prisma-migrations';
+
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+}
+```
+
+Run migrations from your code:
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+const migrations = new Migrations(prisma);
+
+// Run all pending migrations
+await migrations.up();
+
+// Rollback last migration
+await migrations.down();
+```
+
+Or use the CLI:
 
 ```bash
-pastoralist
+# Run migrations
+npx prisma-migrations up
+
+# Rollback migrations
+npx prisma-migrations down
+
+# Interactive mode
+npx prisma-migrations up --interactive
 ```
+
+## Key Features
+
+- **Rollback migrations**: Full `up` and `down` migration support
+- **TypeScript/JavaScript migrations**: Write migrations in TS/JS with full type safety
+- **Programmatic API**: Run migrations from your Node.js code
+- **100% Prisma compatible**: Uses Prisma's standard `_prisma_migrations` table
+- **Step control**: Run or rollback specific numbers of migrations
+- **Interactive mode**: Select which migrations to apply
+- **Zero configuration**: Works out of the box with any Prisma project
 
 ## Benefits
 
-- **🚀 Automated Updates**: No more manual version checking
-- **🔒 Security**: Stay current with security patches
-- **📊 Transparency**: Clear tracking of all overrides
-- **🧹 Clean**: Removes unnecessary overrides automatically
-- **⚡ Fast**: Updates all overrides with one command
-- **📦 Compatible**: Works with npm, yarn, pnpm, and bun
+- **Safe deployments**: Rollback problematic migrations in production
+- **Type safety**: Full TypeScript support for migration code
+- **Flexibility**: Run migrations programmatically during CI/CD or app startup
+- **Compatible**: Works alongside `prisma migrate` commands
+- **Developer friendly**: Interactive mode for development workflows
+- **Battle tested**: Comprehensive test suite with real database testing

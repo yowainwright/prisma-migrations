@@ -34,7 +34,7 @@
         "tsx": "^4.0.0",
       },
       "peerDependencies": {
-        "prisma": "^6.18.0",
+        "prisma": ">=2.0.0",
       },
     },
     "app": {
@@ -48,6 +48,7 @@
         "@docsearch/js": "^3.9.0",
         "@fontsource-variable/lexend": "^5.2.9",
         "@fontsource-variable/outfit": "^5.2.6",
+        "@fontsource/neuton": "^5.2.7",
         "@tailwindcss/vite": "^4.1.12",
         "@types/react": "^18.3.23",
         "@types/react-dom": "^18.3.7",
@@ -55,6 +56,7 @@
         "fuse.js": "^7.1.0",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",
+        "react-icons": "^5.5.0",
         "reactflow": "^11.11.4",
         "typescript": "^5.9.2",
       },
@@ -241,6 +243,8 @@
     "@fontsource-variable/lexend": ["@fontsource-variable/lexend@5.2.11", "", {}, "sha512-0hgEQ4O7Nh8fxL/WWmspJf0BErbocRkZwtLRGey/V4mUUqxfF7QUwqhcdzwpjom3NYCniY4uzQ5wYD7r9/92tQ=="],
 
     "@fontsource-variable/outfit": ["@fontsource-variable/outfit@5.2.8", "", {}, "sha512-4oUDCZx/Tcz6HZP423w/niqEH31Gks5IsqHV2ZZz1qKHaVIZdj2f0/S1IK2n8jl6Xo0o3N+3RjNHlV9R73ozQA=="],
+
+    "@fontsource/neuton": ["@fontsource/neuton@5.2.7", "", {}, "sha512-5XYm0eAoFFxdTmVpyWNnnLu/tW2h6jkhnx8MjGSpNgCcDBxKbc025pZXNPeqrXIJMM8khyQmpzQ1s3522V0BTQ=="],
 
     "@img/colour": ["@img/colour@1.0.0", "", {}, "sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw=="],
 
@@ -1287,6 +1291,8 @@
     "react": ["react@19.2.0", "", {}, "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ=="],
 
     "react-dom": ["react-dom@19.2.0", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.0" } }, "sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ=="],
+
+    "react-icons": ["react-icons@5.5.0", "", { "peerDependencies": { "react": "*" } }, "sha512-MEFcXdkP3dLo8uumGI5xN3lDFNsRtrjbOEKDLD7yv76v4wpnEq2Lt2qeHaQOr34I/wPN3s3+N08WkQ+CW37Xiw=="],
 
     "react-refresh": ["react-refresh@0.17.0", "", {}, "sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ=="],
 

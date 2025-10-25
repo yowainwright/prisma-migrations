@@ -1,51 +1,99 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes:
-    lofi --default,
-    night --prefersdark;
-}
+@plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-outfit: "Outfit Variable", "sans-serif";
+  --font-family-neuton: "Neuton", serif;
+
+  --color-yves-klein-blue: #002FA7;
+  --color-red-accent: #DC2626;
 }
 
-:root {
-  /* Light theme gradients */
-  --blue-teal-gradient: linear-gradient(90deg, #1D4ED8 0%, #3B82F6 35%, #60A5FA 70%, #93C5FD 100%);
-  --blue-teal-gradient-light: linear-gradient(90deg, rgba(29, 78, 216, 0.8) 0%, rgba(59, 130, 246, 0.8) 35%, rgba(96, 165, 250, 0.8) 70%, rgba(147, 197, 253, 0.8) 100%);
-  --blue-teal-text-gradient: linear-gradient(90deg, #1E40AF 0%, #1D4ED8 35%, #3B82F6 70%, #60A5FA 100%);
-  
-  /* Legacy variables for backward compatibility */
-  --purple-gradient: var(--blue-teal-gradient);
-  --purple-dark: #1D4ED8;
+* {
+  font-family: var(--font-family-neuton);
 }
 
-[data-theme="night"] {
-  /* Dark theme gradients - slightly brighter for better contrast */
-  --blue-teal-gradient: linear-gradient(90deg, #3B82F6 0%, #60A5FA 35%, #93C5FD 70%, #BFDBFE 100%);
-  --blue-teal-gradient-light: linear-gradient(90deg, rgba(59, 130, 246, 0.6) 0%, rgba(96, 165, 250, 0.6) 35%, rgba(147, 197, 253, 0.6) 70%, rgba(191, 219, 254, 0.6) 100%);
-  --blue-teal-text-gradient: linear-gradient(90deg, #60A5FA 0%, #3B82F6 35%, #93C5FD 70%, #BFDBFE 100%);
-  
-  /* Legacy variables for backward compatibility */
-  --purple-gradient: var(--blue-teal-gradient);
-  --purple-dark: #3B82F6;
+code, pre {
+  font-family: "Courier New", Courier, monospace;
 }
 
-/* Gradient utility classes */
+code:not(pre code) {
+  background-color: transparent;
+}
+
+.text-xs { font-size: 1rem; }
+.text-sm { font-size: 1.25rem; }
+.text-base { font-size: 1.5rem; }
+.text-lg { font-size: 1.75rem; }
+.text-xl { font-size: 2rem; }
+.text-2xl { font-size: 2.5rem; }
+.text-3xl { font-size: 3rem; }
+.text-4xl { font-size: 3.5rem; }
+.text-5xl { font-size: 4rem; }
+.text-6xl { font-size: 5rem; }
+
+html {
+  /* DaisyUI theme variables */
+  --p: #002FA7;
+  --pc: #FFFFFF;
+  --s: #DC2626;
+  --sc: #FFFFFF;
+  --a: #DC2626;
+  --ac: #FFFFFF;
+  --n: #1F2937;
+  --nc: #FFFFFF;
+  --b1: #FFFFFF;
+  --b2: #F5F5F5;
+  --b3: #E5E5E5;
+  --bc: #002FA7;
+}
+
+html,
+body {
+  background: linear-gradient(135deg, #FFF9C4 0%, #FFFFFF 15%, #FFEBEE 30%, #FFFFFF 45%, #E3F2FD 60%, #FFFFFF 75%, #FFF9C4 85%, #FFEBEE 100%) !important;
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--bc) !important;
+}
+
+* {
+  color: var(--p);
+}
+
+div,
+section,
+main,
+aside,
+nav,
+header,
+footer {
+  background-color: inherit;
+  color: inherit;
+}
+
+.bg-base-100 {
+  background-color: var(--b1) !important;
+}
+
+.bg-base-200 {
+  background-color: var(--b2) !important;
+}
+
+.bg-base-300 {
+  background-color: var(--b3) !important;
+}
+
+.text-base-content {
+  color: var(--bc) !important;
+}
+
 .gradient-text {
-  background: var(--blue-teal-text-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-yves-klein-blue);
 }
 
 .gradient-bg {
-  background: var(--blue-teal-gradient);
-}
-
-.gradient-bg-light {
-  background: var(--blue-teal-gradient-light);
+  background: var(--color-yves-klein-blue);
+  color: #FFFFFF;
 }
 
 /* Improve mobile responsiveness */

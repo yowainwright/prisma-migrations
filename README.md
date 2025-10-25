@@ -1,28 +1,23 @@
 # Prisma Migrations
 
-Assists [Prisma](https://www.prisma.io/docs/orm/prisma-migrate) with migration tooling similar to other js ORMS, like [Knex](https://knexjs.org/guide/migrations.html#rollback)
+> Simple, powerful migration management for Prisma with rollback support
 
-**Prisma Migrations** is a Node.js library and CLI tool that provides a Knex-like migration management approach for Prisma ORM. Write migrations with familiar `up` and `down` functions while leveraging Prisma's powerful client and type safety.
+[![npm version](https://badge.fury.io/js/prisma-migrations.svg)](https://www.npmjs.com/package/prisma-migrations)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why Use This?
+Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining 100% compatibility with Prisma's standard migration system.
 
-- **Familiar Knex-like API** - `up` and `down` functions you already know
-- **TypeScript First** - Full type safety for your migrations
-- **Prisma Powered** - Use both raw SQL and Prisma operations
-- **Flexible Control** - Run specific migrations, rollback, dry-run
-- **Modern Build** - ESM/CJS dual support, Node.js 20+ ready
+## Features
 
-## Why Not Just Use Prisma?
+- ✓ **Rollback migrations** - Full `up` and `down` migration support
+- ✓ **TypeScript/JavaScript migrations** - Write migrations in TS/JS with full type safety
+- ✓ **Programmatic API** - Run migrations from your Node.js code
+- ✓ **100% Prisma compatible** - Uses Prisma's standard `_prisma_migrations` table
+- ✓ **Step control** - Run or rollback specific numbers of migrations
+- ✓ **Interactive mode** - Select which migrations to apply
+- ✓ **Zero configuration** - Works out of the box with any Prisma project
 
-Prisma's native migration system is excellent for schema-driven development, but it lacks:
-
-- **No rollback functionality** - Once applied, migrations can't be easily undone
-- **Limited programmatic control** - Can't run specific numbers of migrations or rollback steps
-- **No up/down functions** - Migrations are pure SQL, no TypeScript/JavaScript logic
-- **Schema-only approach** - Difficult to mix schema changes with data seeding/transformation
-- **No granular migration management** - Can't easily target specific migrations or preview changes
-
-This library complements Prisma by providing the migration management patterns developers expect from other ORMs like Knex, while still leveraging Prisma's powerful client and type safety.
+---
 
 ## Installation
 
@@ -36,594 +31,819 @@ yarn add prisma-migrations
 pnpm add prisma-migrations
 ```
 
-## Compatibility
-
-This library is designed to work with modern versions of Prisma and Node.js. Please ensure your environment meets these requirements:
-
-### Minimum Requirements
-
-- **Prisma:** 2.0.0 or higher
-- **Node.js:** 20.0.0 or higher
-
-### Supported Versions
-
-- **Prisma Client:** 4.0.0+ (peer dependency)
-- **Prisma CLI:** 2.0.0+ (peer dependency)
-- **Node.js:** 20.x, 21.x, 22.x, 23.x, 24.x
-
-### Build Formats
-
-- **CommonJS CLI:** Works with Prisma 2.0.0+
-- **ESM CLI:** Works with Prisma 3.15.0+ (requires ES module support)
-- **Library API:** Both ESM and CommonJS builds available
-
-### Notes
-
-- CommonJS CLI (`dist/cli.cjs`) is used by default for maximum compatibility
-- ESM CLI (`dist/cli.js`) available for users with compatible Prisma versions
-- TypeScript migrations require `tsx` to be installed
-- Development and testing: Node.js 24+ is required for unit tests and mocking
+---
 
 ## Quick Start
 
-### CLI Usage
+### 1. Initialize
 
 ```bash
-# Initialize migrations directory
-prisma-migrations init
-
-# Create a new migration
-prisma-migrations create add_users_table
-
-# Run all pending migrations
-prisma-migrations up
-
-# Run specific number of migrations
-prisma-migrations up --steps 3
-
-# Interactive mode (select which migrations to run)
-prisma-migrations up --interactive
-
-# Rollback last migration
-prisma-migrations down
-
-# Rollback specific number of migrations
-prisma-migrations down --steps 2
-
-# Interactive rollback
-prisma-migrations down --interactive
-
-# Check migration status
-prisma-migrations status
-
-# List pending migrations
-prisma-migrations pending
-
-# List applied migrations
-prisma-migrations applied
-
-# Show latest applied migration
-prisma-migrations latest
-
-# Rollback all migrations
-prisma-migrations reset
-
-# Rollback all and re-run (fresh start)
-prisma-migrations fresh
-
-# Enable verbose logging
-prisma-migrations --verbose up
+npx prisma-migrations init
 ```
 
-### Programmatic Usage
+Creates your first migration file at `prisma/migrations/[timestamp]_initial_migration/migration.ts`
 
-```javascript
-import { Migrations } from "prisma-migrations";
-import { PrismaClient } from "@prisma/client";
+### 2. Create a Migration
 
+```bash
+npx prisma-migrations create add_users_table
+```
+
+### 3. Write Your Migration
+
+```typescript
+// prisma/migrations/[timestamp]_add_users_table/migration.ts
+import type { PrismaClient } from 'prisma-migrations';
+
+export async function up(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+}
+```
+
+### 4. Run Migrations
+
+```bash
+npx prisma-migrations up
+```
+
+### 5. Rollback (when needed)
+
+```bash
+npx prisma-migrations down
+```
+
+---
+
+## CLI API
+
+All CLI commands use the following format:
+
+```bash
+npx prisma-migrations <command> [options]
+```
+
+### Commands
+
+#### `init`
+
+Initialize migrations directory with first migration file.
+
+```bash
+npx prisma-migrations init
+```
+
+**Output:**
+```
+✓ Created migration: 1234567890_initial_migration
+  Location: ./prisma/migrations/1234567890_initial_migration
+```
+
+---
+
+#### `create [name]`
+
+Create a new migration file with optional name.
+
+```bash
+npx prisma-migrations create add_users_table
+```
+
+**Arguments:**
+- `name` (optional) - Migration name (kebab-case recommended)
+
+**Output:**
+```
+✓ Created migration: 1234567890_add_users_table
+  Location: ./prisma/migrations/1234567890_add_users_table
+```
+
+---
+
+#### `up [options]`
+
+Run pending migrations.
+
+```bash
+# Run all pending migrations
+npx prisma-migrations up
+
+# Run next 3 migrations
+npx prisma-migrations up --steps 3
+
+# Interactive mode - choose which migrations to run
+npx prisma-migrations up --interactive
+```
+
+**Options:**
+- `--steps <number>` - Number of migrations to run
+- `--interactive` or `-i` - Interactive selection mode
+
+**Output:**
+```
+┌──────────┬──────────────────────────────────────────────────┐
+│ Status   │ Migrations                                       │
+├──────────┼──────────────────────────────────────────────────┤
+│ ✓        │ 2 migration(s) applied successfully              │
+└──────────┴──────────────────────────────────────────────────┘
+```
+
+---
+
+#### `down [options]`
+
+Rollback migrations.
+
+```bash
+# Rollback last migration
+npx prisma-migrations down
+
+# Rollback last 2 migrations
+npx prisma-migrations down --steps 2
+
+# Interactive mode - choose which migrations to rollback
+npx prisma-migrations down --interactive
+```
+
+**Options:**
+- `--steps <number>` - Number of migrations to rollback (default: 1)
+- `--interactive` or `-i` - Interactive selection mode
+
+**Output:**
+```
+┌──────────┬──────────────────────────────────────────────────┐
+│ Status   │ Migrations                                       │
+├──────────┼──────────────────────────────────────────────────┤
+│ ↓        │ 1 migration(s) rolled back                       │
+└──────────┴──────────────────────────────────────────────────┘
+```
+
+---
+
+#### `status`
+
+Show migration status (which migrations are applied/pending).
+
+```bash
+npx prisma-migrations status
+```
+
+---
+
+#### `pending`
+
+List all pending (not yet applied) migrations.
+
+```bash
+npx prisma-migrations pending
+```
+
+**Output:**
+```
+3 pending migration(s):
+
+  1234567890_add_users_table
+  1234567891_add_posts_table
+  1234567892_add_comments_table
+```
+
+---
+
+#### `applied`
+
+List all applied migrations.
+
+```bash
+npx prisma-migrations applied
+```
+
+**Output:**
+```
+2 applied migration(s):
+
+  ✓ 1234567889_initial_migration
+  ✓ 1234567890_add_users_table
+```
+
+---
+
+#### `latest`
+
+Show the latest applied migration.
+
+```bash
+npx prisma-migrations latest
+```
+
+---
+
+#### `reset`
+
+Rollback all migrations.
+
+```bash
+npx prisma-migrations reset
+```
+
+---
+
+#### `fresh`
+
+Rollback all migrations and re-run them (fresh start).
+
+```bash
+npx prisma-migrations fresh
+```
+
+---
+
+#### `refresh`
+
+Alias for `fresh` command.
+
+```bash
+npx prisma-migrations refresh
+```
+
+---
+
+### Global Options
+
+These options work with any command:
+
+- `--verbose` or `-v` - Enable verbose logging
+- `--log-level <level>` - Set log level (silent, error, warn, info, debug, trace)
+
+**Example:**
+```bash
+npx prisma-migrations up --verbose
+npx prisma-migrations --log-level debug up
+```
+
+---
+
+## Programmatic API
+
+Use the migrations system from your Node.js/TypeScript code.
+
+### Import
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+```
+
+### Constructor
+
+```typescript
+new Migrations(prisma: PrismaClient, config?: MigrationsConfig)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `prisma` | `PrismaClient` | Yes | Your Prisma Client instance |
+| `config` | `MigrationsConfig` | No | Optional configuration |
+
+**Config Options:**
+
+```typescript
+interface MigrationsConfig {
+  migrationsDir?: string;  // Default: auto-discovered from ./prisma/migrations
+  logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+}
+```
+
+**Example:**
+
+```typescript
 const prisma = new PrismaClient();
 const migrations = new Migrations(prisma, {
-  migrationsDir: "./migrations",
+  migrationsDir: './database/migrations',
+  logLevel: 'info'
 });
+```
 
+---
+
+### Methods
+
+#### `up(steps?: number): Promise<number>`
+
+Run pending migrations.
+
+**Parameters:**
+- `steps` (optional) - Number of migrations to run. If omitted, runs all pending migrations.
+
+**Returns:**
+- `Promise<number>` - Number of migrations applied
+
+**Example:**
+
+```typescript
 // Run all pending migrations
 const count = await migrations.up();
 console.log(`Applied ${count} migrations`);
 
+// Run next 3 migrations
+await migrations.up(3);
+```
+
+---
+
+#### `down(steps?: number): Promise<number>`
+
+Rollback migrations.
+
+**Parameters:**
+- `steps` (optional) - Number of migrations to rollback (default: 1)
+
+**Returns:**
+- `Promise<number>` - Number of migrations rolled back
+
+**Example:**
+
+```typescript
 // Rollback last migration
 await migrations.down();
 
-// Rollback last 2 migrations
-await migrations.down(2);
-
-// Get migration status
-await migrations.status();
-
-// Get pending migrations
-const pending = await migrations.pending();
-
-// Get applied migrations
-const applied = await migrations.applied();
-
-// Get latest migration
-const latest = await migrations.latest();
-
-// Reset all migrations
-await migrations.reset();
-
-// Fresh start (reset and re-run)
-await migrations.fresh();
-
-// Disconnect
-await prisma.$disconnect();
+// Rollback last 3 migrations
+await migrations.down(3);
 ```
+
+---
+
+#### `pending(): Promise<MigrationFile[]>`
+
+Get list of pending migrations.
+
+**Returns:**
+- `Promise<MigrationFile[]>` - Array of pending migration objects
+
+**MigrationFile Interface:**
+
+```typescript
+interface MigrationFile {
+  id: string;      // Migration ID (timestamp)
+  name: string;    // Migration name
+  path: string;    // Full path to migration file
+}
+```
+
+**Example:**
+
+```typescript
+const pending = await migrations.pending();
+console.log(`${pending.length} pending migrations:`);
+pending.forEach(m => console.log(`  ${m.id}_${m.name}`));
+```
+
+---
+
+#### `applied(): Promise<MigrationFile[]>`
+
+Get list of applied migrations.
+
+**Returns:**
+- `Promise<MigrationFile[]>` - Array of applied migration objects
+
+**Example:**
+
+```typescript
+const applied = await migrations.applied();
+console.log(`${applied.length} applied migrations`);
+```
+
+---
+
+#### `latest(): Promise<MigrationFile | null>`
+
+Get the latest applied migration.
+
+**Returns:**
+- `Promise<MigrationFile | null>` - Latest migration or null if none applied
+
+**Example:**
+
+```typescript
+const latest = await migrations.latest();
+if (latest) {
+  console.log(`Latest: ${latest.id}_${latest.name}`);
+}
+```
+
+---
+
+#### `status(): Promise<void>`
+
+Display migration status (logs to console).
+
+**Example:**
+
+```typescript
+await migrations.status();
+```
+
+---
+
+#### `reset(): Promise<number>`
+
+Rollback all migrations.
+
+**Returns:**
+- `Promise<number>` - Number of migrations rolled back
+
+**Example:**
+
+```typescript
+const count = await migrations.reset();
+console.log(`Rolled back ${count} migrations`);
+```
+
+---
+
+#### `fresh(): Promise<void>`
+
+Rollback all migrations and re-run them.
+
+**Example:**
+
+```typescript
+await migrations.fresh();
+```
+
+---
+
+#### `refresh(): Promise<void>`
+
+Alias for `fresh()`.
+
+**Example:**
+
+```typescript
+await migrations.refresh();
+```
+
+---
+
+### Complete Example
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+async function runMigrations() {
+  const prisma = new PrismaClient();
+  const migrations = new Migrations(prisma);
+
+  try {
+    // Check pending migrations
+    const pending = await migrations.pending();
+    console.log(`Found ${pending.length} pending migrations`);
+
+    // Run migrations
+    const applied = await migrations.up();
+    console.log(`Successfully applied ${applied} migrations`);
+
+    // Verify latest migration
+    const latest = await migrations.latest();
+    if (latest) {
+      console.log(`Latest migration: ${latest.name}`);
+    }
+  } catch (error) {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+runMigrations();
+```
+
+---
 
 ## Migration Files
 
-Write migrations with familiar `up` and `down` functions, just like Knex:
+Migration files are TypeScript (or JavaScript) modules with `up` and `down` functions.
 
-```typescript
-import { PrismaClient } from "@prisma/client";
+### File Structure
 
-export async function up(prisma: PrismaClient): Promise<void> {
-  // Raw SQL for schema changes
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-
-  // Use Prisma operations for data seeding
-  await prisma.user.createMany({
-    data: [
-      { email: "admin@example.com", name: "Admin User" },
-      { email: "user@example.com", name: "Test User" },
-    ],
-  });
-}
-
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
+```
+prisma/migrations/
+└── [timestamp]_migration_name/
+    └── migration.ts
 ```
 
-**JavaScript migrations work too:**
+### TypeScript Migration
 
-```javascript
-exports.up = async function (prisma) {
+```typescript
+import type { PrismaClient } from 'prisma-migrations';
+
+export async function up(prisma: PrismaClient): Promise<void> {
+  // Your migration code here
   await prisma.$executeRaw`
     CREATE TABLE posts (
       id SERIAL PRIMARY KEY,
       title VARCHAR(255) NOT NULL,
-      user_id INTEGER REFERENCES users(id)
+      content TEXT,
+      published BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
+
+export async function down(prisma: PrismaClient): Promise<void> {
+  // Rollback code here
+  await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
+}
+```
+
+### JavaScript Migration
+
+```javascript
+exports.up = async function(prisma) {
+  await prisma.$executeRaw`
+    CREATE TABLE posts (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT
     )
   `;
 };
 
-exports.down = async function (prisma) {
+exports.down = async function(prisma) {
   await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
 };
 ```
 
+### Using Prisma Client Operations
+
+You can use any Prisma Client method in migrations:
+
+```typescript
+export async function up(prisma: PrismaClient) {
+  // Create table with raw SQL
+  await prisma.$executeRaw`
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      role VARCHAR(50) DEFAULT 'user'
+    )
+  `;
+
+  // Seed initial data using Prisma
+  await prisma.user.createMany({
+    data: [
+      { email: 'admin@example.com', role: 'admin' },
+      { email: 'user@example.com', role: 'user' },
+    ],
+  });
+}
+
+export async function down(prisma: PrismaClient) {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+}
+```
+
+---
+
 ## Configuration
 
-Prisma Migrations can be configured in several ways:
+Prisma Migrations works with zero configuration, but you can customize behavior.
 
-### 1. package.json
+### Option 1: Config File (Recommended)
+
+Create a config file in your project root:
+
+**`.prisma-migrationsrc.json`**
+
+```json
+{
+  "migrationsDir": "./prisma/migrations",
+  "logLevel": "info"
+}
+```
+
+**`.prisma-migrationsrc.js`**
+
+```javascript
+module.exports = {
+  migrationsDir: './prisma/migrations',
+  logLevel: 'info'
+};
+```
+
+### Option 2: package.json
 
 ```json
 {
   "prismaMigrations": {
-    "migrationsDir": "./migrations",
-    "schemaPath": "./prisma/schema.prisma",
-    "tableName": "_prisma_migrations",
-    "createTable": true,
-    "migrationFormat": "ts",
-    "extension": ".ts"
+    "migrationsDir": "./prisma/migrations",
+    "logLevel": "info"
   }
 }
 ```
 
-### 2. Configuration file (prisma-migrations.config.js)
-
-```javascript
-module.exports = {
-  migrationsDir: "./migrations",
-  schemaPath: "./prisma/schema.prisma",
-  tableName: "_prisma_migrations",
-  createTable: true,
-  migrationFormat: "ts", // 'sql', 'js', or 'ts'
-  extension: ".ts", // or '.js', '.sql'
-};
-```
-
 ### Configuration Options
 
-| Option            | Type                | Default                    | Description                                  |
-| ----------------- | ------------------- | -------------------------- | -------------------------------------------- |
-| `migrationsDir`   | `string`            | `'./migrations'`           | Directory where migration files are stored   |
-| `schemaPath`      | `string`            | `'./prisma/schema.prisma'` | Path to Prisma schema file                   |
-| `tableName`       | `string`            | `'_prisma_migrations'`     | Name of the migrations tracking table        |
-| `createTable`     | `boolean`           | `true`                     | Whether to auto-create the migrations table  |
-| `migrationFormat` | `'sql'\|'js'\|'ts'` | `'ts'`                     | Format for new migration files               |
-| `extension`       | `string`            | `'.ts'`                    | File extension for new migrations            |
-| `prismaClient`    | `PrismaClient`      | `undefined`                | Custom PrismaClient instance (for monorepos) |
-
-### 3. Environment Variables
-
-Set `DATABASE_URL` environment variable for database connection.
-
-### 4. Monorepo Support
-
-The package now includes enhanced support for monorepo structures. It automatically searches for Prisma Client in multiple locations:
-
-- Current working directory
-- Parent directories (up to 5 levels)
-- Common monorepo locations
-- Generated client paths (`node_modules/.prisma/client`)
-
-#### Custom PrismaClient Instance
-
-For complex monorepo setups, you can provide your own PrismaClient instance:
-
-```javascript
-// prisma-migrations.config.mjs
-import { PrismaClient } from "../../../node_modules/@prisma/client";
-
-export default {
-  migrationsDir: "./migrations",
-  schemaPath: "./prisma/schema.prisma",
-  tableName: "_prisma_migrations",
-  prismaClient: new PrismaClient(), // Provide your own instance
-};
-```
-
-This is particularly useful when:
-
-- Your Prisma Client is generated in a non-standard location
-- You're using a workspace with multiple Prisma schemas
-- You need custom PrismaClient configuration
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `migrationsDir` | `string` | Auto-discovered | Directory containing migration files |
+| `logLevel` | `string` | `'silent'` | Logging level: silent, error, warn, info, debug, trace |
 
 ---
 
-## API
+## How It Works
 
-### CLI Commands
+### Database Table
 
-#### `prisma-migrations init`
-
-Initialize migrations directory with the first migration.
-
-**Example:**
-
-```bash
-prisma-migrations init
-```
-
----
-
-#### `prisma-migrations create [name]`
-
-Create a new migration file.
-
-**Parameters:**
-
-- `[name]`: Optional migration name (string)
-
-**Example:**
-
-```bash
-prisma-migrations create add_users_table
-prisma-migrations create "update user schema"
-```
-
----
-
-#### `prisma-migrations up [options]`
-
-Run pending migrations.
-
-**Options:**
-
-- `-s, --steps <number>`: Run a specific number of migrations
-- `-i, --interactive`: Interactive mode to select which migrations to run
-
-**Examples:**
-
-```bash
-# Run all pending migrations
-prisma-migrations up
-
-# Run next 3 migrations
-prisma-migrations up --steps 3
-
-# Interactive mode
-prisma-migrations up --interactive
-```
-
----
-
-#### `prisma-migrations down [options]`
-
-Rollback migrations.
-
-**Options:**
-
-- `-s, --steps <number>`: Rollback a specific number of migrations (default: 1)
-- `-i, --interactive`: Interactive mode to select which migrations to rollback
-
-**Examples:**
-
-```bash
-# Rollback last migration
-prisma-migrations down
-
-# Rollback last 2 migrations
-prisma-migrations down --steps 2
-
-# Interactive rollback
-prisma-migrations down --interactive
-```
-
----
-
-#### `prisma-migrations status`
-
-Show migration status (displays all migrations and whether they're applied).
-
-**Example:**
-
-```bash
-prisma-migrations status
-```
-
----
-
-#### `prisma-migrations pending`
-
-List all pending (not yet applied) migrations.
-
-**Example:**
-
-```bash
-prisma-migrations pending
-```
-
----
-
-#### `prisma-migrations applied`
-
-List all applied migrations.
-
-**Example:**
-
-```bash
-prisma-migrations applied
-```
-
----
-
-#### `prisma-migrations latest`
-
-Show the latest applied migration.
-
-**Example:**
-
-```bash
-prisma-migrations latest
-```
-
----
-
-#### `prisma-migrations reset`
-
-Rollback all applied migrations.
-
-**Example:**
-
-```bash
-prisma-migrations reset
-```
-
----
-
-#### `prisma-migrations fresh`
-
-Rollback all migrations and re-run them (fresh start).
-
-**Example:**
-
-```bash
-prisma-migrations fresh
-```
-
----
-
-#### `prisma-migrations refresh`
-
-Alias for `fresh` command.
-
-**Example:**
-
-```bash
-prisma-migrations refresh
-```
-
----
-
-### Programmatic API
-
-The `Migrations` class provides the core functionality for managing migrations programmatically.
-
-#### `new Migrations(prisma, config?)`
-
-**Parameters:**
-
-- `prisma`: PrismaClient instance
-- `config?`: Optional MigrationsConfig object
-  - `migrationsDir?`: Directory containing migrations (default: discovered automatically)
-
-**Methods:**
-
-- `up(steps?)`: Run pending migrations, optionally limiting to N steps
-- `down(steps?)`: Rollback migrations (default: 1)
-- `status()`: Display migration status (logs to console)
-- `pending()`: Returns array of pending migrations
-- `applied()`: Returns array of applied migrations
-- `latest()`: Returns the latest applied migration or null
-- `reset()`: Rollback all migrations
-- `fresh()`: Rollback all and re-run
-- `refresh()`: Alias for fresh()
-- `upTo(migrationId)`: Run migrations up to specific ID
-- `downTo(migrationId)`: Rollback down to specific ID
-
-**Example:**
-
-```typescript
-import { Migrations } from "prisma-migrations";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-const migrations = new Migrations(prisma);
-
-// Run up to 3 migrations
-await migrations.up(3);
-
-// Get pending migrations
-const pending = await migrations.pending();
-console.log(`${pending.length} migrations pending`);
-
-await prisma.$disconnect();
-```
-
----
-
-### Migration File Formats
-
-Prisma Migrations supports both SQL and JavaScript/TypeScript migration files:
-
-#### SQL Format (Traditional)
+Prisma Migrations uses Prisma's standard `_prisma_migrations` table to track applied migrations. This table is automatically created by Prisma and has the following structure:
 
 ```sql
--- UP
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE _prisma_migrations (
+  id VARCHAR(255) PRIMARY KEY,
+  checksum VARCHAR(64) NOT NULL,
+  finished_at TIMESTAMP WITH TIME ZONE,
+  migration_name VARCHAR(255) NOT NULL,
+  logs TEXT,
+  rolled_back_at TIMESTAMP WITH TIME ZONE,
+  started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  applied_steps_count INTEGER NOT NULL DEFAULT 0
 );
-
--- DOWN
-DROP TABLE users;
 ```
 
-#### JavaScript/TypeScript Format (Knex-like)
+**This means:**
+- ✓ 100% compatible with Prisma's native migration system
+- ✓ Works with existing Prisma projects
+- ✓ No additional setup required
+- ✓ Can coexist with `prisma migrate` commands
 
-**TypeScript (.ts files):**
+### Migration Discovery
+
+Migrations are automatically discovered from:
+
+1. `./prisma/migrations` (default Prisma location)
+2. Custom directory specified in config
+3. Any directory containing folders matching pattern: `[timestamp]_[name]`
+
+### Migration Execution
+
+When you run `up`:
+
+1. Loads all migration files from migrations directory
+2. Checks `_prisma_migrations` table to see which are applied
+3. Runs pending migrations in chronological order
+4. Records each successful migration in the database
+
+When you run `down`:
+
+1. Checks which migrations are applied
+2. Runs the `down` function of the most recent migration(s)
+3. Removes the migration record from the database
+
+---
+
+## TypeScript Support
+
+Full TypeScript support out of the box.
+
+### PrismaClient Type
+
+Import the `PrismaClient` type from `prisma-migrations`:
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from 'prisma-migrations';
 
-export async function up(prisma: PrismaClient): Promise<void> {
-  // Raw SQL approach
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-
-  // Or use Prisma operations for data seeding
-  await prisma.user.createMany({
-    data: [{ email: "admin@example.com" }, { email: "user@example.com" }],
-  });
-}
-
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+export async function up(prisma: PrismaClient) {
+  // Full type safety and autocomplete
+  await prisma.$executeRaw`...`;
 }
 ```
 
-**JavaScript (.js files):**
+### Migration Types
 
-```javascript
-exports.up = async function (prisma) {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-};
-
-exports.down = async function (prisma) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-};
-```
-
-#### Configuration
-
-Set the migration format in your configuration:
-
-```javascript
-// prisma-migrations.config.js
-module.exports = {
-  migrationFormat: "ts", // 'sql', 'js', or 'ts'
-  migrationsDir: "./migrations",
-  // ... other options
-};
-```
-
-**Note:** TypeScript migrations require `tsx` to be installed:
-
-```bash
-npm install tsx
+```typescript
+import type {
+  MigrationFile,
+  MigrationFunction,
+  MigrationsConfig
+} from 'prisma-migrations';
 ```
 
 ---
 
+## Compatibility
+
+### Minimum Requirements
+
+- **Node.js:** 20.0.0+
+- **Prisma:** 2.0.0+
+- **Prisma Client:** 4.0.0+
+
+### Tested With
+
+- **Node.js:** 20.x, 22.x, 24.x
+- **Prisma:** 4.x, 5.x, 6.x
+- **Databases:** PostgreSQL 14+, 15, 16
+
+---
+
+## Comparison with Prisma Migrate
+
+| Feature | Prisma Migrate | Prisma Migrations |
+|---------|---------------|-------------------|
+| Create migrations | ✓ | ✓ |
+| Run migrations | ✓ | ✓ |
+| Rollback migrations | x | ✓ |
+| TypeScript migrations | x | ✓ |
+| JavaScript migrations | x | ✓ |
+| Step control | x | ✓ |
+| Interactive mode | x | ✓ |
+| Programmatic API | x | ✓ |
+| SQL migrations | ✓ | ✓ (via `$executeRaw`) |
+
+---
 
 ## Development
 
-This project uses [Bun](https://bun.sh) for development. Install Bun if you haven't already:
+### Prerequisites
 
 ```bash
+# Install Bun
 curl -fsSL https://bun.sh/install | bash
-```
 
-Then install dependencies:
-
-```bash
+# Install dependencies
 bun install
 ```
 
-### Key Tasks
+### Commands
 
-- `bun run build` - Build the TypeScript source
-- `bun test` - Run unit tests
-- `bun run test:e2e` - Run end-to-end tests with Docker
-- `bunx oxlint src tests e2e` - Lint source code
-- `bunx prettier --write src tests e2e` - Format code with prettier
+```bash
+# Build the library
+bun run build
+
+# Run unit tests
+bun test
+
+# Run E2E tests
+bun run test:e2e
+
+# Lint
+bunx oxlint src tests e2e
+
+# Format
+bunx prettier --write src tests e2e
+```
 
 ### Running E2E Tests
 
-The E2E tests run against a real PostgreSQL database in Docker:
+E2E tests use Docker to run against a real PostgreSQL database:
 
 ```bash
-# Run E2E tests (automatically starts Docker)
 ./e2e/run-e2e.sh
-
-# Or use the npm script
-bun run test:e2e
 ```
 
-E2E tests cover:
-- CLI commands (init, create, up, down, status, pending, applied, latest, reset, fresh, refresh)
-- Database operations with real PostgreSQL
-- Migration file discovery and execution
-- Error handling and rollback scenarios
+Tests cover:
+- All CLI commands
+- Database operations
+- Migration file discovery
+- Rollback scenarios
+- Error handling
+
+---
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for your changes
+4. Ensure all tests pass (`bun test && bun run test:e2e`)
+5. Submit a pull request
+
+---
+
+## License
+
+MIT
+
+---
+
+## Support
+
+- Documentation: https://github.com/yowainwright/prisma-migrations
+- Report Issues: https://github.com/yowainwright/prisma-migrations/issues
+- Discussions: https://github.com/yowainwright/prisma-migrations/discussions

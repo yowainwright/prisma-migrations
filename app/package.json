@@ -17,6 +17,7 @@
     "@docsearch/js": "^3.9.0",
     "@fontsource-variable/lexend": "^5.2.9",
     "@fontsource-variable/outfit": "^5.2.6",
+    "@fontsource/neuton": "^5.2.7",
     "@tailwindcss/vite": "^4.1.12",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
@@ -24,6 +25,7 @@
     "fuse.js": "^7.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-icons": "^5.5.0",
     "reactflow": "^11.11.4",
     "typescript": "^5.9.2"
   },

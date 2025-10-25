@@ -4,28 +4,28 @@ import { resolveDocsUrl } from "../../utils/urlResolver";
 ---
 
 <div
-  class="hero bg-base-100 text-base-content mx-auto py-12 sm:py-16 lg:py-20 px-4 sm:px-6 max-w-md md:max-w-full"
+  class="hero text-base-content mx-auto py-12 sm:py-16 lg:py-20 px-4 sm:px-6 max-w-md md:max-w-full"
 >
   <div class="hero-content text-center">
-    <div class="w-full max-w-xl font-outfit">
+    <div class="w-full max-w-xl">
       <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold">
         Install <span class="gradient-text">Prisma Migrations</span>
       </h1>
 
-      <p class="mt-4 sm:mt-6 w-full max-w-lg text-center text-sm sm:text-base">
+      <p class="mt-4 sm:mt-6 w-full max-w-lg text-center text-base">
         Install prisma-migrations globally, as a devDependency,<br class="hidden sm:inline" />
         <span class="sm:hidden">or use with npx.</span>
         <span class="hidden sm:inline">or just use with npx.</span>
       </p>
       <div
-        class="flex items-center bg-base-300 rounded-lg shadow-sm mt-4 justify-between p-1"
+        class="flex items-center bg-transparent border border-primary rounded-lg shadow-sm mt-4 justify-between p-1"
       >
-        <code class="ml-3 text-sm sm:text-base">npm install -g prisma-migrations</code>
+        <code class="ml-3 text-base whitespace-nowrap">npm install -g prisma-migrations</code>
         <CopyButton client:only="react" />
       </div>
 
       <a href={resolveDocsUrl("setup")} class="inline-block mt-6 sm:mt-7">
-        <button class="btn btn-lg sm:btn-md text-white border-0 hover:opacity-90 gradient-bg">Setup guide</button>
+        <button class="btn text-base px-6 py-3 h-14 whitespace-nowrap text-white border-0 shadow-none outline-none hover:opacity-90 gradient-bg">Setup guide</button>
       </a>
     </div>
   </div>

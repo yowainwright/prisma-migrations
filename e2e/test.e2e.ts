@@ -93,15 +93,20 @@ describe("E2E: CLI with real database", async () => {
     datasources: { db: { url: DATABASE_URL } },
   });
 
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
   await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS _prisma_migrations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      applied_at TIMESTAMP DEFAULT NOW()
+    CREATE TABLE _prisma_migrations (
+      id VARCHAR(255) PRIMARY KEY,
+      checksum VARCHAR(64) NOT NULL,
+      finished_at TIMESTAMP WITH TIME ZONE,
+      migration_name VARCHAR(255) NOT NULL,
+      logs TEXT,
+      rolled_back_at TIMESTAMP WITH TIME ZONE,
+      started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      applied_steps_count INTEGER NOT NULL DEFAULT 0
     )
   `;
 
-  await prisma.$executeRaw`TRUNCATE TABLE _prisma_migrations`;
   await prisma.$executeRaw`DROP TABLE IF EXISTS "User"`;
   await prisma.$disconnect();
 
