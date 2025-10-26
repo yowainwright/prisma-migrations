@@ -172,3 +172,5 @@ e2e/.prisma-migrationsrc.json
 # Temporary files
 tmp/
 
+# Astro auto-generated files
+app/.astro/

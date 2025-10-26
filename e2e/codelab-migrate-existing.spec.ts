@@ -243,7 +243,7 @@ model Post {
   await waitForPostgres();
   await cleanDatabase();
   await setupExistingPrismaDatabase();
-}, { timeout: 60000 });
+});
 
 afterAll(async () => {
   await cleanDatabase();
