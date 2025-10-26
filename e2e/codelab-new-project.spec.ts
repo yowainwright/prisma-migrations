@@ -105,12 +105,17 @@ beforeAll(async () => {
   }
   mkdirSync(TEST_DIR, { recursive: true });
 
-  const { symlinkSync } = require("fs");
+  const { symlinkSync, cpSync } = require("fs");
   const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
-  if (!existsSync(testNodeModules)) {
+  try {
+    if (existsSync(testNodeModules)) {
+      rmSync(testNodeModules, { recursive: true, force: true });
+    }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
+  } catch (error) {
+    cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
   writeFileSync(

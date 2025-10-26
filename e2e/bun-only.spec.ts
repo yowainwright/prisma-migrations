@@ -108,14 +108,16 @@ beforeAll(async () => {
   }
   mkdirSync(TEST_DIR, { recursive: true });
 
-  // Create symlink to parent node_modules so CLI can find @prisma/client
-  const { symlinkSync } = require("fs");
+  const { symlinkSync, cpSync } = require("fs");
   const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
   const testNodeModules = path.join(TEST_DIR, "node_modules");
   try {
+    if (existsSync(testNodeModules)) {
+      rmSync(testNodeModules, { recursive: true, force: true });
+    }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
   } catch (error) {
-    // Symlink might already exist, ignore
+    cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
   // Create basic Prisma schema
