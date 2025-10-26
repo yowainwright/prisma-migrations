@@ -15,6 +15,19 @@ const SIDEBAR = [
     ],
   },
   {
+    title: "Code Labs",
+    items: [
+      {
+        title: "New Project Setup",
+        href: resolveDocsUrl("codelab-new-project"),
+      },
+      {
+        title: "Migrate from Prisma Migrate",
+        href: resolveDocsUrl("codelab-migrate"),
+      },
+    ],
+  },
+  {
     title: "Guides",
     items: [
       {

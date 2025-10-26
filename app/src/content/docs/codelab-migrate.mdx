@@ -1,0 +1,557 @@
+---
+title: "Code Lab: Migrate from Prisma Migrate"
+description: "Step-by-step guide to migrating an existing Prisma project to prisma-migrations for rollback support"
+---
+
+# Code Lab: Migrating from Prisma Migrate to Prisma Migrations
+
+This code lab shows you how to migrate an existing project using Prisma's native migrations to **prisma-migrations**, adding rollback functionality while preserving your existing database and migration history.
+
+## What You'll Learn
+
+By the end of this code lab, you'll know how to:
+- Integrate prisma-migrations into an existing Prisma project
+- Preserve your existing database schema and data
+- Add new migrations with rollback support
+- Handle data migrations with up/down functions
+- Leverage the new rollback capabilities
+
+## Prerequisites
+
+- Existing project using Prisma ORM
+- Existing database with Prisma migrations applied
+- Node.js 20+ or Bun installed
+- Basic knowledge of SQL and TypeScript
+
+## Scenario
+
+You have a running application with:
+- PostgreSQL database
+- Prisma ORM with existing migrations
+- Tables: `users` and `posts`
+- Production data you can't lose
+- **No rollback capability** (Prisma's limitation)
+
+You want to add rollback support without disrupting your existing setup.
+
+## Step 1: Assess Your Current State
+
+First, check your existing migrations:
+
+```bash
+ls prisma/migrations
+```
+
+You should see directories like:
+```
+20240101000000_init/
+20240102000000_add_posts/
+20240103000000_add_indexes/
+```
+
+Check your database state:
+
+```bash
+npx prisma migrate status
+```
+
+Verify all migrations are applied.
+
+## Step 2: Install prisma-migrations
+
+Add prisma-migrations to your project:
+
+```bash
+npm install -D prisma-migrations
+```
+
+Your `package.json` should now include:
+
+```json
+{
+  "devDependencies": {
+    "prisma": "^6.0.0",
+    "prisma-migrations": "latest"
+  }
+}
+```
+
+## Step 3: Create Migrations Directory
+
+Create a new directory for prisma-migrations (separate from Prisma's migrations):
+
+```bash
+mkdir migrations
+```
+
+**Important**: Keep your existing `prisma/migrations` directory intact. The new `migrations` directory is for future migrations with rollback support.
+
+## Step 4: Configure prisma-migrations
+
+Create `.prisma-migrationsrc.json`:
+
+```json
+{
+  "migrationsDir": "./migrations",
+  "logLevel": "info"
+}
+```
+
+This tells prisma-migrations where to find new migration files.
+
+## Step 5: Verify Compatibility
+
+Run a status check:
+
+```bash
+npx prisma-migrations status
+```
+
+prisma-migrations reads from the same `_prisma_migrations` table that Prisma uses, so your existing migrations show as applied.
+
+## Step 6: Create Your First New Migration
+
+Now create a new migration with rollback support:
+
+```bash
+npx prisma-migrations create add_comments_table
+```
+
+This creates: `migrations/[timestamp]_add_comments_table/migration.ts`
+
+Edit the file:
+
+```typescript
+import type { PrismaClient } from '@prisma/client';
+
+/**
+ * Add comments table with rollback support
+ */
+export async function up(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    CREATE TABLE comments (
+      id SERIAL PRIMARY KEY,
+      content TEXT NOT NULL,
+      post_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX idx_comments_post_id ON comments(post_id)
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX idx_comments_user_id ON comments(user_id)
+  `;
+}
+
+/**
+ * Rollback comments table
+ */
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`DROP TABLE IF EXISTS comments CASCADE`;
+}
+```
+
+## Step 7: Test the Migration
+
+Run the migration:
+
+```bash
+npx prisma-migrations up
+```
+
+Verify the table was created:
+
+```bash
+psql -d your_db -c "\dt"
+```
+
+You should see `comments` table.
+
+## Step 8: Test Rollback (The New Feature!)
+
+Now try rolling back:
+
+```bash
+npx prisma-migrations down
+```
+
+Check the database again:
+
+```bash
+psql -d your_db -c "\dt"
+```
+
+The `comments` table is gone, but your existing `users` and `posts` tables are untouched.
+
+## Step 9: Re-apply the Migration
+
+```bash
+npx prisma-migrations up
+```
+
+The migration runs again, recreating the `comments` table.
+
+## Step 10: Add a Data Migration
+
+Create a migration that modifies existing data:
+
+```bash
+npx prisma-migrations create add_user_roles
+```
+
+Edit the migration:
+
+```typescript
+import type { PrismaClient } from '@prisma/client';
+
+/**
+ * Add role column to users and set default values
+ */
+export async function up(prisma: PrismaClient): Promise<void> {
+  // Add column
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ADD COLUMN role VARCHAR(50) DEFAULT 'user' NOT NULL
+  `;
+
+  // Update specific users (data migration)
+  await prisma.$executeRaw`
+    UPDATE users
+    SET role = 'admin'
+    WHERE email IN (
+      'admin@example.com',
+      'support@example.com'
+    )
+  `;
+
+  // Add index
+  await prisma.$executeRaw`
+    CREATE INDEX idx_users_role ON users(role)
+  `;
+}
+
+/**
+ * Remove role column
+ * Note: This drops the column, losing the data
+ * Consider backing up critical data in production
+ */
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    DROP COLUMN role
+  `;
+}
+```
+
+Run it:
+
+```bash
+npx prisma-migrations up
+```
+
+Verify:
+
+```bash
+psql -d your_db -c "SELECT email, role FROM users LIMIT 5;"
+```
+
+## Step 11: Update Your Prisma Schema
+
+Update `prisma/schema.prisma` to reflect the new columns:
+
+```prisma
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String?
+  role      String    @default("user") // NEW!
+  createdAt DateTime  @default(now()) @map("created_at")
+  posts     Post[]
+  comments  Comment[] // NEW!
+
+  @@map("users")
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String?
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now()) @map("created_at")
+  comments  Comment[] // NEW!
+
+  @@map("posts")
+}
+
+// NEW MODEL!
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  postId    Int      @map("post_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@index([postId], name: "idx_comments_post_id")
+  @@index([userId], name: "idx_comments_user_id")
+  @@map("comments")
+}
+```
+
+Regenerate Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+## Step 12: Use New Features in Your Code
+
+Now you can use the new tables:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function createComment() {
+  const comment = await prisma.comment.create({
+    data: {
+      content: 'Great post!',
+      postId: 1,
+      userId: 1,
+    },
+  });
+  console.log('Created comment:', comment);
+}
+
+async function getUserWithComments() {
+  const user = await prisma.user.findFirst({
+    where: { role: 'admin' },
+    include: {
+      posts: {
+        include: {
+          comments: true,
+        },
+      },
+    },
+  });
+  console.log('User with comments:', user);
+}
+```
+
+## Step 13: Update Your Workflow
+
+Update your deployment scripts:
+
+```json
+{
+  "scripts": {
+    "migrate:dev": "prisma-migrations up",
+    "migrate:status": "prisma-migrations status",
+    "migrate:create": "prisma-migrations create",
+    "migrate:rollback": "prisma-migrations down",
+    "migrate:fresh": "prisma-migrations fresh",
+    "postinstall": "prisma generate"
+  }
+}
+```
+
+## Step 14: Handle Production Migrations
+
+For production deployments:
+
+1. **Test in staging first**:
+   ```bash
+   npx prisma-migrations up
+   ```
+
+2. **Create a backup**:
+   ```bash
+   pg_dump your_db > backup_$(date +%Y%m%d).sql
+   ```
+
+3. **Run migrations**:
+   ```bash
+   npx prisma-migrations up
+   ```
+
+4. **If something goes wrong, rollback**:
+   ```bash
+   npx prisma-migrations down --steps 1
+   ```
+
+## Step 15: Best Practices
+
+### Safe Rollback Strategy
+
+```typescript
+export async function down(prisma: PrismaClient): Promise<void> {
+  // For critical data, backup before dropping
+  await prisma.$executeRaw`
+    CREATE TABLE comments_backup AS
+    SELECT * FROM comments
+  `;
+
+  await prisma.$executeRaw`
+    DROP TABLE comments CASCADE
+  `;
+
+  // Note: Restore from backup if needed manually
+}
+```
+
+### Progressive Migration
+
+Recommended approach:
+
+1. Keep existing Prisma migrations
+2. Use prisma-migrations for new migrations only
+3. Test rollback in development
+4. Build confidence gradually
+
+### Version Control
+
+Add to `.gitignore`:
+```
+node_modules/
+.env
+dist/
+```
+
+**Do commit**:
+```
+migrations/
+.prisma-migrationsrc.json
+prisma/schema.prisma
+```
+
+## Common Patterns
+
+### Adding a Column with Default
+
+```typescript
+export async function up(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    ADD COLUMN status VARCHAR(20) DEFAULT 'active' NOT NULL
+  `;
+}
+
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    DROP COLUMN status
+  `;
+}
+```
+
+### Renaming a Column
+
+```typescript
+export async function up(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    RENAME COLUMN name TO full_name
+  `;
+}
+
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    ALTER TABLE users
+    RENAME COLUMN full_name TO name
+  `;
+}
+```
+
+### Creating an Index
+
+```typescript
+export async function up(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    CREATE INDEX CONCURRENTLY idx_users_email
+    ON users(email)
+  `;
+}
+
+export async function down(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS idx_users_email
+  `;
+}
+```
+
+## Troubleshooting
+
+### "Table already exists"
+
+If you see this error, the migration was partially applied:
+
+```bash
+# Check status
+npx prisma-migrations status
+
+# If needed, manually mark as rolled back
+npx prisma-migrations down
+```
+
+### "Cannot rollback old Prisma migrations"
+
+prisma-migrations can only rollback migrations with `down()` functions. Old Prisma migrations don't have these, so they can't be rolled back.
+
+Solution: Leave old migrations alone, only rollback new ones.
+
+### Merge Conflicts in Migrations
+
+If multiple developers create migrations:
+
+1. Rename migrations to resolve timestamp conflicts
+2. Test migrations in order
+3. Update migration tracking if needed
+
+## Migration Checklist
+
+Before deploying to production:
+
+- [ ] All migrations tested locally
+- [ ] Rollback tested for each migration
+- [ ] Database backup created
+- [ ] Prisma schema updated
+- [ ] Prisma client regenerated
+- [ ] Application code updated
+- [ ] Staging environment tested
+- [ ] Rollback plan documented
+
+## Summary
+
+You've successfully migrated to prisma-migrations:
+
+- Existing database preserved
+- Existing Prisma migrations untouched
+- New migrations have rollback support
+- Data migrations with up/down functions
+- Safe deployment workflow established
+
+You now have Prisma's ORM with rollback support.
+
+## Next Steps
+
+- [Create complex migrations](/docs/api-reference)
+- [Use the programmatic API](/docs/api-reference#programmatic-api)
+- [Set up CI/CD pipelines](/docs/workspaces)
+- [Explore workspace support](/docs/workspaces)
+
+## Related Documentation
+
+- [New Project Setup](/docs/codelab-new-project)
+- [API Reference](/docs/api-reference)
+- [Workspaces Guide](/docs/workspaces)
