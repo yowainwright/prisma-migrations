@@ -174,7 +174,7 @@ generator client {
       applied_steps_count INTEGER NOT NULL DEFAULT 0
     )
   `;
-}, 60000);
+}, { timeout: 60000 });
 
 afterAll(async () => {
   await cleanDatabase();
