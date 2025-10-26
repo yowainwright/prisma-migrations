@@ -114,6 +114,21 @@ jobs:
       - name: Build project
         run: bun run build
 
+      - name: Generate Prisma Client for e2e tests
+        run: |
+          mkdir -p prisma
+          cat > prisma/schema.prisma << 'EOF'
+          datasource db {
+            provider = "postgresql"
+            url      = env("DATABASE_URL")
+          }
+
+          generator client {
+            provider = "prisma-client-js"
+          }
+          EOF
+          bunx prisma generate
+
       - name: Start all PostgreSQL containers
         run: docker compose -f e2e/docker-compose.yml up -d
 
