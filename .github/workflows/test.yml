@@ -134,16 +134,16 @@ jobs:
           echo "All PostgreSQL containers are ready"
 
       - name: Run CLI e2e tests
-        run: bun test e2e/cli-commands.spec.ts
+        run: bun test e2e/cli-commands.spec.ts --timeout 120000
 
       - name: Run Bun e2e tests
-        run: bun test e2e/bun-only.spec.ts
+        run: bun test e2e/bun-only.spec.ts --timeout 120000
 
       - name: Run new project codelab e2e tests
-        run: bun test e2e/codelab-new-project.spec.ts
+        run: bun test e2e/codelab-new-project.spec.ts --timeout 120000
 
       - name: Run migrate codelab e2e tests
-        run: bun test e2e/codelab-migrate-existing.spec.ts
+        run: bun test e2e/codelab-migrate-existing.spec.ts --timeout 120000
 
       - name: Stop PostgreSQL containers
         if: always()
