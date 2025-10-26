@@ -54,7 +54,7 @@ jobs:
         run: bunx prisma generate || echo "Prisma schema not found, skipping generate"
 
       - name: Run unit tests
-        run: bun test
+        run: bun run test
 
   cross-node-compatibility:
     runs-on: ubuntu-latest
@@ -115,7 +115,7 @@ jobs:
         run: bun run build
 
       - name: Start all PostgreSQL containers
-        run: docker-compose -f e2e/docker-compose.yml up -d
+        run: docker compose -f e2e/docker-compose.yml up -d
 
       - name: Wait for PostgreSQL containers
         run: |
@@ -146,4 +146,4 @@ jobs:
 
       - name: Stop PostgreSQL containers
         if: always()
-        run: docker-compose -f e2e/docker-compose.yml down
+        run: docker compose -f e2e/docker-compose.yml down
