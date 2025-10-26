@@ -136,16 +136,20 @@ jobs:
         run: |
           echo "Waiting for all PostgreSQL containers to be ready..."
           for port in 5435 5436 5437 5438; do
-            for i in {1..30}; do
-              if nc -z localhost $port 2>/dev/null; then
+            echo "Checking port $port..."
+            for i in {1..60}; do
+              if pg_isready -h localhost -p $port -U test 2>/dev/null; then
                 echo "PostgreSQL on port $port is ready"
                 break
               fi
-              echo "Waiting for PostgreSQL on port $port..."
-              sleep 2
+              if [ $i -eq 60 ]; then
+                echo "PostgreSQL on port $port failed to become ready"
+                exit 1
+              fi
+              sleep 1
             done
           done
-          sleep 3
+          echo "All PostgreSQL containers are ready"
 
       - name: Run CLI e2e tests
         run: bun test e2e/cli-commands.spec.ts
