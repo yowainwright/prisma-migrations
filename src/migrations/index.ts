@@ -5,9 +5,10 @@ import type { PrismaClient, MigrationsConfig, MigrationFile } from "../types";
 import { logger } from "../logger";
 import { Discovery } from "../discovery";
 
-async function importMigration(
-  migrationPath: string,
-): Promise<{ up?: (prisma: PrismaClient) => Promise<void>; down?: (prisma: PrismaClient) => Promise<void> }> {
+async function importMigration(migrationPath: string): Promise<{
+  up?: (prisma: PrismaClient) => Promise<void>;
+  down?: (prisma: PrismaClient) => Promise<void>;
+}> {
   const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
 
   if (isBun) {

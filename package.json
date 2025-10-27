@@ -90,11 +90,9 @@
     "husky": "^9.1.7",
     "prisma": "^6.18.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.0.0",
     "turbo": "^2.5.8",
     "typescript": "^5.0.0"
-  },
-  "optionalDependencies": {
-    "tsx": "^4.0.0"
   },
   "peerDependencies": {
     "prisma": ">=2.0.0"

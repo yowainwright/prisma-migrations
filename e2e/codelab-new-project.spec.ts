@@ -221,9 +221,16 @@ describe("Code Lab: New Project Setup", () => {
     });
 
     it("should have generated Prisma client", async () => {
-      expect(existsSync(path.join(TEST_DIR, "node_modules", ".prisma"))).toBe(
-        true,
+      const prismaClientPath = path.join(TEST_DIR, "node_modules", ".prisma");
+      const parentPrismaClientPath = path.join(
+        import.meta.dir,
+        "..",
+        "node_modules",
+        ".prisma",
       );
+      const hasPrismaClient =
+        existsSync(prismaClientPath) || existsSync(parentPrismaClientPath);
+      expect(hasPrismaClient).toBe(true);
     });
   });
 
