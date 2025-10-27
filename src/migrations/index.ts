@@ -46,16 +46,20 @@ export class Migrations {
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
           const mod = await import(pathToFileURL(migration.path).href);
-          const hasUpFunction = typeof mod.up === 'function';
+          const hasUpFunction = typeof mod.up === "function";
           if (!hasUpFunction) {
-            throw new Error(`Migration ${migration.id}_${migration.name} does not export an 'up' function`);
+            throw new Error(
+              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
+            );
           }
           await mod.up(this.prisma);
           await this.prisma
             .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, '', NOW(), ${migration.name}, NULL, NOW(), 1)`;
           logger.info(`✓ Applied ${migration.id}_${migration.name}`);
         } catch (error) {
-          logger.error(`Failed to apply migration ${migration.id}_${migration.name}`);
+          logger.error(
+            `Failed to apply migration ${migration.id}_${migration.name}`,
+          );
           logger.error(error instanceof Error ? error.message : String(error));
           throw error;
         }
@@ -83,9 +87,11 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
         const mod = await import(pathToFileURL(migration.path).href);
-        const hasDownFunction = typeof mod.down === 'function';
+        const hasDownFunction = typeof mod.down === "function";
         if (!hasDownFunction) {
-          throw new Error(`Migration ${id}_${migration.name} does not export a 'down' function`);
+          throw new Error(
+            `Migration ${id}_${migration.name} does not export a 'down' function`,
+          );
         }
         await mod.down(this.prisma);
         await this.prisma
@@ -141,16 +147,20 @@ export class Migrations {
         logger.info(`Rolling back ${migration.id}_${migration.name}...`);
         try {
           const mod = await import(pathToFileURL(migration.path).href);
-          const hasDownFunction = typeof mod.down === 'function';
+          const hasDownFunction = typeof mod.down === "function";
           if (!hasDownFunction) {
-            throw new Error(`Migration ${migration.id}_${migration.name} does not export a 'down' function`);
+            throw new Error(
+              `Migration ${migration.id}_${migration.name} does not export a 'down' function`,
+            );
           }
           await mod.down(this.prisma);
           await this.prisma
             .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
           logger.info(`✓ Rolled back ${migration.id}_${migration.name}`);
         } catch (error) {
-          logger.error(`Failed to rollback migration ${migration.id}_${migration.name}`);
+          logger.error(
+            `Failed to rollback migration ${migration.id}_${migration.name}`,
+          );
           logger.error(error instanceof Error ? error.message : String(error));
           throw error;
         }
@@ -196,16 +206,20 @@ export class Migrations {
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
           const mod = await import(pathToFileURL(migration.path).href);
-          const hasUpFunction = typeof mod.up === 'function';
+          const hasUpFunction = typeof mod.up === "function";
           if (!hasUpFunction) {
-            throw new Error(`Migration ${migration.id}_${migration.name} does not export an 'up' function`);
+            throw new Error(
+              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
+            );
           }
           await mod.up(this.prisma);
           await this.prisma
             .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, '', NOW(), ${migration.name}, NULL, NOW(), 1)`;
           logger.info(`✓ Applied ${migration.id}_${migration.name}`);
         } catch (error) {
-          logger.error(`Failed to apply migration ${migration.id}_${migration.name}`);
+          logger.error(
+            `Failed to apply migration ${migration.id}_${migration.name}`,
+          );
           logger.error(error instanceof Error ? error.message : String(error));
           throw error;
         }
@@ -243,9 +257,11 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
         const mod = await import(pathToFileURL(migration.path).href);
-        const hasDownFunction = typeof mod.down === 'function';
+        const hasDownFunction = typeof mod.down === "function";
         if (!hasDownFunction) {
-          throw new Error(`Migration ${id}_${migration.name} does not export a 'down' function`);
+          throw new Error(
+            `Migration ${id}_${migration.name} does not export a 'down' function`,
+          );
         }
         await mod.down(this.prisma);
         await this.prisma
