@@ -75,6 +75,19 @@ describe("E2E: CLI with real database", async () => {
   await waitForPostgres();
   console.log("PostgreSQL is ready");
 
+  const { symlinkSync, cpSync } = require("fs");
+  const parentNodeModules = join(process.cwd(), "node_modules");
+  const e2eNodeModules = join(e2eDir, "node_modules");
+
+  try {
+    if (existsSync(e2eNodeModules)) {
+      rmSync(e2eNodeModules, { recursive: true, force: true });
+    }
+    symlinkSync(parentNodeModules, e2eNodeModules, "dir");
+  } catch (error) {
+    cpSync(parentNodeModules, e2eNodeModules, { recursive: true });
+  }
+
   if (existsSync(migrationsDir)) {
     rmSync(migrationsDir, { recursive: true });
   }

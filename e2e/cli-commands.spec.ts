@@ -236,6 +236,11 @@ describe("CLI Commands E2E", () => {
     it("should run all pending migrations", async () => {
       const result = await runCLI(["up"]);
 
+      if (result.code !== 0) {
+        console.error("up command failed:");
+        console.error("stdout:", result.stdout);
+        console.error("stderr:", result.stderr);
+      }
       expect(result.code).toBe(0);
 
       // Verify migrations were applied to database
