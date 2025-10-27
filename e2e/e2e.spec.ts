@@ -1,12 +1,4 @@
-import {
-  describe,
-  test,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  afterEach,
-} from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { spawn } from "child_process";
 import { join } from "path";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
@@ -82,6 +74,19 @@ describe("E2E: CLI with real database", async () => {
   console.log("Waiting for PostgreSQL to be ready...");
   await waitForPostgres();
   console.log("PostgreSQL is ready");
+
+  const { symlinkSync, cpSync } = require("fs");
+  const parentNodeModules = join(process.cwd(), "node_modules");
+  const e2eNodeModules = join(e2eDir, "node_modules");
+
+  try {
+    if (existsSync(e2eNodeModules)) {
+      rmSync(e2eNodeModules, { recursive: true, force: true });
+    }
+    symlinkSync(parentNodeModules, e2eNodeModules, "dir");
+  } catch (error) {
+    cpSync(parentNodeModules, e2eNodeModules, { recursive: true });
+  }
 
   if (existsSync(migrationsDir)) {
     rmSync(migrationsDir, { recursive: true });

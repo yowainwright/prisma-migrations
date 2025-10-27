@@ -16,12 +16,10 @@
       "inputs": ["src/**/*.ts", "tests/**/*.ts", "e2e/**/*.{ts,js}"]
     },
     "test-lib": {
-      "dependsOn": ["build-lib"],
-      "inputs": ["src/**/*.ts", "tests/**/*.ts", "e2e/**/*.{ts,js}"]
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
     "//#test-lib": {
-      "dependsOn": ["build-lib"],
-      "inputs": ["src/**/*.ts", "tests/**/*.ts", "e2e/**/*.{ts,js}"]
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
     "dev": {
       "cache": false,

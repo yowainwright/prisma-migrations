@@ -7,6 +7,26 @@
 
 Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining compatibility with Prisma's standard migration system.
 
+## Why Use This?
+
+- **Familiar Knex-like API** - `up` and `down` functions you already know
+- **TypeScript First** - Full type safety for your migrations
+- **Prisma Powered** - Use both raw SQL and Prisma operations
+- **Flexible Control** - Run specific migrations, rollback, dry-run
+- **Modern Build** - ESM/CJS dual support, Node.js 20+ ready
+
+## Why Not Just Use Prisma?
+
+Prisma's native migration system is excellent for schema-driven development, but it lacks:
+
+- **No rollback functionality** - Once applied, migrations can't be easily undone
+- **Limited programmatic control** - Can't run specific numbers of migrations or rollback steps
+- **No up/down functions** - Migrations are pure SQL, no TypeScript/JavaScript logic
+- **Schema-only approach** - Difficult to mix schema changes with data seeding/transformation
+- **No granular migration management** - Can't easily target specific migrations or preview changes
+
+This library complements Prisma by providing the migration management patterns developers expect from other ORMs like Knex, while still leveraging Prisma's powerful client and type safety.
+
 ## Features
 
 - **Rollback migrations** - `up` and `down` migration support

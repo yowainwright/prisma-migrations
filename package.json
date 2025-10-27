@@ -24,13 +24,18 @@
     "dev-app": "bun run --filter app dev",
     "preview": "bun run --filter app preview",
     "test": "turbo run test-lib",
-    "test-lib": "bun test",
-    "test:watch": "bun test --watch",
-    "test:e2e": "./e2e/run-e2e.sh",
-    "test:e2e:esm": "bun run build && bun test e2e/test.js",
-    "test:e2e:cjs": "bun run build && bun test e2e/test-cjs.js",
-    "test:docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
-    "test:docker:clean": "docker-compose -f docker-compose.test.yml down -v",
+    "test-lib": "bun test ./tests",
+    "test:watch": "bun test ./tests --watch",
+    "e2e": "./e2e/run-e2e.sh",
+    "e2e:esm": "bun run build && bun test e2e/test.js",
+    "e2e:cjs": "bun run build && bun test e2e/test-cjs.js",
+    "e2e:cli": "bun run build && docker-compose -f e2e/docker-compose.yml up -d postgres-cli && bun test e2e/cli-commands.spec.ts && docker-compose -f e2e/docker-compose.yml down",
+    "e2e:bun": "bun run build && docker-compose -f e2e/docker-compose.yml up -d postgres-bun && bun test e2e/bun-only.spec.ts && docker-compose -f e2e/docker-compose.yml down",
+    "e2e:codelab-new": "bun run build && docker-compose -f e2e/docker-compose.yml up -d postgres-codelab-new && bun test e2e/codelab-new-project.spec.ts && docker-compose -f e2e/docker-compose.yml down",
+    "e2e:codelab-migrate": "bun run build && docker-compose -f e2e/docker-compose.yml up -d postgres-codelab-migrate && bun test e2e/codelab-migrate-existing.spec.ts && docker-compose -f e2e/docker-compose.yml down",
+    "e2e:all": "bun run e2e:cli && bun run e2e:bun && bun run e2e:codelab-new && bun run e2e:codelab-migrate",
+    "docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
+    "docker:clean": "docker-compose -f docker-compose.test.yml down -v",
     "lint": "turbo run lint-lib",
     "lint-lib": "bunx -y oxlint src tests e2e",
     "lint:fix": "bunx -y oxlint src tests e2e --fix",
@@ -42,7 +47,7 @@
     "clean:deps": "rm -rf node_modules app/node_modules bun.lock",
     "clean:all": "bun run clean && bun run clean:deps",
     "rebuild": "bun run clean && bun install && bun run build",
-    "precommit": "bun run format && bun run lint && bun run build && bun test",
+    "precommit": "bun run format && bun run lint && bun run build && bun run test",
     "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun test",
     "prepare": "husky"
   },
@@ -85,11 +90,9 @@
     "husky": "^9.1.7",
     "prisma": "^6.18.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.0.0",
     "turbo": "^2.5.8",
     "typescript": "^5.0.0"
-  },
-  "optionalDependencies": {
-    "tsx": "^4.0.0"
   },
   "peerDependencies": {
     "prisma": ">=2.0.0"

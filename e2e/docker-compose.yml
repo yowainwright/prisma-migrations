@@ -1,4 +1,5 @@
 services:
+  # Main PostgreSQL database for existing e2e tests
   postgres:
     image: postgres:16-alpine
     environment:
@@ -7,6 +8,74 @@ services:
       POSTGRES_DB: prisma_migrations_test
     ports:
       - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  # PostgreSQL for CLI commands e2e test
+  postgres-cli:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: cli_test
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  # PostgreSQL for Bun-only e2e test
+  postgres-bun:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: bun_test
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  # PostgreSQL for new project code lab
+  postgres-codelab-new:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: codelab_new
+    ports:
+      - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  # PostgreSQL for migration code lab (pre-seeded with existing Prisma schema)
+  postgres-codelab-migrate:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: codelab_migrate
+    ports:
+      - "5438:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test"]
       interval: 5s

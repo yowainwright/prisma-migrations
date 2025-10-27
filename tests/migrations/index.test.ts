@@ -175,6 +175,32 @@ describe("Migrations", () => {
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalled();
     });
+
+    test("should throw error when migration does not export up function", async () => {
+      const migrationDir = join(testMigrationsDir, "001_missing_up");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.ts"),
+        `export async function down(prisma) { }`,
+      );
+
+      await expect(migrations.up()).rejects.toThrow(
+        "Migration 001_missing_up does not export an 'up' function",
+      );
+    });
+
+    test("should throw error when up is not a function", async () => {
+      const migrationDir = join(testMigrationsDir, "002_invalid_up");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.ts"),
+        `export const up = "not a function"; export async function down(prisma) { }`,
+      );
+
+      await expect(migrations.up()).rejects.toThrow(
+        "Migration 002_invalid_up does not export an 'up' function",
+      );
+    });
   });
 
   describe("down", () => {
@@ -207,6 +233,36 @@ describe("Migrations", () => {
 
       await expect(migrations.down(1)).rejects.toThrow(
         "Migration file not found for 001",
+      );
+    });
+
+    test("should throw error when migration does not export down function", async () => {
+      const migrationDir = join(testMigrationsDir, "001_missing_down");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.ts"),
+        `export async function up(prisma) { }`,
+      );
+
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      await expect(migrations.down(1)).rejects.toThrow(
+        "Migration 001_missing_down does not export a 'down' function",
+      );
+    });
+
+    test("should throw error when down is not a function", async () => {
+      const migrationDir = join(testMigrationsDir, "002_invalid_down");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.ts"),
+        `export async function up(prisma) { }; export const down = "not a function"`,
+      );
+
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "002" }]));
+
+      await expect(migrations.down(1)).rejects.toThrow(
+        "Migration 002_invalid_down does not export a 'down' function",
       );
     });
   });

@@ -152,12 +152,25 @@ test-*.cjs
 .claude
 .turbo/
 
-# E2E test generated files
+# E2E test generated files and directories
 e2e/generated/
 e2e/node_modules/
 e2e/migrations/
 e2e/prisma/
+e2e/cli-test/
+e2e/codelab-new/
+e2e/codelab-migrate/
+e2e/bun-test/
+e2e/package.json
+e2e/bun.lock
+e2e/schema.prisma
+e2e/.prisma-migrationsrc.json
 
 # Test migrations (but not src/migrations source code)
 /migrations
 
+# Temporary files
+tmp/
+
+# Astro auto-generated files
+app/.astro/
