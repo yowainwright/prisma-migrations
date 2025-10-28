@@ -1,5 +1,8 @@
 export interface PrismaClient {
-  $executeRaw(query: TemplateStringsArray, ...values: unknown[]): Promise<number>;
+  $executeRaw(
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<number>;
   $executeRawUnsafe(query: string, ...values: unknown[]): Promise<number>;
   $queryRaw<T = unknown>(
     query: TemplateStringsArray,

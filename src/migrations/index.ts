@@ -85,9 +85,10 @@ export class Migrations {
         await prev;
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
-          const mod = migration.fileType === "sql"
-            ? await loadSqlMigration(migration.path)
-            : await importMigration(migration.path);
+          const mod =
+            migration.fileType === "sql"
+              ? await loadSqlMigration(migration.path)
+              : await importMigration(migration.path);
 
           const hasUpFunction = typeof mod.up === "function";
           if (!hasUpFunction) {
@@ -129,9 +130,10 @@ export class Migrations {
 
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
-        const mod = migration.fileType === "sql"
-          ? await loadSqlMigration(migration.path)
-          : await importMigration(migration.path);
+        const mod =
+          migration.fileType === "sql"
+            ? await loadSqlMigration(migration.path)
+            : await importMigration(migration.path);
 
         const hasDownFunction = typeof mod.down === "function";
         if (!hasDownFunction) {
@@ -192,9 +194,10 @@ export class Migrations {
         await prev;
         logger.info(`Rolling back ${migration.id}_${migration.name}...`);
         try {
-          const mod = migration.fileType === "sql"
-            ? await loadSqlMigration(migration.path)
-            : await importMigration(migration.path);
+          const mod =
+            migration.fileType === "sql"
+              ? await loadSqlMigration(migration.path)
+              : await importMigration(migration.path);
 
           const hasDownFunction = typeof mod.down === "function";
           if (!hasDownFunction) {
@@ -254,9 +257,10 @@ export class Migrations {
         await prev;
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
-          const mod = migration.fileType === "sql"
-            ? await loadSqlMigration(migration.path)
-            : await importMigration(migration.path);
+          const mod =
+            migration.fileType === "sql"
+              ? await loadSqlMigration(migration.path)
+              : await importMigration(migration.path);
 
           const hasUpFunction = typeof mod.up === "function";
           if (!hasUpFunction) {
@@ -308,9 +312,10 @@ export class Migrations {
 
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
-        const mod = migration.fileType === "sql"
-          ? await loadSqlMigration(migration.path)
-          : await importMigration(migration.path);
+        const mod =
+          migration.fileType === "sql"
+            ? await loadSqlMigration(migration.path)
+            : await importMigration(migration.path);
 
         const hasDownFunction = typeof mod.down === "function";
         if (!hasDownFunction) {
@@ -346,12 +351,16 @@ export class Migrations {
     const tsPath = join(migrationsDir, dirName, "migration.ts");
     const sqlPath = join(migrationsDir, dirName, "migration.sql");
 
-    const hasTsFile = await access(tsPath).then(() => true).catch(() => false);
+    const hasTsFile = await access(tsPath)
+      .then(() => true)
+      .catch(() => false);
     if (hasTsFile) {
       return { path: tsPath, fileType: "ts" };
     }
 
-    const hasSqlFile = await access(sqlPath).then(() => true).catch(() => false);
+    const hasSqlFile = await access(sqlPath)
+      .then(() => true)
+      .catch(() => false);
     if (hasSqlFile) {
       return { path: sqlPath, fileType: "sql" };
     }
@@ -376,7 +385,9 @@ export class Migrations {
     return entries.filter((entry) => {
       const isDirectory = entry.isDirectory();
       const isValid = isDirectory && this.isValidMigrationDir(entry.name);
-      logger.debug(`Entry ${entry.name}: directory=${isDirectory}, valid=${isValid}`);
+      logger.debug(
+        `Entry ${entry.name}: directory=${isDirectory}, valid=${isValid}`,
+      );
       return isValid;
     });
   }
@@ -388,8 +399,13 @@ export class Migrations {
     return await Promise.all(
       validDirs.map(async (entry) => {
         const { id, name } = this.parseMigrationName(entry.name);
-        const { path, fileType } = await this.detectMigrationFile(migrationsDir, entry.name);
-        logger.debug(`Mapped migration: ${id}_${name} at ${path} (${fileType})`);
+        const { path, fileType } = await this.detectMigrationFile(
+          migrationsDir,
+          entry.name,
+        );
+        logger.debug(
+          `Mapped migration: ${id}_${name} at ${path} (${fileType})`,
+        );
         return { id, name, path, fileType };
       }),
     );
