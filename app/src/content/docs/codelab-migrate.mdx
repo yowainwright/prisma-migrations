@@ -76,15 +76,13 @@ Your `package.json` should now include:
 }
 ```
 
-## Step 3: Create Migrations Directory
+## Step 3: Use Existing Migrations Directory
 
-Create a new directory for prisma-migrations (separate from Prisma's migrations):
+**Important**: prisma-migrations can work directly with your existing `prisma/migrations` directory. It supports both:
+- **SQL migrations** (`.sql` files) - Your existing Prisma migrations
+- **TypeScript migrations** (`.ts` files) - New migrations with rollback support
 
-```bash
-mkdir migrations
-```
-
-**Important**: Keep your existing `prisma/migrations` directory intact. The new `migrations` directory is for future migrations with rollback support.
+No need to create a separate directory unless you prefer to keep them separate.
 
 ## Step 4: Configure prisma-migrations
 
@@ -92,12 +90,12 @@ Create `.prisma-migrationsrc.json`:
 
 ```json
 {
-  "migrationsDir": "./migrations",
+  "migrationsDir": "./prisma/migrations",
   "logLevel": "info"
 }
 ```
 
-This tells prisma-migrations where to find new migration files.
+This tells prisma-migrations where to find migration files. Using `./prisma/migrations` allows you to work with existing Prisma migrations.
 
 ## Step 5: Verify Compatibility
 
@@ -117,7 +115,9 @@ Now create a new migration with rollback support:
 npx prisma-migrations create add_comments_table
 ```
 
-This creates: `migrations/[timestamp]_add_comments_table/migration.ts`
+This creates: `prisma/migrations/[timestamp]_add_comments_table/migration.ts`
+
+**Note**: Your existing migrations are `.sql` files. New migrations are `.ts` files with `up()` and `down()` functions for rollback support. prisma-migrations handles both types automatically.
 
 Edit the file:
 
@@ -414,10 +414,13 @@ export async function down(prisma: PrismaClient): Promise<void> {
 
 Recommended approach:
 
-1. Keep existing Prisma migrations
-2. Use prisma-migrations for new migrations only
-3. Test rollback in development
-4. Build confidence gradually
+1. Keep existing Prisma `.sql` migrations (they work as-is)
+2. Create new migrations as `.ts` files with rollback support
+3. Mix both types in the same directory
+4. Test rollback in development
+5. Build confidence gradually
+
+**Note**: SQL migrations execute via their `up()` function but show a warning on `down()` since they don't have rollback logic.
 
 ### Version Control
 
@@ -506,9 +509,9 @@ npx prisma-migrations down
 
 ### "Cannot rollback old Prisma migrations"
 
-prisma-migrations can only rollback migrations with `down()` functions. Old Prisma migrations don't have these, so they can't be rolled back.
+prisma-migrations can execute existing Prisma `.sql` migrations, but they don't have `down()` functions for rollback. Attempting to roll back a `.sql` migration will show a warning.
 
-Solution: Leave old migrations alone, only rollback new ones.
+Solution: Only rollback new `.ts` migrations that have `down()` functions. Leave old `.sql` migrations alone.
 
 ### Merge Conflicts in Migrations
 
@@ -536,8 +539,9 @@ Before deploying to production:
 You've successfully migrated to prisma-migrations:
 
 - Existing database preserved
-- Existing Prisma migrations untouched
-- New migrations have rollback support
+- Existing Prisma `.sql` migrations work as-is
+- New `.ts` migrations have rollback support
+- Mix both migration types in the same directory
 - Data migrations with up/down functions
 - Safe deployment workflow established
 

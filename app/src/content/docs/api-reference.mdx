@@ -314,6 +314,7 @@ interface MigrationFile {
   id: string;      // Migration ID (timestamp)
   name: string;    // Migration name
   path: string;    // Full path to migration file
+  fileType: 'ts' | 'sql';  // Migration file type
 }
 ```
 
