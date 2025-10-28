@@ -1,10 +1,14 @@
 export interface PrismaClient {
-  $executeRaw(query: TemplateStringsArray, ...values: any[]): Promise<number>;
+  $executeRaw(
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<number>;
+  $executeRawUnsafe(query: string, ...values: unknown[]): Promise<number>;
   $queryRaw<T = unknown>(
     query: TemplateStringsArray,
-    ...values: any[]
+    ...values: unknown[]
   ): Promise<T>;
-  $raw(value: string): any;
+  $raw(value: string): unknown;
   $disconnect(): Promise<void>;
 }
 
@@ -19,6 +23,7 @@ export interface MigrationFile {
   id: string;
   name: string;
   path: string;
+  fileType: "ts" | "sql";
 }
 
 export interface MigrationsConfig {

@@ -7,6 +7,41 @@
 
 Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining compatibility with Prisma's standard migration system.
 
+## Table of Contents
+
+- [Why Use This?](#why-use-this)
+- [Why Not Just Use Prisma?](#why-not-just-use-prisma)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CLI API](#cli-api)
+  - [Commands](#commands)
+  - [Global Options](#global-options)
+- [Programmatic API](#programmatic-api)
+  - [Import](#import)
+  - [Constructor](#constructor)
+  - [Methods](#methods)
+  - [Complete Example](#complete-example)
+- [Migration Files](#migration-files)
+  - [File Structure](#file-structure)
+  - [TypeScript Migration](#typescript-migration)
+  - [JavaScript Migration](#javascript-migration)
+  - [SQL Migrations](#sql-migrations)
+  - [Using Prisma Client Operations](#using-prisma-client-operations)
+- [Configuration](#configuration)
+- [How It Works](#how-it-works)
+  - [Database Table](#database-table)
+  - [Migration Discovery](#migration-discovery)
+  - [Migration Execution](#migration-execution)
+  - [Migration Flow Diagram](#migration-flow-diagram)
+- [TypeScript Support](#typescript-support)
+- [Compatibility](#compatibility)
+- [Comparison with Prisma Migrate](#comparison-with-prisma-migrate)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
 ## Why Use This?
 
 - **Familiar Knex-like API** - `up` and `down` functions you already know
@@ -409,9 +444,10 @@ Get list of pending migrations.
 
 ```typescript
 interface MigrationFile {
-  id: string;      // Migration ID (timestamp)
-  name: string;    // Migration name
-  path: string;    // Full path to migration file
+  id: string;           // Migration ID (timestamp)
+  name: string;         // Migration name
+  path: string;         // Full path to migration file
+  fileType: 'ts' | 'sql';  // Migration file type
 }
 ```
 
@@ -602,6 +638,39 @@ exports.down = async function(prisma) {
 };
 ```
 
+### SQL Migrations
+
+Prisma Migrations supports both TypeScript/JavaScript migrations and SQL migrations. This is particularly useful when migrating from Prisma's native migration system or when you want to mix both approaches.
+
+**File Structure:**
+```bash
+prisma/migrations/
+├── 20220101000000_init_db/
+│   └── migration.sql          # SQL migration (from Prisma)
+└── 20220102000000_add_posts/
+    └── migration.ts            # TypeScript migration (new)
+```
+
+**SQL Migration File:**
+```sql
+-- migration.sql
+CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  published BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**How It Works:**
+- SQL migrations are detected automatically
+- The `up` command executes the SQL file contents
+- The `down` command shows a warning (SQL files don't have rollback logic)
+- You can mix SQL and TypeScript migrations in the same project
+
+**Note:** SQL migrations don't support rollback (`down`) operations since they don't have `down` functions. For migrations that need rollback support, use TypeScript/JavaScript migrations.
+
 ### Using Prisma Client Operations
 
 You can use any Prisma Client method in migrations:
@@ -727,6 +796,49 @@ When you run `down`:
 2. Runs the `down` function of the most recent migration(s)
 3. Removes the migration record from the database
 
+### Migration Flow Diagram
+
+```mermaid
+flowchart TD
+    Start([CLI Command]) --> DetectType{Command Type?}
+
+    DetectType -->|up| LoadPending[Load Pending Migrations]
+    DetectType -->|down| LoadApplied[Load Applied Migrations]
+    DetectType -->|status| ShowStatus[Display Migration Status]
+
+    LoadPending --> CheckFileType{File Type?}
+    LoadApplied --> ReverseOrder[Reverse Order]
+
+    CheckFileType -->|.ts/.js| ImportTS[Import TypeScript Module]
+    CheckFileType -->|.sql| LoadSQL[Read SQL File]
+
+    ImportTS --> ExecuteUp[Execute up Function]
+    LoadSQL --> ExecuteSQL[Execute SQL via $executeRawUnsafe]
+
+    ExecuteUp --> RecordDB[(Record in _prisma_migrations)]
+    ExecuteSQL --> RecordDB
+
+    ReverseOrder --> CheckDownType{File Type?}
+
+    CheckDownType -->|.ts/.js| ImportDownTS[Import TypeScript Module]
+    CheckDownType -->|.sql| WarnNoDown[Warn: No down support]
+
+    ImportDownTS --> ExecuteDown[Execute down Function]
+
+    ExecuteDown --> RemoveDB[(Remove from _prisma_migrations)]
+    WarnNoDown --> RemoveDB
+
+    RecordDB --> Success([Migration Complete])
+    RemoveDB --> Success
+    ShowStatus --> Success
+
+    style Start fill:#e1f5ff
+    style Success fill:#d4edda
+    style RecordDB fill:#fff3cd
+    style RemoveDB fill:#fff3cd
+    style WarnNoDown fill:#f8d7da
+```
+
 ---
 
 ## TypeScript Support
@@ -783,10 +895,11 @@ import type {
 | Rollback migrations | x | ✓ |
 | TypeScript migrations | x | ✓ |
 | JavaScript migrations | x | ✓ |
+| SQL migrations | ✓ | ✓ |
+| Mixed .sql and .ts migrations | x | ✓ |
 | Step control | x | ✓ |
 | Interactive mode | x | ✓ |
 | Programmatic API | x | ✓ |
-| SQL migrations | ✓ | ✓ (via `$executeRaw`) |
 
 ---
 

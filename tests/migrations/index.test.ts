@@ -3,6 +3,7 @@ import { Migrations } from "../../src/migrations";
 import type { PrismaClient, MigrationFile } from "../../src/types";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
+import { logger } from "../../src/logger";
 
 const testMigrationsDir = join(process.cwd(), "test-migrations");
 
@@ -18,6 +19,7 @@ describe("Migrations", () => {
 
     mockPrisma = {
       $executeRaw: mock(() => Promise.resolve(1)),
+      $executeRawUnsafe: mock(() => Promise.resolve(1)),
       $queryRaw: mock(() => Promise.resolve([])),
       $raw: mock((value: string) => value),
     };
@@ -389,6 +391,171 @@ describe("Migrations", () => {
       const pending = await migrations.pending();
       expect(pending[0].id).toBe("20230101120000");
       expect(pending[0].name).toBe("create_users_table");
+    });
+
+    test("should correctly populate fileType property for TypeScript migrations", async () => {
+      createMigration("001", "first");
+
+      const pending = await migrations.pending();
+      expect(pending[0].fileType).toBe("ts");
+    });
+
+    test("should correctly populate fileType property for SQL migrations", async () => {
+      const migrationDir = join(testMigrationsDir, "002_sql_migration");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.sql"),
+        "CREATE TABLE users (id SERIAL PRIMARY KEY, name VARCHAR(255));",
+      );
+
+      const pending = await migrations.pending();
+      const sqlMigration = pending.find((m) => m.id === "002");
+      expect(sqlMigration?.fileType).toBe("sql");
+    });
+
+    test("should handle mixed TypeScript and SQL migrations", async () => {
+      createMigration("001", "typescript_migration");
+
+      const sqlMigrationDir = join(testMigrationsDir, "002_sql_migration");
+      mkdirSync(sqlMigrationDir, { recursive: true });
+      writeFileSync(
+        join(sqlMigrationDir, "migration.sql"),
+        "CREATE TABLE posts (id SERIAL PRIMARY KEY, title VARCHAR(255));",
+      );
+
+      createMigration("003", "another_typescript");
+
+      const pending = await migrations.pending();
+      expect(pending.length).toBe(3);
+
+      const tsMigration1 = pending.find((m) => m.id === "001");
+      const sqlMigration = pending.find((m) => m.id === "002");
+      const tsMigration2 = pending.find((m) => m.id === "003");
+
+      expect(tsMigration1?.fileType).toBe("ts");
+      expect(sqlMigration?.fileType).toBe("sql");
+      expect(tsMigration2?.fileType).toBe("ts");
+    });
+  });
+  describe("detectMigrationFile", () => {
+    test("should throw error if neither migration.ts nor migration.sql is found", async () => {
+      const emptyMigrationDir = join(testMigrationsDir, "001_empty");
+      mkdirSync(emptyMigrationDir, { recursive: true });
+
+      await expect(migrations.pending()).rejects.toThrow(
+        "No migration file found for 001_empty (checked migration.ts and migration.sql)",
+      );
+    });
+
+    test("should prefer TypeScript file when both migration.ts and migration.sql exist", async () => {
+      const migrationDir = join(testMigrationsDir, "001_both_files");
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(
+        join(migrationDir, "migration.ts"),
+        "export async function up(prisma) { }; export async function down(prisma) { }",
+      );
+      writeFileSync(
+        join(migrationDir, "migration.sql"),
+        "CREATE TABLE test (id SERIAL PRIMARY KEY);",
+      );
+
+      const pending = await migrations.pending();
+      expect(pending[0].fileType).toBe("ts");
+    });
+  });
+
+  describe("SQL migrations", () => {
+    const createSqlMigration = (id: string, name: string, sql: string) => {
+      const migrationDir = join(testMigrationsDir, `${id}_${name}`);
+      mkdirSync(migrationDir, { recursive: true });
+      writeFileSync(join(migrationDir, "migration.sql"), sql);
+    };
+
+    test("should correctly execute SQL content using $executeRawUnsafe in up function", async () => {
+      const sqlContent =
+        "CREATE TABLE users (id SERIAL PRIMARY KEY, name VARCHAR(255));";
+      createSqlMigration("001", "create_users", sqlContent);
+
+      mockPrisma.$executeRawUnsafe = mock(() => Promise.resolve(1));
+
+      await migrations.up();
+
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(sqlContent);
+    });
+
+    test("should log warning and not execute rollback logic in down function", async () => {
+      const sqlContent =
+        "CREATE TABLE users (id SERIAL PRIMARY KEY, name VARCHAR(255));";
+      createSqlMigration("001", "create_users", sqlContent);
+
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      const loggerWarnSpy = mock();
+      const originalWarn = logger.warn.bind(logger);
+      logger.warn = loggerWarnSpy;
+
+      try {
+        await migrations.down(1);
+
+        expect(mockPrisma.$executeRawUnsafe).not.toHaveBeenCalled();
+        expect(loggerWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining("No down migration available for SQL file"),
+        );
+      } finally {
+        logger.warn = originalWarn;
+      }
+    });
+
+    test("should execute both TypeScript and SQL migrations in correct order", async () => {
+      createMigration("001", "first_ts", "await prisma.$executeRaw`SELECT 1`");
+      createSqlMigration(
+        "002",
+        "sql_migration",
+        "CREATE TABLE posts (id SERIAL PRIMARY KEY);",
+      );
+      createMigration("003", "third_ts", "await prisma.$executeRaw`SELECT 2`");
+
+      mockPrisma.$executeRaw = mock(() => Promise.resolve(1));
+      mockPrisma.$executeRawUnsafe = mock(() => Promise.resolve(1));
+
+      const count = await migrations.up();
+
+      expect(count).toBe(3);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
+        "CREATE TABLE posts (id SERIAL PRIMARY KEY);",
+      );
+    });
+
+    test("should handle SQL migration rollback correctly", async () => {
+      const sqlContent = "CREATE TABLE users (id SERIAL PRIMARY KEY);";
+      createSqlMigration("001", "create_users", sqlContent);
+
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      const loggerWarnSpy = mock();
+      const originalWarn = logger.warn.bind(logger);
+      logger.warn = loggerWarnSpy;
+
+      try {
+        await migrations.down(1);
+
+        expect(loggerWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining("No down migration available for SQL file"),
+        );
+
+        expect(mockPrisma.$executeRaw).toHaveBeenCalledWith(
+          expect.objectContaining({
+            raw: expect.arrayContaining([
+              "DELETE FROM _prisma_migrations WHERE id = ",
+              "",
+            ]),
+          }),
+          "001",
+        );
+      } finally {
+        logger.warn = originalWarn;
+      }
     });
   });
 });
