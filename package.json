@@ -48,7 +48,7 @@
     "clean:all": "bun run clean && bun run clean:deps",
     "rebuild": "bun run clean && bun install && bun run build",
     "precommit": "bun run format && bun run lint && bun run build && bun run test",
-    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun test",
+    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun run test-lib",
     "prepare": "husky"
   },
   "keywords": [
