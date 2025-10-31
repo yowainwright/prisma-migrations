@@ -3,11 +3,14 @@ import { up } from "./commands/up";
 import { down } from "./commands/down";
 import { init } from "./commands/init";
 import { create } from "./commands/create";
+import { mcp } from "./commands/mcp";
+import * as prisma from "./commands/prisma";
 import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
 import { Discovery } from "../discovery";
 import { setLogLevel } from "../logger";
 import type { MigrationFile } from "../types";
+import { MigrationError } from "../errors";
 import boxen from "boxen";
 import chalk from "chalk";
 
@@ -19,6 +22,17 @@ console.log(
     borderColor: "cyan",
   }),
 );
+
+function handleError(error: unknown) {
+  if (error instanceof MigrationError) {
+    console.error(error.format());
+  } else if (error instanceof Error) {
+    console.error(chalk.red("❌"), chalk.red.bold("Error:"), error.message);
+  } else {
+    console.error(chalk.red("❌"), chalk.red.bold("Error:"), String(error));
+  }
+  process.exit(1);
+}
 
 const program = new Command();
 
@@ -39,8 +53,7 @@ program
     try {
       await init();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -51,8 +64,7 @@ program
     try {
       await create(name);
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -77,8 +89,7 @@ program
       await up(prisma, steps, config, interactive);
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -103,8 +114,7 @@ program
       await down(prisma, steps, config, interactive);
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -120,8 +130,7 @@ program
       await migrations.status();
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -146,8 +155,7 @@ program
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -172,8 +180,7 @@ program
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -196,8 +203,7 @@ program
       }
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -214,8 +220,7 @@ program
       console.log(chalk.green(`\n✓ Rolled back ${count} migration(s)`));
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -236,8 +241,7 @@ program
       );
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
     }
   });
 
@@ -258,8 +262,85 @@ program
       );
       await prisma.$disconnect();
     } catch (error) {
-      console.error(chalk.red("Error:"), error);
-      process.exit(1);
+      handleError(error);
+    }
+  });
+
+program
+  .command("dev [name]")
+  .description(
+    "Create and apply a new Prisma schema migration (wraps prisma migrate dev)",
+  )
+  .action(async (name) => {
+    try {
+      await prisma.dev(name);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("deploy")
+  .description(
+    "Apply pending Prisma schema migrations (wraps prisma migrate deploy)",
+  )
+  .action(async () => {
+    try {
+      await prisma.deploy();
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("resolve")
+  .description("Resolve migration issues (wraps prisma migrate resolve)")
+  .option("--applied <migration>", "Mark a migration as applied")
+  .option("--rolled-back <migration>", "Mark a migration as rolled back")
+  .action(async (options) => {
+    try {
+      await prisma.resolve({
+        applied: options.applied,
+        rolledBack: options.rolledBack,
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("push")
+  .description("Push schema changes to database (wraps prisma db push)")
+  .option("--skip-generate", "Skip generating Prisma Client")
+  .action(async (options) => {
+    try {
+      await prisma.dbPush({ skipGenerate: options.skipGenerate });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("generate")
+  .description("Generate Prisma Client (wraps prisma generate)")
+  .action(async () => {
+    try {
+      await prisma.generate();
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("mcp")
+  .description(
+    "Start MCP server for AI assistant integration (data migrations + Prisma)",
+  )
+  .action(async () => {
+    try {
+      await mcp();
+    } catch (error) {
+      handleError(error);
     }
   });
 

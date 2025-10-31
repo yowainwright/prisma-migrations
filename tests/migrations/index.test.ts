@@ -187,7 +187,7 @@ describe("Migrations", () => {
       );
 
       await expect(migrations.up()).rejects.toThrow(
-        "Migration 001_missing_up does not export an 'up' function",
+        "Migration 001_missing_up is invalid: missing up or down function",
       );
     });
 
@@ -200,7 +200,7 @@ describe("Migrations", () => {
       );
 
       await expect(migrations.up()).rejects.toThrow(
-        "Migration 002_invalid_up does not export an 'up' function",
+        "Migration 002_invalid_up is invalid: missing up or down function",
       );
     });
   });

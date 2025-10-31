@@ -195,6 +195,23 @@ npx prisma-migrations refresh
 
 ---
 
+### `mcp`
+
+Start the MCP (Model Context Protocol) server for AI assistant integration.
+
+```bash
+npx prisma-migrations mcp
+```
+
+**Description:**
+Provides 15 tools for AI assistants to manage both data migrations and Prisma operations:
+- **Data migrations**: status, pending, applied, up, down, create, dry-run, reset, fresh, refresh
+- **Prisma operations**: migrate dev/deploy/resolve, db push, generate
+
+Use with Claude Desktop or other MCP-compatible AI assistants for AI-assisted database management.
+
+---
+
 ### Global Options
 
 These options work with any command:
