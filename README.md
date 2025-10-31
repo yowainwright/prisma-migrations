@@ -38,6 +38,7 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 - [Compatibility](#compatibility)
 - [Comparison with Prisma Migrate](#comparison-with-prisma-migrate)
 - [Development](#development)
+- [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
@@ -52,15 +53,30 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 
 ## Why Not Just Use Prisma?
 
-Prisma's native migration system is excellent for schema-driven development, but it lacks:
+`prisma-migrations` wraps Prisma's native commands and adds powerful data migration capabilities. Use one CLI for everything:
 
-- **No rollback functionality** - Once applied, migrations can't be easily undone
-- **Limited programmatic control** - Can't run specific numbers of migrations or rollback steps
-- **No up/down functions** - Migrations are pure SQL, no TypeScript/JavaScript logic
-- **Schema-only approach** - Difficult to mix schema changes with data seeding/transformation
-- **No granular migration management** - Can't easily target specific migrations or preview changes
+| Feature | Prisma Native | prisma-migrations |
+|---------|--------------|-------------------|
+| **Schema migrations** | ✅ `prisma migrate dev` | ✅ `prisma-migrations dev` |
+| **Deploy migrations** | ✅ `prisma migrate deploy` | ✅ `prisma-migrations deploy` |
+| **Rollback support** | ❌ | ✅ `prisma-migrations down` |
+| **Data migrations** | ❌ | ✅ TypeScript/JavaScript |
+| **Programmatic API** | ❌ | ✅ Full Node.js API |
+| **Step control** | ❌ | ✅ Run/rollback N migrations |
+| **Interactive mode** | ❌ | ✅ Choose migrations |
+| **Hooks & validation** | ❌ | ✅ Before/after hooks |
+| **AI assistant (MCP)** | ❌ | ✅ 15 migration tools |
 
-This library complements Prisma by providing the migration management patterns developers expect from other ORMs like Knex, while still leveraging Prisma's powerful client and type safety.
+## Unified Workflow
+
+```bash
+# Use one CLI for both schema AND data migrations
+npx prisma-migrations dev add_users_table    # Schema migration (wraps Prisma)
+npx prisma-migrations create seed_admin      # Data migration
+npx prisma-migrations up                     # Run all pending
+npx prisma-migrations down                   # Rollback if needed
+npx prisma-migrations deploy                 # Deploy to production
+```
 
 ## Features
 
@@ -70,6 +86,7 @@ This library complements Prisma by providing the migration management patterns d
 - **Prisma compatible** - Uses Prisma's standard `_prisma_migrations` table
 - **Step control** - Run or rollback specific numbers of migrations
 - **Interactive mode** - Select which migrations to apply
+- **MCP server** - AI assistant integration with 15 migration tools
 - **Zero configuration** - Out-of-the-box working Prisma configuration
 
 ---
@@ -323,6 +340,81 @@ Alias for `fresh` command.
 ```bash
 npx prisma-migrations refresh
 ```
+
+---
+
+### Prisma Wrapper Commands
+
+These commands wrap Prisma's native CLI for a unified migration experience:
+
+#### `dev [name]`
+
+Create and apply a new Prisma schema migration (wraps `prisma migrate dev`).
+
+```bash
+npx prisma-migrations dev add_users_table
+```
+
+---
+
+#### `deploy`
+
+Apply pending Prisma schema migrations in production (wraps `prisma migrate deploy`).
+
+```bash
+npx prisma-migrations deploy
+```
+
+---
+
+#### `resolve`
+
+Resolve migration issues (wraps `prisma migrate resolve`).
+
+```bash
+# Mark a migration as applied
+npx prisma-migrations resolve --applied 20231215120000_migration_name
+
+# Mark a migration as rolled back
+npx prisma-migrations resolve --rolled-back 20231215120000_migration_name
+```
+
+---
+
+#### `push`
+
+Push schema changes to database without creating migrations (wraps `prisma db push`).
+
+```bash
+npx prisma-migrations push
+npx prisma-migrations push --skip-generate
+```
+
+---
+
+#### `generate`
+
+Generate Prisma Client (wraps `prisma generate`).
+
+```bash
+npx prisma-migrations generate
+```
+
+---
+
+#### `mcp`
+
+Start the MCP (Model Context Protocol) server for AI assistant integration. Provides 15 tools for managing both data migrations and Prisma operations.
+
+```bash
+npx prisma-migrations mcp
+```
+
+The MCP server exposes the following tools:
+- **Data migrations**: status, pending, applied, up, down, create, dry-run, reset, fresh, refresh
+- **Prisma operations**: migrate dev/deploy/resolve, db push, generate
+
+Use with Claude Desktop or other MCP-compatible AI assistants for AI-assisted database management.
 
 ---
 
@@ -948,6 +1040,12 @@ Tests cover:
 - Migration file discovery
 - Rollback scenarios
 - Error handling
+
+---
+
+## Security
+
+The MCP server runs locally only and validates all inputs to prevent command injection. Always backup databases before running destructive operations in production.
 
 ---
 

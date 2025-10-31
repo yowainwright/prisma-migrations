@@ -4,4 +4,6 @@ export type {
   MigrationFunction,
   PrismaClient,
   MigrationsConfig,
+  MigrationFile,
+  MigrationHooks,
 } from "./types";

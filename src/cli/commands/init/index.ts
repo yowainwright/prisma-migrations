@@ -1,30 +1,34 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import chalk from "chalk";
+import { generateMigrationId } from "../../../utils";
 
 export async function init() {
   const migrationsDir = join(process.cwd(), "prisma", "migrations");
-
   await mkdir(migrationsDir, { recursive: true });
 
-  const timestamp = Date.now().toString();
+  const timestamp = generateMigrationId();
   const migrationName = "initial_migration";
   const migrationDir = join(migrationsDir, `${timestamp}_${migrationName}`);
 
   await mkdir(migrationDir, { recursive: true });
 
-  const migrationContent = `import type { PrismaClient } from 'prisma-migrations';
+  const migrationContent = `-- Add your migration SQL here
+-- This will be executed when running: prisma-migrations up
 
-export async function up(prisma: PrismaClient) {
-  // Add your up migration here
-}
-
-export async function down(prisma: PrismaClient) {
-  // Add your down migration here
-}
+-- Example:
+-- CREATE TABLE users (
+--   id SERIAL PRIMARY KEY,
+--   email VARCHAR(255) UNIQUE NOT NULL,
+--   created_at TIMESTAMP DEFAULT NOW()
+-- );
 `;
 
-  await writeFile(join(migrationDir, "migration.ts"), migrationContent);
+  await writeFile(join(migrationDir, "migration.sql"), migrationContent);
 
-  console.log(`✓ Created migration: ${timestamp}_${migrationName}`);
-  console.log(`  Location: ${migrationDir}`);
+  console.log(
+    chalk.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
+  );
+  console.log(chalk.gray(`  Location: ${migrationDir}`));
+  console.log(chalk.gray(`  File: migration.sql`));
 }

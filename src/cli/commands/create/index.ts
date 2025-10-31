@@ -4,6 +4,7 @@ import inquirer from "inquirer";
 import ora from "ora";
 import chalk from "chalk";
 import boxen from "boxen";
+import { generateMigrationId, validateMigrationName } from "../../../utils";
 
 export async function create(name?: string) {
   let migrationName = name;
@@ -14,10 +15,20 @@ export async function create(name?: string) {
         type: "input",
         name: "name",
         message: "Migration name:",
-        validate: (input: string) => input.length > 0 || "Name is required",
+        validate: (input: string) => {
+          if (input.length === 0) return "Name is required";
+          if (!validateMigrationName(input)) {
+            return "Name must contain only lowercase letters, numbers, and underscores";
+          }
+          return true;
+        },
       },
     ]);
     migrationName = answers.name;
+  } else if (!validateMigrationName(migrationName)) {
+    throw new Error(
+      "Migration name must contain only lowercase letters, numbers, and underscores",
+    );
   }
 
   const spinner = ora("Creating migration...").start();
@@ -26,27 +37,19 @@ export async function create(name?: string) {
     const migrationsDir = join(process.cwd(), "prisma", "migrations");
     await mkdir(migrationsDir, { recursive: true });
 
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .split(".")[0]
-      .replace("T", "");
+    const timestamp = generateMigrationId();
     const migrationDir = join(migrationsDir, `${timestamp}_${migrationName}`);
 
     await mkdir(migrationDir, { recursive: true });
 
-    const migrationContent = `import type { PrismaClient } from 'prisma-migrations';
+    const migrationContent = `-- Add your migration SQL here
+-- This will be executed when running: prisma-migrations up
 
-export async function up(prisma: PrismaClient) {
-  // Add your up migration here
-}
-
-export async function down(prisma: PrismaClient) {
-  // Add your down migration here
-}
+-- Example:
+-- ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
 `;
 
-    await writeFile(join(migrationDir, "migration.ts"), migrationContent);
+    await writeFile(join(migrationDir, "migration.sql"), migrationContent);
 
     spinner.succeed(chalk.green("Migration created"));
 
