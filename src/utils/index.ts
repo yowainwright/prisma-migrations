@@ -3,11 +3,9 @@ import { readFile } from "fs/promises";
 import type { MigrationFile } from "../types";
 
 export function generateMigrationId(): string {
-  return new Date()
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .split(".")[0]
-    .replace("T", "");
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[-:]/g, "").replace("T", "");
+  return timestamp.substring(0, 14) + timestamp.substring(15, 18);
 }
 
 export function validateMigrationName(name: string): boolean {
