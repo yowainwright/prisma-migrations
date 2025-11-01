@@ -97,13 +97,9 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
  * Clean up database
  */
 async function cleanDatabase(): Promise<void> {
-  try {
-    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_users CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_posts CASCADE`;
-  } catch {
-    // Tables might not exist yet, that's fine
-  }
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_users CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_posts CASCADE`;
 }
 
 beforeAll(async () => {

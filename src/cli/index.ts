@@ -7,7 +7,7 @@ import * as prisma from "./commands/prisma";
 import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
 import { Discovery } from "../discovery";
-import { setLogLevel } from "../logger";
+import { setLogLevel, logger } from "../logger";
 import type { MigrationFile } from "../types";
 import { MigrationError } from "../errors";
 import { colors } from "../utils/colors";
@@ -20,11 +20,11 @@ console.log(
 
 function handleError(error: unknown) {
   if (error instanceof MigrationError) {
-    console.error(error.format());
+    logger.error(error.format());
   } else if (error instanceof Error) {
-    console.error(colors.bold(colors.red("Error:")), error.message);
+    logger.error(error.message);
   } else {
-    console.error(colors.bold(colors.red("Error:")), String(error));
+    logger.error(String(error));
   }
   process.exit(1);
 }
