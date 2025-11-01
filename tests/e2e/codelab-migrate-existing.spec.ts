@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
-import { rmSync, existsSync, mkdirSync, writeFileSync, cpSync } from "fs";
+import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "child_process";
 
@@ -33,14 +33,14 @@ function runCLI(
 }> {
   return new Promise((resolve) => {
     const cwd = options.cwd || TEST_DIR;
-    const nodeModulesPath = path.join(import.meta.dir, "..", "node_modules");
+    const nodeModulesPath = path.join(import.meta.dir, "..", "..", "node_modules");
     const env = {
       ...process.env,
       DATABASE_URL,
       NODE_PATH: nodeModulesPath,
       ...options.env,
     };
-    const cliPath = path.join(import.meta.dir, "..", "dist", "cli.js");
+    const cliPath = path.join(import.meta.dir, "..", "..", "dist", "cli.js");
 
     const child = spawn("node", [cliPath, ...args], {
       cwd,
@@ -73,7 +73,7 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return;
-    } catch (error) {
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
@@ -166,7 +166,7 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
+  const parentNodeModules = path.join(import.meta.dir, "..", "..", "node_modules");
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
   try {
@@ -174,7 +174,7 @@ beforeAll(async () => {
       rmSync(testNodeModules, { recursive: true, force: true });
     }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
-  } catch (error) {
+  } catch {
     cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
@@ -233,7 +233,7 @@ model Post {
       env: { ...process.env, DATABASE_URL },
       stdio: "inherit",
     });
-  } catch (error) {
+  } catch {
     throw new Error("Failed to generate Prisma client");
   }
 
@@ -395,43 +395,27 @@ describe("Code Lab: Migrate Existing Prisma Project", () => {
         const migrationFile = path.join(
           MIGRATIONS_DIR,
           commentsMigration,
-          "migration.ts",
+          "migration.sql",
         );
         writeFileSync(
           migrationFile,
-          `import type { PrismaClient } from '@prisma/client';
+          `-- Migration: Up
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-/**
- * Add comments table - NEW migration with rollback support
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`
-    CREATE TABLE comments (
-      id SERIAL PRIMARY KEY,
-      content TEXT NOT NULL,
-      post_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  \`;
+CREATE INDEX idx_comments_post_id ON comments(post_id);
 
-  await prisma.$executeRaw\`
-    CREATE INDEX idx_comments_post_id ON comments(post_id)
-  \`;
+CREATE INDEX idx_comments_user_id ON comments(user_id);
 
-  await prisma.$executeRaw\`
-    CREATE INDEX idx_comments_user_id ON comments(user_id)
-  \`;
-}
-
-/**
- * Rollback comments table - This is NEW! Old Prisma migrations couldn't do this
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`DROP TABLE IF EXISTS comments CASCADE\`;
-}
+-- Migration: Down
+DROP TABLE IF EXISTS comments CASCADE;
 `,
         );
       }
@@ -542,39 +526,21 @@ export async function down(prisma: PrismaClient): Promise<void> {
         const migrationFile = path.join(
           MIGRATIONS_DIR,
           rolesMigration,
-          "migration.ts",
+          "migration.sql",
         );
         writeFileSync(
           migrationFile,
-          `import type { PrismaClient } from '@prisma/client';
+          `-- Migration: Up
+ALTER TABLE users
+ADD COLUMN role VARCHAR(50) DEFAULT 'user';
 
-/**
- * Add role column and set defaults
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  // Add column
-  await prisma.$executeRaw\`
-    ALTER TABLE users
-    ADD COLUMN role VARCHAR(50) DEFAULT 'user'
-  \`;
+UPDATE users
+SET role = 'admin'
+WHERE email = 'existing@example.com';
 
-  // Update existing users
-  await prisma.$executeRaw\`
-    UPDATE users
-    SET role = 'admin'
-    WHERE email = 'existing@example.com'
-  \`;
-}
-
-/**
- * Remove role column
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`
-    ALTER TABLE users
-    DROP COLUMN role
-  \`;
-}
+-- Migration: Down
+ALTER TABLE users
+DROP COLUMN role;
 `,
         );
       }
@@ -641,7 +607,7 @@ export async function down(prisma: PrismaClient): Promise<void> {
 
   describe("Step 11: Test Advanced Features", () => {
     it("should handle fresh command (reset + rerun)", async () => {
-      const result = await runCLI(["fresh"]);
+      const result = await runCLI(["fresh", "--force"]);
 
       expect(result.code).toBe(0);
     });

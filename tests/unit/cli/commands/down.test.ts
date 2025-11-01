@@ -1,11 +1,10 @@
 import { describe, test, expect, mock } from "bun:test";
 import {
-  promptDownMode,
   runRollbackForMode,
   rollbackOne,
   showRollbackTable,
-} from "../../../src/cli/commands/down";
-import type { Migrations } from "../../../src/migrations";
+} from "../../../../src/cli/commands/down";
+import type { Migrations } from "../../../../src/migrations";
 
 describe("down command", () => {
   describe("promptDownMode", () => {
