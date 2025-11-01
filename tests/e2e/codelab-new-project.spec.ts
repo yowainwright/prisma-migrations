@@ -34,7 +34,12 @@ function runCLI(
 }> {
   return new Promise((resolve) => {
     const cwd = options.cwd || TEST_DIR;
-    const nodeModulesPath = path.join(import.meta.dir, "..", "..", "node_modules");
+    const nodeModulesPath = path.join(
+      import.meta.dir,
+      "..",
+      "..",
+      "node_modules",
+    );
     const env = {
       ...process.env,
       DATABASE_URL,
@@ -106,7 +111,12 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "..", "node_modules");
+  const parentNodeModules = path.join(
+    import.meta.dir,
+    "..",
+    "..",
+    "node_modules",
+  );
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
   try {

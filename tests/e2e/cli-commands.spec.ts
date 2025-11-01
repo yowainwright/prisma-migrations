@@ -108,7 +108,12 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "..", "node_modules");
+  const parentNodeModules = path.join(
+    import.meta.dir,
+    "..",
+    "..",
+    "node_modules",
+  );
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
   try {
