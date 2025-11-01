@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { Discovery } from "../../src/discovery";
+import { Discovery } from "../../../src/discovery";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 

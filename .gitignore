@@ -174,3 +174,8 @@ tmp/
 
 # Astro auto-generated files
 app/.astro/
+
+# macOS files
+.DS_Store
+**/.DS_Store
+prisma

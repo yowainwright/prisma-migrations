@@ -20,3 +20,6 @@ export async function generateChecksum(filePath: string): Promise<string> {
   const content = await readFile(filePath, "utf-8");
   return createHash("sha256").update(content).digest("hex");
 }
+
+export { spinner, Spinner } from "./spinner";
+export { createTable } from "./table";

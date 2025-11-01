@@ -3,8 +3,8 @@ import {
   promptUpMode,
   runMigrationsForMode,
   showSuccessTable,
-} from "../../../src/cli/commands/up";
-import type { Migrations } from "../../../src/migrations";
+} from "../../../../src/cli/commands/up";
+import type { Migrations } from "../../../../src/migrations";
 
 describe("up command", () => {
   describe("promptUpMode", () => {

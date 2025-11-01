@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import pc from "picocolors";
 
 export class MigrationError extends Error {
   constructor(
@@ -11,17 +11,17 @@ export class MigrationError extends Error {
   }
 
   format(): string {
-    let output = `\n${chalk.red("❌")} ${chalk.red.bold(this.message)}\n`;
+    let output = `\n${pc.bold(pc.red(this.message))}\n`;
 
     if (this.suggestions.length > 0) {
-      output += `\n${chalk.cyan("💡 Suggestions:")}\n`;
+      output += `\n${pc.cyan("Suggestions:")}\n`;
       this.suggestions.forEach((suggestion) => {
-        output += `  ${chalk.gray("•")} ${suggestion}\n`;
+        output += `  ${pc.gray("•")} ${suggestion}\n`;
       });
     }
 
     if (this.helpCommand) {
-      output += `\n${chalk.yellow("Need help?")} Run: ${chalk.cyan(this.helpCommand)}\n`;
+      output += `\n${pc.yellow("Need help?")} Run: ${pc.cyan(this.helpCommand)}\n`;
     }
 
     return output;
@@ -36,9 +36,8 @@ export function createMigrationNotFoundError(
     [
       "Run 'prisma-migrations status' to see all migrations",
       "Check if the migration directory exists in prisma/migrations",
-      "The migration may have been deleted - run 'prisma-migrations doctor' to diagnose",
+      "The migration file may have been deleted or moved",
     ],
-    "prisma-migrations help",
   );
 }
 
@@ -51,7 +50,6 @@ export function createDatabaseConnectionError(error: Error): MigrationError {
       "Ensure your database credentials are correct",
       "Try running 'prisma db pull' to test the connection",
     ],
-    "prisma-migrations help database",
   );
 }
 
@@ -63,10 +61,9 @@ export function createInvalidMigrationError(
     `Migration ${migrationId} is invalid: ${reason}`,
     [
       "Check that migration.sql exists in the migration directory",
+      "Ensure the file contains both '-- Migration: Up' and '-- Migration: Down' markers",
       "Verify the SQL syntax is correct",
-      "For TypeScript migrations, ensure up() and down() functions are exported",
     ],
-    "prisma-migrations help migration-format",
   );
 }
 
@@ -79,9 +76,8 @@ export function createChecksumMismatchError(
       "The migration file content has changed since it was applied",
       "Never modify migrations that have been applied to production",
       "Create a new migration instead to make schema changes",
-      "If this is a development environment, you can run 'prisma-migrations fresh'",
+      "If this is a development environment, you can run 'prisma-migrations fresh --force'",
     ],
-    "prisma-migrations help checksum",
   );
 }
 
@@ -93,7 +89,6 @@ export function createNoMigrationsError(): MigrationError {
       "Or run 'prisma-migrations create <name>' to create a new migration",
       "Check that your migrations directory exists at prisma/migrations",
     ],
-    "prisma-migrations help getting-started",
   );
 }
 
@@ -109,7 +104,6 @@ export function createMigrationFailedError(
       "Review the database logs for more details",
       "You may need to rollback: 'prisma-migrations down'",
     ],
-    "prisma-migrations help troubleshoot",
   );
 }
 
@@ -121,11 +115,10 @@ export function createRollbackFailedError(
     `Rollback of ${migrationId} failed: ${error.message}`,
     [
       "The migration may have made irreversible changes",
-      "Check if the migration.sql file has rollback SQL",
+      "Check that the '-- Migration: Down' section has valid rollback SQL",
       "You may need to manually fix the database state",
-      "SQL migrations don't support automatic rollback - write manual SQL",
+      "Verify the SQL syntax in the down section is correct",
     ],
-    "prisma-migrations help rollback",
   );
 }
 
@@ -137,6 +130,5 @@ export function createPrismaClientNotFoundError(): MigrationError {
       "Run 'prisma generate' to generate the client",
       "Verify @prisma/client is in your dependencies",
     ],
-    "prisma-migrations help setup",
   );
 }

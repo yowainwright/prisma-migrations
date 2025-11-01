@@ -6,9 +6,8 @@ import type {
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
 import inquirer from "inquirer";
-import ora from "ora";
-import chalk from "chalk";
-import Table from "cli-table3";
+import pc from "picocolors";
+import { spinner, createTable } from "../../../utils";
 
 export async function up(
   prisma: PrismaClient,
@@ -22,12 +21,12 @@ export async function up(
     return await interactiveUp(migrations);
   }
 
-  const spinner = ora("Loading migrations...").start();
+  const spin = spinner("Loading migrations...").start();
 
   try {
-    spinner.text = "Running migrations...";
+    spin.text = "Running migrations...";
     const count = await migrations.up(steps);
-    spinner.succeed(chalk.green(`Applied ${count} migration(s)`));
+    spin.succeed(`Applied ${count} migration(s)`);
 
     const hasAppliedMigrations = count > 0;
     if (hasAppliedMigrations) {
@@ -36,7 +35,7 @@ export async function up(
 
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Migration failed"));
+    spin.fail("Migration failed");
     logger.error(error);
     throw error;
   }
@@ -47,7 +46,7 @@ export async function interactiveUp(migrations: Migrations) {
   const hasPending = pending.length > 0;
 
   if (!hasPending) {
-    console.log(chalk.green("No pending migrations"));
+    console.log(pc.green("No pending migrations"));
     return 0;
   }
 
@@ -64,10 +63,10 @@ export async function interactiveUp(migrations: Migrations) {
 
 export async function promptUpMode(): Promise<string> {
   const choices = [
-    { name: chalk.cyan("All pending migrations"), value: "all" },
-    { name: chalk.yellow("Select number of migrations"), value: "steps" },
+    { name: pc.cyan("All pending migrations"), value: "all" },
+    { name: pc.yellow("Select number of migrations"), value: "steps" },
     {
-      name: chalk.blue("Select specific migration to run up to"),
+      name: pc.blue("Select specific migration to run up to"),
       value: "specific",
     },
   ];
@@ -110,14 +109,14 @@ export async function runMigrationsForMode(
 export async function runAllMigrations(
   migrations: Migrations,
 ): Promise<number> {
-  const spinner = ora("Running migrations...").start();
+  const spin = spinner("Running migrations...").start();
 
   try {
     const count = await migrations.up();
-    spinner.succeed(chalk.green(`Applied ${count} migration(s)`));
+    spin.succeed(`Applied ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Migration failed"));
+    spin.fail("Migration failed");
     logger.error(error);
     throw error;
   }
@@ -142,14 +141,14 @@ export async function runStepsMigrations(
     },
   });
 
-  const spinner = ora("Running migrations...").start();
+  const spin = spinner("Running migrations...").start();
 
   try {
     const count = await migrations.up(steps);
-    spinner.succeed(chalk.green(`Applied ${count} migration(s)`));
+    spin.succeed(`Applied ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Migration failed"));
+    spin.fail("Migration failed");
     logger.error(error);
     throw error;
   }
@@ -173,24 +172,23 @@ export async function runToSpecificMigration(
     },
   ]);
 
-  const spinner = ora("Running migrations...").start();
+  const spin = spinner("Running migrations...").start();
 
   try {
     const count = await migrations.upTo(migrationId);
-    spinner.succeed(chalk.green(`Applied ${count} migration(s)`));
+    spin.succeed(`Applied ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Migration failed"));
+    spin.fail("Migration failed");
     logger.error(error);
     throw error;
   }
 }
 
 export function showSuccessTable(count: number): void {
-  const table = new Table({
-    head: [chalk.cyan("Status"), chalk.cyan("Migrations")],
-    colWidths: [10, 50],
-  });
-  table.push([chalk.green("✓"), `${count} migration(s) applied successfully`]);
-  console.log(table.toString());
+  const table = createTable(
+    [pc.cyan("Status"), pc.cyan("Migrations")],
+    [[pc.green("[x]"), `${count} migration(s) applied successfully`]],
+  );
+  console.log(table);
 }

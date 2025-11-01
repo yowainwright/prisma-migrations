@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import chalk from "chalk";
+import pc from "picocolors";
 import { generateMigrationId } from "../../../utils";
 
 export async function init() {
@@ -13,22 +13,30 @@ export async function init() {
 
   await mkdir(migrationDir, { recursive: true });
 
-  const migrationContent = `-- Add your migration SQL here
+  const migrationContent = `-- Migration: Up
+-- Add your forward migration SQL here
 -- This will be executed when running: prisma-migrations up
-
 -- Example:
 -- CREATE TABLE users (
 --   id SERIAL PRIMARY KEY,
 --   email VARCHAR(255) UNIQUE NOT NULL,
 --   created_at TIMESTAMP DEFAULT NOW()
 -- );
+
+
+-- Migration: Down
+-- Add your rollback migration SQL here
+-- This will be executed when running: prisma-migrations down
+-- Example:
+-- DROP TABLE IF EXISTS users;
+
 `;
 
   await writeFile(join(migrationDir, "migration.sql"), migrationContent);
 
   console.log(
-    chalk.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
+    pc.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
   );
-  console.log(chalk.gray(`  Location: ${migrationDir}`));
-  console.log(chalk.gray(`  File: migration.sql`));
+  console.log(pc.gray(`  Location: ${migrationDir}`));
+  console.log(pc.gray(`  File: migration.sql`));
 }

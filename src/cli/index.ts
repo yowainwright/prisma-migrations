@@ -3,7 +3,6 @@ import { up } from "./commands/up";
 import { down } from "./commands/down";
 import { init } from "./commands/init";
 import { create } from "./commands/create";
-import { mcp } from "./commands/mcp";
 import * as prisma from "./commands/prisma";
 import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
@@ -11,25 +10,21 @@ import { Discovery } from "../discovery";
 import { setLogLevel } from "../logger";
 import type { MigrationFile } from "../types";
 import { MigrationError } from "../errors";
-import boxen from "boxen";
-import chalk from "chalk";
+import pc from "picocolors";
+import inquirer from "inquirer";
+import { PROMPTS, MESSAGES } from "./constants";
 
 console.log(
-  boxen(chalk.cyan.bold("Prisma Migrations"), {
-    padding: 1,
-    margin: 1,
-    borderStyle: "round",
-    borderColor: "cyan",
-  }),
+  `\n   ╭───────────────────────╮\n   │                       │\n   │   ${pc.bold(pc.cyan("Prisma Migrations"))}   │\n   │                       │\n   ╰───────────────────────╯\n`,
 );
 
 function handleError(error: unknown) {
   if (error instanceof MigrationError) {
     console.error(error.format());
   } else if (error instanceof Error) {
-    console.error(chalk.red("❌"), chalk.red.bold("Error:"), error.message);
+    console.error(pc.bold(pc.red("Error:")), error.message);
   } else {
-    console.error(chalk.red("❌"), chalk.red.bold("Error:"), String(error));
+    console.error(pc.bold(pc.red("Error:")), String(error));
   }
   process.exit(1);
 }
@@ -39,7 +34,7 @@ const program = new Command();
 program
   .name("prisma-migrations")
   .description("Simple up/down migrations for Prisma")
-  .version("1.0.0")
+  .version("0.1.3")
   .option("-v, --verbose", "Enable verbose logging")
   .option(
     "--log-level <level>",
@@ -73,6 +68,7 @@ program
   .description("Run pending migrations")
   .option("-s, --steps <number>", "Number of migrations to run")
   .option("-i, --interactive", "Interactive mode")
+  .option("--dry-run", "Show what migrations would run without executing them")
   .action(async (options, command) => {
     const discovery = new Discovery();
     try {
@@ -84,6 +80,24 @@ program
 
       const config = await loadConfig();
       const prisma = await discovery.findPrismaClient(config);
+
+      if (options.dryRun) {
+        const migrations = new Migrations(prisma, config);
+        const steps = options.steps ? parseInt(options.steps) : undefined;
+        const toRun = await migrations.dryRun(steps);
+
+        if (toRun.length === 0) {
+          console.log(pc.green("No pending migrations"));
+        } else {
+          console.log(pc.cyan(`\nWould run ${toRun.length} migration(s):\n`));
+          toRun.forEach((m: MigrationFile) =>
+            console.log(`  ${m.id}_${m.name}`),
+          );
+        }
+        await prisma.$disconnect();
+        return;
+      }
+
       const steps = options.steps ? parseInt(options.steps) : undefined;
       const interactive = options.interactive || false;
       await up(prisma, steps, config, interactive);
@@ -146,9 +160,9 @@ program
       const pending = await migrations.pending();
 
       if (pending.length === 0) {
-        console.log(chalk.green("No pending migrations"));
+        console.log(pc.green("No pending migrations"));
       } else {
-        console.log(chalk.cyan(`\n${pending.length} pending migration(s):\n`));
+        console.log(pc.cyan(`\n${pending.length} pending migration(s):\n`));
         pending.forEach((m: MigrationFile) =>
           console.log(`  ${m.id}_${m.name}`),
         );
@@ -171,9 +185,9 @@ program
       const applied = await migrations.applied();
 
       if (applied.length === 0) {
-        console.log(chalk.yellow("No applied migrations"));
+        console.log(pc.yellow("No applied migrations"));
       } else {
-        console.log(chalk.cyan(`\n${applied.length} applied migration(s):\n`));
+        console.log(pc.cyan(`\n${applied.length} applied migration(s):\n`));
         applied.forEach((m: MigrationFile) =>
           console.log(`  ✓ ${m.id}_${m.name}`),
         );
@@ -196,9 +210,9 @@ program
       const latest = await migrations.latest();
 
       if (!latest) {
-        console.log(chalk.yellow("No migrations applied yet"));
+        console.log(pc.yellow("No migrations applied yet"));
       } else {
-        console.log(chalk.cyan("Latest migration:"));
+        console.log(pc.cyan("Latest migration:"));
         console.log(`  ✓ ${latest.id}_${latest.name}`);
       }
       await prisma.$disconnect();
@@ -210,14 +224,40 @@ program
 program
   .command("reset")
   .description("Rollback all migrations")
-  .action(async () => {
+  .option("-f, --force", "Skip confirmation prompt")
+  .action(async (options) => {
     const discovery = new Discovery();
     try {
       const config = await loadConfig();
       const prisma = await discovery.findPrismaClient(config);
       const migrations = new Migrations(prisma, config);
+      const applied = await migrations.applied();
+
+      if (applied.length === 0) {
+        console.log(pc.yellow(MESSAGES.NO_MIGRATIONS_TO_ROLLBACK));
+        await prisma.$disconnect();
+        return;
+      }
+
+      const shouldProceed =
+        options.force ||
+        (
+          await inquirer.prompt([
+            {
+              ...PROMPTS.RESET_CONFIRM,
+              message: PROMPTS.RESET_CONFIRM.message(applied.length),
+            },
+          ])
+        ).confirm;
+
+      if (!shouldProceed) {
+        console.log(pc.gray(MESSAGES.CANCELLED));
+        await prisma.$disconnect();
+        return;
+      }
+
       const count = await migrations.reset();
-      console.log(chalk.green(`\n✓ Rolled back ${count} migration(s)`));
+      console.log(pc.green(`\n✓ Rolled back ${count} migration(s)`));
       await prisma.$disconnect();
     } catch (error) {
       handleError(error);
@@ -227,15 +267,26 @@ program
 program
   .command("fresh")
   .description("Rollback all migrations and re-run them")
-  .action(async () => {
+  .option("-f, --force", "Skip confirmation prompt")
+  .action(async (options) => {
     const discovery = new Discovery();
     try {
       const config = await loadConfig();
       const prisma = await discovery.findPrismaClient(config);
       const migrations = new Migrations(prisma, config);
+
+      const shouldProceed =
+        options.force || (await inquirer.prompt([PROMPTS.FRESH_CONFIRM])).confirm;
+
+      if (!shouldProceed) {
+        console.log(pc.gray(MESSAGES.CANCELLED));
+        await prisma.$disconnect();
+        return;
+      }
+
       const count = await migrations.fresh();
       console.log(
-        chalk.green(
+        pc.green(
           `\n✓ Fresh migration complete. Applied ${count} migration(s)`,
         ),
       );
@@ -248,15 +299,26 @@ program
 program
   .command("refresh")
   .description("Rollback all migrations and re-run them (alias for fresh)")
-  .action(async () => {
+  .option("-f, --force", "Skip confirmation prompt")
+  .action(async (options) => {
     const discovery = new Discovery();
     try {
       const config = await loadConfig();
       const prisma = await discovery.findPrismaClient(config);
       const migrations = new Migrations(prisma, config);
+
+      const shouldProceed =
+        options.force || (await inquirer.prompt([PROMPTS.REFRESH_CONFIRM])).confirm;
+
+      if (!shouldProceed) {
+        console.log(pc.gray(MESSAGES.CANCELLED));
+        await prisma.$disconnect();
+        return;
+      }
+
       const result = await migrations.refresh();
       console.log(
-        chalk.green(
+        pc.green(
           `\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`,
         ),
       );
@@ -326,19 +388,6 @@ program
   .action(async () => {
     try {
       await prisma.generate();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("mcp")
-  .description(
-    "Start MCP server for AI assistant integration (data migrations + Prisma)",
-  )
-  .action(async () => {
-    try {
-      await mcp();
     } catch (error) {
       handleError(error);
     }

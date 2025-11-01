@@ -4,8 +4,8 @@ import {
   runRollbackForMode,
   rollbackOne,
   showRollbackTable,
-} from "../../../src/cli/commands/down";
-import type { Migrations } from "../../../src/migrations";
+} from "../../../../src/cli/commands/down";
+import type { Migrations } from "../../../../src/migrations";
 
 describe("down command", () => {
   describe("promptDownMode", () => {

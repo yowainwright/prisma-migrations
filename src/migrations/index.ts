@@ -1,7 +1,6 @@
 import { readdir, readFile, access } from "fs/promises";
 import type { Dirent } from "fs";
 import { join } from "path";
-import { pathToFileURL } from "url";
 import type { PrismaClient, MigrationsConfig, MigrationFile } from "../types";
 import { logger } from "../logger";
 import { Discovery } from "../discovery";
@@ -11,27 +10,38 @@ import {
   createInvalidMigrationError,
 } from "../errors";
 
-async function importMigration(migrationPath: string): Promise<{
-  up?: (prisma: PrismaClient) => Promise<void>;
-  down?: (prisma: PrismaClient) => Promise<void>;
-}> {
-  const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
+interface ParsedSqlMigration {
+  up: string;
+  down: string;
+}
 
-  if (isBun) {
-    return await import(pathToFileURL(migrationPath).href);
+function parseSqlMigration(sql: string): ParsedSqlMigration {
+  const upMarker = "-- Migration: Up";
+  const downMarker = "-- Migration: Down";
+
+  const upIndex = sql.indexOf(upMarker);
+  const downIndex = sql.indexOf(downMarker);
+
+  if (upIndex === -1 || downIndex === -1) {
+    throw new Error(
+      `Invalid migration format. Migration file must contain both "${upMarker}" and "${downMarker}" markers.`
+    );
   }
 
-  let tsxModule: { register: () => () => void };
-  try {
-    tsxModule = await import("tsx/esm/api" as string);
-  } catch {
-    return await import(pathToFileURL(migrationPath).href);
+  if (upIndex >= downIndex) {
+    throw new Error(
+      `Invalid migration format. "${upMarker}" must come before "${downMarker}".`
+    );
   }
 
-  const unregister = tsxModule.register();
-  const mod = await import(pathToFileURL(migrationPath).href);
-  unregister();
-  return mod;
+  const upSql = sql
+    .substring(upIndex + upMarker.length, downIndex)
+    .trim();
+  const downSql = sql
+    .substring(downIndex + downMarker.length)
+    .trim();
+
+  return { up: upSql, down: downSql };
 }
 
 async function loadSqlMigration(migrationPath: string): Promise<{
@@ -39,13 +49,21 @@ async function loadSqlMigration(migrationPath: string): Promise<{
   down: (prisma: PrismaClient) => Promise<void>;
 }> {
   const sql = await readFile(migrationPath, "utf-8");
+  const parsed = parseSqlMigration(sql);
 
   return {
     up: async (prisma: PrismaClient) => {
-      await prisma.$executeRawUnsafe(sql);
+      if (!parsed.up) {
+        throw new Error(`No up migration found in ${migrationPath}`);
+      }
+      await prisma.$executeRawUnsafe(parsed.up);
     },
-    down: async () => {
-      logger.warn(`No down migration available for SQL file: ${migrationPath}`);
+    down: async (prisma: PrismaClient) => {
+      if (!parsed.down) {
+        logger.warn(`No down migration available for: ${migrationPath}`);
+        return;
+      }
+      await prisma.$executeRawUnsafe(parsed.down);
     },
   };
 }
@@ -65,10 +83,7 @@ export class Migrations {
     migration: MigrationFile,
   ): Promise<boolean> {
     try {
-      const mod =
-        migration.fileType === "sql"
-          ? await loadSqlMigration(migration.path)
-          : await importMigration(migration.path);
+      const mod = await loadSqlMigration(migration.path);
       return typeof mod.up === "function" && typeof mod.down === "function";
     } catch {
       return false;
@@ -145,10 +160,7 @@ export class Migrations {
               );
             }
 
-            const mod =
-              migration.fileType === "sql"
-                ? await loadSqlMigration(migration.path)
-                : await importMigration(migration.path);
+            const mod = await loadSqlMigration(migration.path);
 
             const hasUpFunction = typeof mod.up === "function";
             if (!hasUpFunction) {
@@ -193,10 +205,7 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
         await this.executeWithHooks(migration, "down", async () => {
-          const mod =
-            migration.fileType === "sql"
-              ? await loadSqlMigration(migration.path)
-              : await importMigration(migration.path);
+          const mod = await loadSqlMigration(migration.path);
 
           const hasDownFunction = typeof mod.down === "function";
           if (!hasDownFunction) {
@@ -225,7 +234,7 @@ export class Migrations {
 
     logger.info("\nMigration Status:\n");
     for (const migration of all) {
-      const status = applied.includes(migration.id) ? "✓" : "✗";
+      const status = applied.includes(migration.id) ? "[x]" : "[ ]";
       logger.info(`${status} ${migration.id}_${migration.name}`);
     }
   }
@@ -258,10 +267,7 @@ export class Migrations {
         await prev;
         logger.info(`Rolling back ${migration.id}_${migration.name}...`);
         try {
-          const mod =
-            migration.fileType === "sql"
-              ? await loadSqlMigration(migration.path)
-              : await importMigration(migration.path);
+          const mod = await loadSqlMigration(migration.path);
 
           const hasDownFunction = typeof mod.down === "function";
           if (!hasDownFunction) {
@@ -330,10 +336,7 @@ export class Migrations {
               );
             }
 
-            const mod =
-              migration.fileType === "sql"
-                ? await loadSqlMigration(migration.path)
-                : await importMigration(migration.path);
+            const mod = await loadSqlMigration(migration.path);
 
             const hasUpFunction = typeof mod.up === "function";
             if (!hasUpFunction) {
@@ -388,10 +391,7 @@ export class Migrations {
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
         await this.executeWithHooks(migration, "down", async () => {
-          const mod =
-            migration.fileType === "sql"
-              ? await loadSqlMigration(migration.path)
-              : await importMigration(migration.path);
+          const mod = await loadSqlMigration(migration.path);
 
           const hasDownFunction = typeof mod.down === "function";
           if (!hasDownFunction) {
@@ -424,27 +424,20 @@ export class Migrations {
   private async detectMigrationFile(
     migrationsDir: string,
     dirName: string,
-  ): Promise<{ path: string; fileType: "ts" | "sql" }> {
-    const tsPath = join(migrationsDir, dirName, "migration.ts");
+  ): Promise<string> {
     const sqlPath = join(migrationsDir, dirName, "migration.sql");
-
-    const hasTsFile = await access(tsPath)
-      .then(() => true)
-      .catch(() => false);
-    if (hasTsFile) {
-      return { path: tsPath, fileType: "ts" };
-    }
 
     const hasSqlFile = await access(sqlPath)
       .then(() => true)
       .catch(() => false);
-    if (hasSqlFile) {
-      return { path: sqlPath, fileType: "sql" };
+
+    if (!hasSqlFile) {
+      throw new Error(
+        `No migration.sql file found in ${dirName}`,
+      );
     }
 
-    throw new Error(
-      `No migration file found for ${dirName} (checked migration.ts and migration.sql)`,
-    );
+    return sqlPath;
   }
 
   private isValidMigrationDir(name: string): boolean {
@@ -476,14 +469,14 @@ export class Migrations {
     return await Promise.all(
       validDirs.map(async (entry) => {
         const { id, name } = this.parseMigrationName(entry.name);
-        const { path, fileType } = await this.detectMigrationFile(
+        const path = await this.detectMigrationFile(
           migrationsDir,
           entry.name,
         );
         logger.debug(
-          `Mapped migration: ${id}_${name} at ${path} (${fileType})`,
+          `Mapped migration: ${id}_${name} at ${path}`,
         );
-        return { id, name, path, fileType };
+        return { id, name, path };
       }),
     );
   }
