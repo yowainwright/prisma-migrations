@@ -8,7 +8,6 @@
         "commander": "^14.0.1",
         "fast-glob": "^3.3.3",
         "inquirer": "^12.10.0",
-        "picocolors": "^1.1.1",
       },
       "devDependencies": {
         "@types/node": "^20.0.0",

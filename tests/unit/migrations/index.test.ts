@@ -1,9 +1,8 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
 import { Migrations } from "../../../src/migrations";
-import type { PrismaClient, MigrationFile } from "../../../src/types";
+import type { PrismaClient } from "../../../src/types";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
-import { logger } from "../../../src/logger";
 
 const testMigrationsDir = join(process.cwd(), "test-migrations");
 
@@ -183,10 +182,7 @@ ${downSql}
     test("should throw error when migration format is invalid", async () => {
       const migrationDir = join(testMigrationsDir, "001_missing_markers");
       mkdirSync(migrationDir, { recursive: true });
-      writeFileSync(
-        join(migrationDir, "migration.sql"),
-        `SELECT 1;`,
-      );
+      writeFileSync(join(migrationDir, "migration.sql"), `SELECT 1;`);
 
       await expect(migrations.up()).rejects.toThrow(
         "missing up or down function",
@@ -226,7 +222,6 @@ ${downSql}
         "Migration file not found for 001",
       );
     });
-
   });
 
   describe("reset", () => {
@@ -352,7 +347,6 @@ ${downSql}
       expect(pending[0].id).toBe("20230101120000");
       expect(pending[0].name).toBe("create_users_table");
     });
-
   });
   describe("detectMigrationFile", () => {
     test("should throw error if migration.sql is not found", async () => {
@@ -364,5 +358,4 @@ ${downSql}
       );
     });
   });
-
 });

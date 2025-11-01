@@ -24,24 +24,27 @@ function parseSqlMigration(sql: string): ParsedSqlMigration {
 
   if (upIndex === -1 || downIndex === -1) {
     throw new Error(
-      `Invalid migration format. Migration file must contain both "${upMarker}" and "${downMarker}" markers.`
+      `Invalid migration format. Migration file must contain both "${upMarker}" and "${downMarker}" markers.`,
     );
   }
 
   if (upIndex >= downIndex) {
     throw new Error(
-      `Invalid migration format. "${upMarker}" must come before "${downMarker}".`
+      `Invalid migration format. "${upMarker}" must come before "${downMarker}".`,
     );
   }
 
-  const upSql = sql
-    .substring(upIndex + upMarker.length, downIndex)
-    .trim();
-  const downSql = sql
-    .substring(downIndex + downMarker.length)
-    .trim();
+  const upSql = sql.substring(upIndex + upMarker.length, downIndex).trim();
+  const downSql = sql.substring(downIndex + downMarker.length).trim();
 
   return { up: upSql, down: downSql };
+}
+
+function splitSqlStatements(sql: string): string[] {
+  return sql
+    .split(";")
+    .map((stmt) => stmt.trim())
+    .filter((stmt) => stmt.length > 0);
 }
 
 async function loadSqlMigration(migrationPath: string): Promise<{
@@ -56,14 +59,20 @@ async function loadSqlMigration(migrationPath: string): Promise<{
       if (!parsed.up) {
         throw new Error(`No up migration found in ${migrationPath}`);
       }
-      await prisma.$executeRawUnsafe(parsed.up);
+      const statements = splitSqlStatements(parsed.up);
+      for (const statement of statements) {
+        await prisma.$executeRawUnsafe(statement);
+      }
     },
     down: async (prisma: PrismaClient) => {
       if (!parsed.down) {
         logger.warn(`No down migration available for: ${migrationPath}`);
         return;
       }
-      await prisma.$executeRawUnsafe(parsed.down);
+      const statements = splitSqlStatements(parsed.down);
+      for (const statement of statements) {
+        await prisma.$executeRawUnsafe(statement);
+      }
     },
   };
 }
@@ -432,9 +441,7 @@ export class Migrations {
       .catch(() => false);
 
     if (!hasSqlFile) {
-      throw new Error(
-        `No migration.sql file found in ${dirName}`,
-      );
+      throw new Error(`No migration.sql file found in ${dirName}`);
     }
 
     return sqlPath;
@@ -469,13 +476,8 @@ export class Migrations {
     return await Promise.all(
       validDirs.map(async (entry) => {
         const { id, name } = this.parseMigrationName(entry.name);
-        const path = await this.detectMigrationFile(
-          migrationsDir,
-          entry.name,
-        );
-        logger.debug(
-          `Mapped migration: ${id}_${name} at ${path}`,
-        );
+        const path = await this.detectMigrationFile(migrationsDir, entry.name);
+        logger.debug(`Mapped migration: ${id}_${name} at ${path}`);
         return { id, name, path };
       }),
     );

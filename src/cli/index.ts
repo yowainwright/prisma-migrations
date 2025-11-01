@@ -10,21 +10,21 @@ import { Discovery } from "../discovery";
 import { setLogLevel } from "../logger";
 import type { MigrationFile } from "../types";
 import { MigrationError } from "../errors";
-import pc from "picocolors";
+import { colors } from "../utils/colors";
 import inquirer from "inquirer";
 import { PROMPTS, MESSAGES } from "./constants";
 
 console.log(
-  `\n   ╭───────────────────────╮\n   │                       │\n   │   ${pc.bold(pc.cyan("Prisma Migrations"))}   │\n   │                       │\n   ╰───────────────────────╯\n`,
+  `\n   ╭───────────────────────╮\n   │                       │\n   │   ${colors.bold(colors.cyan("Prisma Migrations"))}   │\n   │                       │\n   ╰───────────────────────╯\n`,
 );
 
 function handleError(error: unknown) {
   if (error instanceof MigrationError) {
     console.error(error.format());
   } else if (error instanceof Error) {
-    console.error(pc.bold(pc.red("Error:")), error.message);
+    console.error(colors.bold(colors.red("Error:")), error.message);
   } else {
-    console.error(pc.bold(pc.red("Error:")), String(error));
+    console.error(colors.bold(colors.red("Error:")), String(error));
   }
   process.exit(1);
 }
@@ -87,9 +87,11 @@ program
         const toRun = await migrations.dryRun(steps);
 
         if (toRun.length === 0) {
-          console.log(pc.green("No pending migrations"));
+          console.log(colors.green("No pending migrations"));
         } else {
-          console.log(pc.cyan(`\nWould run ${toRun.length} migration(s):\n`));
+          console.log(
+            colors.cyan(`\nWould run ${toRun.length} migration(s):\n`),
+          );
           toRun.forEach((m: MigrationFile) =>
             console.log(`  ${m.id}_${m.name}`),
           );
@@ -160,9 +162,9 @@ program
       const pending = await migrations.pending();
 
       if (pending.length === 0) {
-        console.log(pc.green("No pending migrations"));
+        console.log(colors.green("No pending migrations"));
       } else {
-        console.log(pc.cyan(`\n${pending.length} pending migration(s):\n`));
+        console.log(colors.cyan(`\n${pending.length} pending migration(s):\n`));
         pending.forEach((m: MigrationFile) =>
           console.log(`  ${m.id}_${m.name}`),
         );
@@ -185,9 +187,9 @@ program
       const applied = await migrations.applied();
 
       if (applied.length === 0) {
-        console.log(pc.yellow("No applied migrations"));
+        console.log(colors.yellow("No applied migrations"));
       } else {
-        console.log(pc.cyan(`\n${applied.length} applied migration(s):\n`));
+        console.log(colors.cyan(`\n${applied.length} applied migration(s):\n`));
         applied.forEach((m: MigrationFile) =>
           console.log(`  ✓ ${m.id}_${m.name}`),
         );
@@ -210,9 +212,9 @@ program
       const latest = await migrations.latest();
 
       if (!latest) {
-        console.log(pc.yellow("No migrations applied yet"));
+        console.log(colors.yellow("No migrations applied yet"));
       } else {
-        console.log(pc.cyan("Latest migration:"));
+        console.log(colors.cyan("Latest migration:"));
         console.log(`  ✓ ${latest.id}_${latest.name}`);
       }
       await prisma.$disconnect();
@@ -234,7 +236,7 @@ program
       const applied = await migrations.applied();
 
       if (applied.length === 0) {
-        console.log(pc.yellow(MESSAGES.NO_MIGRATIONS_TO_ROLLBACK));
+        console.log(colors.yellow(MESSAGES.NO_MIGRATIONS_TO_ROLLBACK));
         await prisma.$disconnect();
         return;
       }
@@ -251,13 +253,13 @@ program
         ).confirm;
 
       if (!shouldProceed) {
-        console.log(pc.gray(MESSAGES.CANCELLED));
+        console.log(colors.gray(MESSAGES.CANCELLED));
         await prisma.$disconnect();
         return;
       }
 
       const count = await migrations.reset();
-      console.log(pc.green(`\n✓ Rolled back ${count} migration(s)`));
+      console.log(colors.green(`\n✓ Rolled back ${count} migration(s)`));
       await prisma.$disconnect();
     } catch (error) {
       handleError(error);
@@ -276,17 +278,18 @@ program
       const migrations = new Migrations(prisma, config);
 
       const shouldProceed =
-        options.force || (await inquirer.prompt([PROMPTS.FRESH_CONFIRM])).confirm;
+        options.force ||
+        (await inquirer.prompt([PROMPTS.FRESH_CONFIRM])).confirm;
 
       if (!shouldProceed) {
-        console.log(pc.gray(MESSAGES.CANCELLED));
+        console.log(colors.gray(MESSAGES.CANCELLED));
         await prisma.$disconnect();
         return;
       }
 
       const count = await migrations.fresh();
       console.log(
-        pc.green(
+        colors.green(
           `\n✓ Fresh migration complete. Applied ${count} migration(s)`,
         ),
       );
@@ -308,17 +311,18 @@ program
       const migrations = new Migrations(prisma, config);
 
       const shouldProceed =
-        options.force || (await inquirer.prompt([PROMPTS.REFRESH_CONFIRM])).confirm;
+        options.force ||
+        (await inquirer.prompt([PROMPTS.REFRESH_CONFIRM])).confirm;
 
       if (!shouldProceed) {
-        console.log(pc.gray(MESSAGES.CANCELLED));
+        console.log(colors.gray(MESSAGES.CANCELLED));
         await prisma.$disconnect();
         return;
       }
 
       const result = await migrations.refresh();
       console.log(
-        pc.green(
+        colors.green(
           `\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`,
         ),
       );

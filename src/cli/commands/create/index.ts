@@ -1,8 +1,12 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import inquirer from "inquirer";
-import pc from "picocolors";
-import { generateMigrationId, validateMigrationName, spinner } from "../../../utils";
+import {
+  generateMigrationId,
+  validateMigrationName,
+  spinner,
+  colors,
+} from "../../../utils";
 
 export async function create(name?: string) {
   let migrationName = name;
@@ -55,8 +59,8 @@ export async function create(name?: string) {
 
     spin.succeed("Migration created");
 
-    console.log(pc.cyan(`\n${timestamp}_${migrationName}`));
-    console.log(pc.gray(`Location: ${migrationDir}`));
+    console.log(colors.cyan(`\n${timestamp}_${migrationName}`));
+    console.log(colors.gray(`Location: ${migrationDir}`));
   } catch (error) {
     spin.fail("Failed to create migration");
     throw error;

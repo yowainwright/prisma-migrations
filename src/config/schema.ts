@@ -55,9 +55,8 @@ export function validateConfig(config: unknown): ValidatedConfig {
       validatedHooks.afterUp = hooks.afterUp as () => void | Promise<void>;
     }
     if (typeof hooks.beforeDown === "function") {
-      validatedHooks.beforeDown = hooks.beforeDown as () =>
-        | void
-        | Promise<void>;
+      validatedHooks.beforeDown =
+        hooks.beforeDown as () => void | Promise<void>;
     }
     if (typeof hooks.afterDown === "function") {
       validatedHooks.afterDown = hooks.afterDown as () => void | Promise<void>;

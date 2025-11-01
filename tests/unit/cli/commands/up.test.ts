@@ -1,18 +1,11 @@
 import { describe, test, expect, mock } from "bun:test";
 import {
-  promptUpMode,
   runMigrationsForMode,
   showSuccessTable,
 } from "../../../../src/cli/commands/up";
 import type { Migrations } from "../../../../src/migrations";
 
 describe("up command", () => {
-  describe("promptUpMode", () => {
-    test("should return selected mode", async () => {
-      expect(true).toBe(true);
-    });
-  });
-
   describe("runMigrationsForMode", () => {
     test('should run all migrations when mode is "all"', async () => {
       const mockMigrations = {

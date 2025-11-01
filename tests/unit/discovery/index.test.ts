@@ -5,7 +5,7 @@ import { join } from "path";
 
 const testDir = join(process.cwd(), "test-discovery");
 const prismaDir = join(testDir, "prisma");
-const migrationsDir = join(prismaDir, "migrations");
+const _migrationsDir = join(prismaDir, "migrations");
 const nodeModulesDir = join(testDir, "node_modules");
 const prismaClientDir = join(nodeModulesDir, "@prisma", "client");
 

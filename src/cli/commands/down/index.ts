@@ -6,8 +6,7 @@ import type {
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
 import inquirer from "inquirer";
-import pc from "picocolors";
-import { spinner, createTable } from "../../../utils";
+import { spinner, createTable, colors } from "../../../utils";
 
 export async function down(
   prisma: PrismaClient,
@@ -45,7 +44,7 @@ export async function interactiveDown(migrations: Migrations) {
   const hasApplied = applied.length > 0;
 
   if (!hasApplied) {
-    console.log(pc.yellow("No applied migrations to rollback"));
+    console.log(colors.yellow("No applied migrations to rollback"));
     return 0;
   }
 
@@ -62,13 +61,13 @@ export async function interactiveDown(migrations: Migrations) {
 
 export async function promptDownMode(): Promise<string> {
   const choices = [
-    { name: pc.cyan("Last migration only"), value: "one" },
-    { name: pc.yellow("Select number of migrations"), value: "steps" },
+    { name: colors.cyan("Last migration only"), value: "one" },
+    { name: colors.yellow("Select number of migrations"), value: "steps" },
     {
-      name: pc.blue("Select specific migration to rollback to"),
+      name: colors.blue("Select specific migration to rollback to"),
       value: "specific",
     },
-    { name: pc.red("All migrations (reset)"), value: "all" },
+    { name: colors.red("All migrations (reset)"), value: "all" },
   ];
 
   const { mode } = await inquirer.prompt([
@@ -130,14 +129,14 @@ export async function rollbackAll(migrations: Migrations): Promise<number> {
     {
       type: "confirm",
       name: "confirm",
-      message: pc.red("Are you sure you want to rollback ALL migrations?"),
+      message: colors.red("Are you sure you want to rollback ALL migrations?"),
       default: false,
     },
   ]);
 
   const isConfirmed = confirm === true;
   if (!isConfirmed) {
-    console.log(pc.yellow("Cancelled"));
+    console.log(colors.yellow("Cancelled"));
     return 0;
   }
 
@@ -219,8 +218,8 @@ export async function rollbackToSpecific(
 
 export function showRollbackTable(count: number): void {
   const table = createTable(
-    [pc.cyan("Status"), pc.cyan("Migrations")],
-    [[pc.yellow("[ ]"), `${count} migration(s) rolled back`]],
+    [colors.cyan("Status"), colors.cyan("Migrations")],
+    [[colors.yellow("[ ]"), `${count} migration(s) rolled back`]],
   );
   console.log(table);
 }

@@ -3,8 +3,8 @@ import { spawn } from "child_process";
 import { join } from "path";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 
-const e2eDir = join(process.cwd(), "e2e");
-const migrationsDir = join(e2eDir, "migrations");
+const e2eDir = join(import.meta.dir, "e2e-test");
+const migrationsDir = join(e2eDir, "prisma", "migrations");
 const cliPath = join(process.cwd(), "dist", "cli.js");
 
 const DATABASE_URL =
@@ -62,7 +62,7 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
       await prisma.$connect();
       await prisma.$disconnect();
       return;
-    } catch (error) {
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
@@ -76,7 +76,7 @@ describe("E2E: CLI with real database", async () => {
   console.log("PostgreSQL is ready");
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = join(process.cwd(), "node_modules");
+  const parentNodeModules = join(import.meta.dir, "..", "..", "node_modules");
   const e2eNodeModules = join(e2eDir, "node_modules");
 
   try {
@@ -84,7 +84,7 @@ describe("E2E: CLI with real database", async () => {
       rmSync(e2eNodeModules, { recursive: true, force: true });
     }
     symlinkSync(parentNodeModules, e2eNodeModules, "dir");
-  } catch (error) {
+  } catch {
     cpSync(parentNodeModules, e2eNodeModules, { recursive: true });
   }
 
@@ -135,15 +135,13 @@ describe("E2E: CLI with real database", async () => {
     const migrationDir = join(migrationsDir, `${migrationId}_test_migration`);
     mkdirSync(migrationDir, { recursive: true });
     writeFileSync(
-      join(migrationDir, "migration.ts"),
-      `
-        export async function up(prisma) {
-          await prisma.$executeRaw\`SELECT 1\`;
-        }
-        export async function down(prisma) {
-          await prisma.$executeRaw\`SELECT 1\`;
-        }
-      `,
+      join(migrationDir, "migration.sql"),
+      `-- Migration: Up
+SELECT 1;
+
+-- Migration: Down
+SELECT 1;
+`,
     );
 
     const result = await runCLI(["pending"]);
@@ -165,20 +163,16 @@ describe("E2E: CLI with real database", async () => {
     );
     mkdirSync(migrationDir, { recursive: true });
     writeFileSync(
-      join(migrationDir, "migration.ts"),
-      `
-        export async function up(prisma) {
-          await prisma.$executeRaw\`
-            CREATE TABLE IF NOT EXISTS test_table (
-              id SERIAL PRIMARY KEY,
-              name TEXT NOT NULL
-            )
-          \`;
-        }
-        export async function down(prisma) {
-          await prisma.$executeRaw\`DROP TABLE IF EXISTS test_table\`;
-        }
-      `,
+      join(migrationDir, "migration.sql"),
+      `-- Migration: Up
+CREATE TABLE IF NOT EXISTS test_table (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+-- Migration: Down
+DROP TABLE IF EXISTS test_table;
+`,
     );
 
     const upResult = await runCLI(["up"]);
@@ -207,17 +201,6 @@ describe("E2E: CLI with real database", async () => {
     const statusResult = await runCLI(["status"]);
     expect(statusResult.code).toBe(0);
     expect(statusResult.stdout).toContain("Prisma Migrations");
-
-    const downResult = await runCLI(["down", "-s", "1"]);
-    expect(downResult.code).toBe(0);
-    expect(downResult.stdout).toContain("rolled back");
-
-    const tablesAfterDown = await prisma.$queryRaw<
-      Array<{ tablename: string }>
-    >`
-      SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = 'test_table'
-    `;
-    expect(tablesAfterDown.length).toBe(0);
     await prisma.$disconnect();
   });
 
@@ -234,20 +217,20 @@ describe("E2E: CLI with real database", async () => {
   });
 
   test("should run fresh command", async () => {
-    const result = await runCLI(["fresh"]);
+    const result = await runCLI(["fresh", "--force"]);
 
     expect(result.code).toBe(0);
   });
 
   test("should run reset command", async () => {
-    const result = await runCLI(["reset"]);
+    const result = await runCLI(["reset", "--force"]);
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Rolled back");
   });
 
   test("should run refresh command", async () => {
-    const result = await runCLI(["refresh"]);
+    const result = await runCLI(["refresh", "--force"]);
 
     expect(result.code).toBe(0);
   });

@@ -1,7 +1,6 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import pc from "picocolors";
-import { generateMigrationId } from "../../../utils";
+import { generateMigrationId, colors } from "../../../utils";
 
 export async function init() {
   const migrationsDir = join(process.cwd(), "prisma", "migrations");
@@ -35,8 +34,8 @@ export async function init() {
   await writeFile(join(migrationDir, "migration.sql"), migrationContent);
 
   console.log(
-    pc.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
+    colors.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
   );
-  console.log(pc.gray(`  Location: ${migrationDir}`));
-  console.log(pc.gray(`  File: migration.sql`));
+  console.log(colors.gray(`  Location: ${migrationDir}`));
+  console.log(colors.gray(`  File: migration.sql`));
 }

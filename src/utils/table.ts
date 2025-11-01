@@ -4,7 +4,8 @@ export function createTable(headers: string[], rows: string[][]): string {
 
   const topBorder = "┌" + colWidths.map((w) => "─".repeat(w)).join("┬") + "┐";
   const midBorder = "├" + colWidths.map((w) => "─".repeat(w)).join("┼") + "┤";
-  const bottomBorder = "└" + colWidths.map((w) => "─".repeat(w)).join("┴") + "┘";
+  const bottomBorder =
+    "└" + colWidths.map((w) => "─".repeat(w)).join("┴") + "┘";
 
   const formatRow = (cells: string[]): string => {
     return (
@@ -35,5 +36,7 @@ export function createTable(headers: string[], rows: string[][]): string {
 }
 
 function stripAnsi(str: string): string {
-  return str.replace(/\u001b\[\d+m/g, "");
+  const escapeCode = "\u001b";
+  const ansiPattern = new RegExp(`${escapeCode}\\[\\d+m`, "g");
+  return str.replace(ansiPattern, "");
 }

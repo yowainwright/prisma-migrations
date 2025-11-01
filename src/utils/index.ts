@@ -23,3 +23,4 @@ export async function generateChecksum(filePath: string): Promise<string> {
 
 export { spinner, Spinner } from "./spinner";
 export { createTable } from "./table";
+export { colors } from "./colors";

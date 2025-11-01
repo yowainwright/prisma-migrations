@@ -1,12 +1,12 @@
 import { spawn } from "child_process";
-import chalk from "chalk";
+import { colors } from "../../../utils/colors";
 
 export async function execPrismaCommand(
   command: string,
   args: string[] = [],
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    console.log(chalk.cyan(`\nRunning: prisma ${command} ${args.join(" ")}\n`));
+    console.log(colors.cyan(`\nRunning: prisma ${command} ${args.join(" ")}\n`));
 
     const prisma = spawn("npx", ["prisma", command, ...args], {
       stdio: "inherit",

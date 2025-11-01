@@ -1,4 +1,4 @@
-import pc from "picocolors";
+import { colors } from "../utils/colors";
 
 export class MigrationError extends Error {
   constructor(
@@ -11,17 +11,17 @@ export class MigrationError extends Error {
   }
 
   format(): string {
-    let output = `\n${pc.bold(pc.red(this.message))}\n`;
+    let output = `\n${colors.bold(colors.red(this.message))}\n`;
 
     if (this.suggestions.length > 0) {
-      output += `\n${pc.cyan("Suggestions:")}\n`;
+      output += `\n${colors.cyan("Suggestions:")}\n`;
       this.suggestions.forEach((suggestion) => {
-        output += `  ${pc.gray("•")} ${suggestion}\n`;
+        output += `  ${colors.gray("•")} ${suggestion}\n`;
       });
     }
 
     if (this.helpCommand) {
-      output += `\n${pc.yellow("Need help?")} Run: ${pc.cyan(this.helpCommand)}\n`;
+      output += `\n${colors.yellow("Need help?")} Run: ${colors.cyan(this.helpCommand)}\n`;
     }
 
     return output;
@@ -31,40 +31,31 @@ export class MigrationError extends Error {
 export function createMigrationNotFoundError(
   migrationId: string,
 ): MigrationError {
-  return new MigrationError(
-    `Migration file not found for ${migrationId}`,
-    [
-      "Run 'prisma-migrations status' to see all migrations",
-      "Check if the migration directory exists in prisma/migrations",
-      "The migration file may have been deleted or moved",
-    ],
-  );
+  return new MigrationError(`Migration file not found for ${migrationId}`, [
+    "Run 'prisma-migrations status' to see all migrations",
+    "Check if the migration directory exists in prisma/migrations",
+    "The migration file may have been deleted or moved",
+  ]);
 }
 
 export function createDatabaseConnectionError(error: Error): MigrationError {
-  return new MigrationError(
-    `Failed to connect to database: ${error.message}`,
-    [
-      "Check your DATABASE_URL environment variable",
-      "Verify the database server is running",
-      "Ensure your database credentials are correct",
-      "Try running 'prisma db pull' to test the connection",
-    ],
-  );
+  return new MigrationError(`Failed to connect to database: ${error.message}`, [
+    "Check your DATABASE_URL environment variable",
+    "Verify the database server is running",
+    "Ensure your database credentials are correct",
+    "Try running 'prisma db pull' to test the connection",
+  ]);
 }
 
 export function createInvalidMigrationError(
   migrationId: string,
   reason: string,
 ): MigrationError {
-  return new MigrationError(
-    `Migration ${migrationId} is invalid: ${reason}`,
-    [
-      "Check that migration.sql exists in the migration directory",
-      "Ensure the file contains both '-- Migration: Up' and '-- Migration: Down' markers",
-      "Verify the SQL syntax is correct",
-    ],
-  );
+  return new MigrationError(`Migration ${migrationId} is invalid: ${reason}`, [
+    "Check that migration.sql exists in the migration directory",
+    "Ensure the file contains both '-- Migration: Up' and '-- Migration: Down' markers",
+    "Verify the SQL syntax is correct",
+  ]);
 }
 
 export function createChecksumMismatchError(
@@ -82,14 +73,11 @@ export function createChecksumMismatchError(
 }
 
 export function createNoMigrationsError(): MigrationError {
-  return new MigrationError(
-    "No migrations found",
-    [
-      "Run 'prisma-migrations init' to create your first migration",
-      "Or run 'prisma-migrations create <name>' to create a new migration",
-      "Check that your migrations directory exists at prisma/migrations",
-    ],
-  );
+  return new MigrationError("No migrations found", [
+    "Run 'prisma-migrations init' to create your first migration",
+    "Or run 'prisma-migrations create <name>' to create a new migration",
+    "Check that your migrations directory exists at prisma/migrations",
+  ]);
 }
 
 export function createMigrationFailedError(
@@ -123,12 +111,9 @@ export function createRollbackFailedError(
 }
 
 export function createPrismaClientNotFoundError(): MigrationError {
-  return new MigrationError(
-    "Prisma Client not found",
-    [
-      "Install Prisma Client: npm install @prisma/client",
-      "Run 'prisma generate' to generate the client",
-      "Verify @prisma/client is in your dependencies",
-    ],
-  );
+  return new MigrationError("Prisma Client not found", [
+    "Install Prisma Client: npm install @prisma/client",
+    "Run 'prisma generate' to generate the client",
+    "Verify @prisma/client is in your dependencies",
+  ]);
 }

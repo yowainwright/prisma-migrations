@@ -6,8 +6,7 @@ import type {
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
 import inquirer from "inquirer";
-import pc from "picocolors";
-import { spinner, createTable } from "../../../utils";
+import { spinner, createTable, colors } from "../../../utils";
 
 export async function up(
   prisma: PrismaClient,
@@ -46,7 +45,7 @@ export async function interactiveUp(migrations: Migrations) {
   const hasPending = pending.length > 0;
 
   if (!hasPending) {
-    console.log(pc.green("No pending migrations"));
+    console.log(colors.green("No pending migrations"));
     return 0;
   }
 
@@ -63,10 +62,10 @@ export async function interactiveUp(migrations: Migrations) {
 
 export async function promptUpMode(): Promise<string> {
   const choices = [
-    { name: pc.cyan("All pending migrations"), value: "all" },
-    { name: pc.yellow("Select number of migrations"), value: "steps" },
+    { name: colors.cyan("All pending migrations"), value: "all" },
+    { name: colors.yellow("Select number of migrations"), value: "steps" },
     {
-      name: pc.blue("Select specific migration to run up to"),
+      name: colors.blue("Select specific migration to run up to"),
       value: "specific",
     },
   ];
@@ -187,8 +186,8 @@ export async function runToSpecificMigration(
 
 export function showSuccessTable(count: number): void {
   const table = createTable(
-    [pc.cyan("Status"), pc.cyan("Migrations")],
-    [[pc.green("[x]"), `${count} migration(s) applied successfully`]],
+    [colors.cyan("Status"), colors.cyan("Migrations")],
+    [[colors.green("[x]"), `${count} migration(s) applied successfully`]],
   );
   console.log(table);
 }

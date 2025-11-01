@@ -1,4 +1,4 @@
-import pc from "picocolors";
+import { colors } from "./colors";
 
 const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
@@ -29,7 +29,7 @@ export class Spinner {
   private render(): void {
     if (!this.isSpinning) return;
     const frame = frames[this.frameIndex];
-    process.stdout.write(`\r${pc.cyan(frame)} ${this._text}`);
+    process.stdout.write(`\r${colors.cyan(frame)} ${this._text}`);
   }
 
   private clear(): void {
@@ -49,12 +49,12 @@ export class Spinner {
 
   succeed(text?: string): void {
     this.stop();
-    console.log(pc.green("✔") + " " + (text || this._text));
+    console.log(colors.green("✔") + " " + (text || this._text));
   }
 
   fail(text?: string): void {
     this.stop();
-    console.log(pc.red("✖") + " " + (text || this._text));
+    console.log(colors.red("✖") + " " + (text || this._text));
   }
 
   set text(value: string) {
