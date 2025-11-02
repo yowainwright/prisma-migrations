@@ -34,14 +34,19 @@ function runCLI(
 }> {
   return new Promise((resolve) => {
     const cwd = options.cwd || TEST_DIR;
-    const nodeModulesPath = path.join(import.meta.dir, "..", "node_modules");
+    const nodeModulesPath = path.join(
+      import.meta.dir,
+      "..",
+      "..",
+      "node_modules",
+    );
     const env = {
       ...process.env,
       DATABASE_URL,
       NODE_PATH: nodeModulesPath,
       ...options.env,
     };
-    const cliPath = path.join(import.meta.dir, "..", "dist", "cli.js");
+    const cliPath = path.join(import.meta.dir, "..", "..", "dist", "cli.js");
 
     const child = spawn("node", [cliPath, ...args], {
       cwd,
@@ -74,7 +79,7 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return;
-    } catch (error) {
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
@@ -106,7 +111,12 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
+  const parentNodeModules = path.join(
+    import.meta.dir,
+    "..",
+    "..",
+    "node_modules",
+  );
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
   try {
@@ -114,7 +124,7 @@ beforeAll(async () => {
       rmSync(testNodeModules, { recursive: true, force: true });
     }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
-  } catch (error) {
+  } catch {
     cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
@@ -152,7 +162,7 @@ generator client {
       env: { ...process.env, DATABASE_URL },
       stdio: "inherit",
     });
-  } catch (error) {
+  } catch {
     throw new Error("Failed to generate Prisma client");
   }
 
@@ -224,7 +234,7 @@ describe("Code Lab: New Project Setup", () => {
       try {
         await import("@prisma/client");
         expect(true).toBe(true);
-      } catch (error) {
+      } catch {
         throw new Error(
           "Prisma client not accessible - ensure prisma generate was successful",
         );
@@ -262,33 +272,21 @@ describe("Code Lab: New Project Setup", () => {
         const migrationFile = path.join(
           MIGRATIONS_DIR,
           usersMigration,
-          "migration.ts",
+          "migration.sql",
         );
         writeFileSync(
           migrationFile,
-          `import type { PrismaClient } from '@prisma/client';
+          `-- Migration: Up
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
-/**
- * Create users table
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    )
-  \`;
-}
-
-/**
- * Drop users table
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`DROP TABLE IF EXISTS users CASCADE\`;
-}
+-- Migration: Down
+DROP TABLE IF EXISTS users CASCADE;
 `,
         );
       }
@@ -312,40 +310,26 @@ export async function down(prisma: PrismaClient): Promise<void> {
         const migrationFile = path.join(
           MIGRATIONS_DIR,
           postsMigration,
-          "migration.ts",
+          "migration.sql",
         );
         writeFileSync(
           migrationFile,
-          `import type { PrismaClient } from '@prisma/client';
+          `-- Migration: Up
+CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  published BOOLEAN DEFAULT false,
+  author_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-/**
- * Create posts table with foreign key to users
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`
-    CREATE TABLE posts (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT,
-      published BOOLEAN DEFAULT false,
-      author_id INTEGER NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
-      FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  \`;
+CREATE INDEX idx_posts_author_id ON posts(author_id);
 
-  await prisma.$executeRaw\`
-    CREATE INDEX idx_posts_author_id ON posts(author_id)
-  \`;
-}
-
-/**
- * Drop posts table
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw\`DROP TABLE IF EXISTS posts CASCADE\`;
-}
+-- Migration: Down
+DROP TABLE IF EXISTS posts CASCADE;
 `,
         );
       }

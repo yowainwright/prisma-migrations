@@ -23,7 +23,6 @@ export interface MigrationFile {
   id: string;
   name: string;
   path: string;
-  fileType: "ts" | "sql";
 }
 
 export interface MigrationHooks {
@@ -38,5 +37,4 @@ export interface MigrationsConfig {
   prismaClient?: PrismaClient;
   logLevel?: "silent" | "error" | "warn" | "info" | "debug" | "trace";
   hooks?: MigrationHooks;
-  migrationFileType?: "sql" | "ts";
 }

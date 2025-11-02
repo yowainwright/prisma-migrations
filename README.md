@@ -24,17 +24,15 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
   - [Complete Example](#complete-example)
 - [Migration Files](#migration-files)
   - [File Structure](#file-structure)
-  - [TypeScript Migration](#typescript-migration)
-  - [JavaScript Migration](#javascript-migration)
-  - [SQL Migrations](#sql-migrations)
-  - [Using Prisma Client Operations](#using-prisma-client-operations)
+  - [SQL Migration Format](#sql-migration-format)
+  - [Migration Examples](#migration-examples)
 - [Configuration](#configuration)
 - [How It Works](#how-it-works)
   - [Database Table](#database-table)
   - [Migration Discovery](#migration-discovery)
   - [Migration Execution](#migration-execution)
   - [Migration Flow Diagram](#migration-flow-diagram)
-- [TypeScript Support](#typescript-support)
+- [Programmatic API](#programmatic-api-1)
 - [Compatibility](#compatibility)
 - [Comparison with Prisma Migrate](#comparison-with-prisma-migrate)
 - [Development](#development)
@@ -45,10 +43,10 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 
 ## Why Use This?
 
-- **Familiar Knex-like API** - `up` and `down` functions you already know
-- **TypeScript First** - Full type safety for your migrations
-- **Prisma Powered** - Use both raw SQL and Prisma operations
+- **Prisma Compatible** - Uses Prisma's standard SQL migration format
+- **Rollback Support** - Add down migrations for easy rollback
 - **Flexible Control** - Run specific migrations, rollback, dry-run
+- **Programmatic API** - Control migrations from your code
 - **Modern Build** - ESM/CJS dual support, Node.js 20+ ready
 
 ## Why Not Just Use Prisma?
@@ -57,15 +55,14 @@ Prisma Migrations adds the rollback functionality and programmatic control that 
 
 | Feature | Prisma Native | prisma-migrations |
 |---------|--------------|-------------------|
-| **Schema migrations** | ✅ `prisma migrate dev` | ✅ `prisma-migrations dev` |
-| **Deploy migrations** | ✅ `prisma migrate deploy` | ✅ `prisma-migrations deploy` |
-| **Rollback support** | ❌ | ✅ `prisma-migrations down` |
-| **Data migrations** | ❌ | ✅ TypeScript/JavaScript |
-| **Programmatic API** | ❌ | ✅ Full Node.js API |
-| **Step control** | ❌ | ✅ Run/rollback N migrations |
-| **Interactive mode** | ❌ | ✅ Choose migrations |
-| **Hooks & validation** | ❌ | ✅ Before/after hooks |
-| **AI assistant (MCP)** | ❌ | ✅ 15 migration tools |
+| **Schema migrations** | ✓ `prisma migrate dev` | ✓ `prisma-migrations dev` |
+| **Deploy migrations** | ✓ `prisma migrate deploy` | ✓ `prisma-migrations deploy` |
+| **Rollback support** | ✗ | ✓ `prisma-migrations down` |
+| **Data migrations** | ✗ | ✓ SQL migrations with rollback |
+| **Programmatic API** | ✗ | ✓ Full Node.js API |
+| **Step control** | ✗ | ✓ Run/rollback N migrations |
+| **Interactive mode** | ✗ | ✓ Choose migrations |
+| **Hooks & validation** | ✗ | ✓ Before/after hooks |
 
 ## Unified Workflow
 
@@ -86,7 +83,6 @@ npx prisma-migrations deploy                 # Deploy to production
 - **Prisma compatible** - Uses Prisma's standard `_prisma_migrations` table
 - **Step control** - Run or rollback specific numbers of migrations
 - **Interactive mode** - Select which migrations to apply
-- **MCP server** - AI assistant integration with 15 migration tools
 - **Zero configuration** - Out-of-the-box working Prisma configuration
 
 ---
@@ -107,7 +103,7 @@ npm install prisma-migrations
 npx prisma-migrations init
 ```
 
-Creates your first migration file at `prisma/migrations/[timestamp]_initial_migration/migration.ts`
+Creates your first migration file at `prisma/migrations/[timestamp]_initial_migration/migration.sql`
 
 ### 2. Create a Migration
 
@@ -117,24 +113,21 @@ npx prisma-migrations create add_users_table
 
 ### 3. Write Your Migration
 
-```typescript
-// prisma/migrations/[timestamp]_add_users_table/migration.ts
-import type { PrismaClient } from 'prisma-migrations';
+The migration file contains two sections separated by a marker comment:
 
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
+```sql
+-- prisma/migrations/[timestamp]_add_users_table/migration.sql
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
+-- Migration: Up
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Migration: Down
+DROP TABLE IF EXISTS users;
 ```
 
 ### 4. Run Migrations
@@ -678,74 +671,24 @@ runMigrations();
 
 ## Migration Files
 
-Migration files are TypeScript (or JavaScript) modules with `up` and `down` functions.
+Migration files are SQL files with separate `up` and `down` sections for forward and rollback migrations.
 
 ### File Structure
 
 ```bash
 prisma/migrations/
 └── [timestamp]_migration_name/
-    └── migration.ts
+    └── migration.sql
 ```
 
-### TypeScript Migration
+### SQL Migration Format
 
-```typescript
-import type { PrismaClient } from 'prisma-migrations';
+Each migration file contains two sections separated by special comment markers:
 
-export async function up(prisma: PrismaClient): Promise<void> {
-  // Your migration code here
-  await prisma.$executeRaw`
-    CREATE TABLE posts (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT,
-      published BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
-
-export async function down(prisma: PrismaClient): Promise<void> {
-  // Rollback code here
-  await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
-}
-```
-
-### JavaScript Migration
-
-```javascript
-exports.up = async function(prisma) {
-  await prisma.$executeRaw`
-    CREATE TABLE posts (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT
-    )
-  `;
-};
-
-exports.down = async function(prisma) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
-};
-```
-
-### SQL Migrations
-
-Prisma Migrations supports both TypeScript/JavaScript migrations and SQL migrations. This is particularly useful when migrating from Prisma's native migration system or when you want to mix both approaches.
-
-**File Structure:**
-```bash
-prisma/migrations/
-├── 20220101000000_init_db/
-│   └── migration.sql          # SQL migration (from Prisma)
-└── 20220102000000_add_posts/
-    └── migration.ts            # TypeScript migration (new)
-```
-
-**SQL Migration File:**
 ```sql
 -- migration.sql
+
+-- Migration: Up
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
@@ -753,43 +696,46 @@ CREATE TABLE posts (
   published BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Migration: Down
+DROP TABLE IF EXISTS posts;
 ```
 
 **How It Works:**
-- SQL migrations are detected automatically
-- The `up` command executes the SQL file contents
-- The `down` command shows a warning (SQL files don't have rollback logic)
-- You can mix SQL and TypeScript migrations in the same project
+- The `-- Migration: Up` section runs when executing `prisma-migrations up`
+- The `-- Migration: Down` section runs when executing `prisma-migrations down`
+- Both sections can contain any valid SQL for your database
+- The marker comments must be exact: `-- Migration: Up` and `-- Migration: Down`
 
-**Note:** SQL migrations don't support rollback (`down`) operations since they don't have `down` functions. For migrations that need rollback support, use TypeScript/JavaScript migrations.
+### Migration Examples
 
-### Using Prisma Client Operations
+**Adding a Column:**
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
 
-You can use any Prisma Client method in migrations:
+-- Migration: Down
+ALTER TABLE users DROP COLUMN last_login;
+```
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Create table with raw SQL
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      role VARCHAR(50) DEFAULT 'user'
-    )
-  `;
+**Creating an Index:**
+```sql
+-- Migration: Up
+CREATE INDEX idx_users_email ON users(email);
 
-  // Seed initial data using Prisma
-  await prisma.user.createMany({
-    data: [
-      { email: 'admin@example.com', role: 'admin' },
-      { email: 'user@example.com', role: 'user' },
-    ],
-  });
-}
+-- Migration: Down
+DROP INDEX idx_users_email;
+```
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
+**Data Migration:**
+```sql
+-- Migration: Up
+INSERT INTO roles (name, permissions) VALUES
+  ('admin', '{"all": true}'),
+  ('user', '{"read": true}');
+
+-- Migration: Down
+DELETE FROM roles WHERE name IN ('admin', 'user');
 ```
 
 ---
@@ -933,32 +879,26 @@ flowchart TD
 
 ---
 
-## TypeScript Support
+## Programmatic API
 
-Full TypeScript support out of the box.
+The library exports TypeScript types for programmatic usage in your Node.js/Bun applications.
 
-### PrismaClient Type
-
-Import the `PrismaClient` type from `prisma-migrations`:
-
-```typescript
-import type { PrismaClient } from 'prisma-migrations';
-
-export async function up(prisma: PrismaClient) {
-  // Full type safety and autocomplete
-  await prisma.$executeRaw`...`;
-}
-```
-
-### Migration Types
+### Available Types
 
 ```typescript
 import type {
+  PrismaClient,
   MigrationFile,
-  MigrationFunction,
-  MigrationsConfig
+  MigrationsConfig,
+  MigrationHooks
 } from 'prisma-migrations';
 ```
+
+**Type Definitions:**
+- `PrismaClient` - Interface for Prisma Client compatibility
+- `MigrationFile` - Represents a migration file structure
+- `MigrationsConfig` - Configuration options for the Migrations class
+- `MigrationHooks` - Lifecycle hooks for migrations
 
 ---
 
@@ -984,14 +924,12 @@ import type {
 |---------|---------------|-------------------|
 | Create migrations | ✓ | ✓ |
 | Run migrations | ✓ | ✓ |
-| Rollback migrations | x | ✓ |
-| TypeScript migrations | x | ✓ |
-| JavaScript migrations | x | ✓ |
-| SQL migrations | ✓ | ✓ |
-| Mixed .sql and .ts migrations | x | ✓ |
-| Step control | x | ✓ |
-| Interactive mode | x | ✓ |
-| Programmatic API | x | ✓ |
+| Rollback migrations | ✗ | ✓ |
+| SQL migrations with up/down | ✗ | ✓ |
+| Step control | ✗ | ✓ |
+| Interactive mode | ✗ | ✓ |
+| Programmatic API | ✗ | ✓ |
+| Hooks & validation | ✗ | ✓ |
 
 ---
 

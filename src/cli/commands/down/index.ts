@@ -6,9 +6,7 @@ import type {
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
 import inquirer from "inquirer";
-import ora from "ora";
-import chalk from "chalk";
-import Table from "cli-table3";
+import { spinner, createTable, colors } from "../../../utils";
 
 export async function down(
   prisma: PrismaClient,
@@ -22,11 +20,11 @@ export async function down(
     return await interactiveDown(migrations);
   }
 
-  const spinner = ora("Rolling back migrations...").start();
+  const spin = spinner("Rolling back migrations...").start();
 
   try {
     const count = await migrations.down(steps);
-    spinner.succeed(chalk.green(`Rolled back ${count} migration(s)`));
+    spin.succeed(`Rolled back ${count} migration(s)`);
 
     const hasRolledBack = count > 0;
     if (hasRolledBack) {
@@ -35,7 +33,7 @@ export async function down(
 
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Rollback failed"));
+    spin.fail("Rollback failed");
     logger.error(error);
     throw error;
   }
@@ -46,7 +44,7 @@ export async function interactiveDown(migrations: Migrations) {
   const hasApplied = applied.length > 0;
 
   if (!hasApplied) {
-    console.log(chalk.yellow("No applied migrations to rollback"));
+    console.log(colors.yellow("No applied migrations to rollback"));
     return 0;
   }
 
@@ -63,13 +61,13 @@ export async function interactiveDown(migrations: Migrations) {
 
 export async function promptDownMode(): Promise<string> {
   const choices = [
-    { name: chalk.cyan("Last migration only"), value: "one" },
-    { name: chalk.yellow("Select number of migrations"), value: "steps" },
+    { name: colors.cyan("Last migration only"), value: "one" },
+    { name: colors.yellow("Select number of migrations"), value: "steps" },
     {
-      name: chalk.blue("Select specific migration to rollback to"),
+      name: colors.blue("Select specific migration to rollback to"),
       value: "specific",
     },
-    { name: chalk.red("All migrations (reset)"), value: "all" },
+    { name: colors.red("All migrations (reset)"), value: "all" },
   ];
 
   const { mode } = await inquirer.prompt([
@@ -113,14 +111,14 @@ export async function runRollbackForMode(
 }
 
 export async function rollbackOne(migrations: Migrations): Promise<number> {
-  const spinner = ora("Rolling back migration...").start();
+  const spin = spinner("Rolling back migration...").start();
 
   try {
     const count = await migrations.down(1);
-    spinner.succeed(chalk.green(`Rolled back ${count} migration(s)`));
+    spin.succeed(`Rolled back ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Rollback failed"));
+    spin.fail("Rollback failed");
     logger.error(error);
     throw error;
   }
@@ -131,25 +129,25 @@ export async function rollbackAll(migrations: Migrations): Promise<number> {
     {
       type: "confirm",
       name: "confirm",
-      message: chalk.red("Are you sure you want to rollback ALL migrations?"),
+      message: colors.red("Are you sure you want to rollback ALL migrations?"),
       default: false,
     },
   ]);
 
   const isConfirmed = confirm === true;
   if (!isConfirmed) {
-    console.log(chalk.yellow("Cancelled"));
+    console.log(colors.yellow("Cancelled"));
     return 0;
   }
 
-  const spinner = ora("Rolling back all migrations...").start();
+  const spin = spinner("Rolling back all migrations...").start();
 
   try {
     const count = await migrations.reset();
-    spinner.succeed(chalk.green(`Rolled back ${count} migration(s)`));
+    spin.succeed(`Rolled back ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Rollback failed"));
+    spin.fail("Rollback failed");
     logger.error(error);
     throw error;
   }
@@ -174,14 +172,14 @@ export async function rollbackSteps(
     },
   });
 
-  const spinner = ora("Rolling back migrations...").start();
+  const spin = spinner("Rolling back migrations...").start();
 
   try {
     const count = await migrations.down(steps);
-    spinner.succeed(chalk.green(`Rolled back ${count} migration(s)`));
+    spin.succeed(`Rolled back ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Rollback failed"));
+    spin.fail("Rollback failed");
     logger.error(error);
     throw error;
   }
@@ -205,24 +203,23 @@ export async function rollbackToSpecific(
     },
   ]);
 
-  const spinner = ora("Rolling back migrations...").start();
+  const spin = spinner("Rolling back migrations...").start();
 
   try {
     const count = await migrations.downTo(migrationId);
-    spinner.succeed(chalk.green(`Rolled back ${count} migration(s)`));
+    spin.succeed(`Rolled back ${count} migration(s)`);
     return count;
   } catch (error) {
-    spinner.fail(chalk.red("Rollback failed"));
+    spin.fail("Rollback failed");
     logger.error(error);
     throw error;
   }
 }
 
 export function showRollbackTable(count: number): void {
-  const table = new Table({
-    head: [chalk.cyan("Status"), chalk.cyan("Migrations")],
-    colWidths: [10, 50],
-  });
-  table.push([chalk.yellow("↓"), `${count} migration(s) rolled back`]);
-  console.log(table.toString());
+  const table = createTable(
+    [colors.cyan("Status"), colors.cyan("Migrations")],
+    [[colors.yellow("[ ]"), `${count} migration(s) rolled back`]],
+  );
+  console.log(table);
 }

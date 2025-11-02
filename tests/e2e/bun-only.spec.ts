@@ -30,14 +30,19 @@ function runCLI(
 }> {
   return new Promise((resolve) => {
     const cwd = options.cwd || TEST_DIR;
-    const nodeModulesPath = path.join(import.meta.dir, "..", "node_modules");
+    const nodeModulesPath = path.join(
+      import.meta.dir,
+      "..",
+      "..",
+      "node_modules",
+    );
     const env = {
       ...process.env,
       DATABASE_URL,
       NODE_PATH: nodeModulesPath,
       ...options.env,
     };
-    const cliPath = path.join(import.meta.dir, "..", "dist", "cli.js");
+    const cliPath = path.join(import.meta.dir, "..", "..", "dist", "cli.js");
 
     const proc = spawn(["bun", cliPath, ...args], {
       cwd,
@@ -81,7 +86,7 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return;
-    } catch (error) {
+    } catch {
       await Bun.sleep(1000);
     }
   }
@@ -92,13 +97,9 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
  * Clean up database
  */
 async function cleanDatabase(): Promise<void> {
-  try {
-    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_users CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_posts CASCADE`;
-  } catch (error) {
-    // Tables might not exist yet, that's fine
-  }
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_users CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS bun_test_posts CASCADE`;
 }
 
 beforeAll(async () => {
@@ -109,14 +110,19 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
+  const parentNodeModules = path.join(
+    import.meta.dir,
+    "..",
+    "..",
+    "node_modules",
+  );
   const testNodeModules = path.join(TEST_DIR, "node_modules");
   try {
     if (existsSync(testNodeModules)) {
       rmSync(testNodeModules, { recursive: true, force: true });
     }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
-  } catch (error) {
+  } catch {
     cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
@@ -263,7 +269,7 @@ describe("Bun-Only E2E", () => {
     });
 
     it("should reset migrations with Bun", async () => {
-      const result = await runCLI(["reset"]);
+      const result = await runCLI(["reset", "--force"]);
 
       expect(result.code).toBe(0);
     });
@@ -272,7 +278,7 @@ describe("Bun-Only E2E", () => {
   describe("Programmatic API with Bun", () => {
     it("should work with Migrations class in Bun", async () => {
       // Dynamic import to test programmatic API
-      const { Migrations } = await import("../dist/index.js");
+      const { Migrations } = await import("../../dist/index.js");
 
       const migrations = new Migrations(prisma, {
         migrationsDir: MIGRATIONS_DIR,

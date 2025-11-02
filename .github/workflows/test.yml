@@ -22,10 +22,10 @@ jobs:
         run: bun install
 
       - name: Check formatting
-        run: bunx prettier --check src tests e2e
+        run: bunx prettier --check src tests
 
       - name: Lint code
-        run: bunx oxlint src tests e2e
+        run: bunx oxlint src tests
 
       - name: Type check
         run: bunx tsc --noEmit
@@ -77,7 +77,6 @@ jobs:
         run: |
           # Test that CLI can be executed without errors
           timeout 10s node dist/cli.js --help || true
-          timeout 10s node dist/cli.cjs --help || true
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -112,7 +111,7 @@ jobs:
           bunx prisma generate
 
       - name: Start all PostgreSQL containers
-        run: docker compose -f e2e/docker-compose.yml up -d
+        run: docker compose -f tests/e2e/docker-compose.yml up -d
 
       - name: Wait for PostgreSQL containers
         run: |
@@ -134,17 +133,17 @@ jobs:
           echo "All PostgreSQL containers are ready"
 
       - name: Run CLI e2e tests
-        run: bun test e2e/cli-commands.spec.ts --timeout 120000
+        run: bun test tests/e2e/cli-commands.spec.ts --timeout 120000
 
       - name: Run Bun e2e tests
-        run: bun test e2e/bun-only.spec.ts --timeout 120000
+        run: bun test tests/e2e/bun-only.spec.ts --timeout 120000
 
       - name: Run new project codelab e2e tests
-        run: bun test e2e/codelab-new-project.spec.ts --timeout 120000
+        run: bun test tests/e2e/codelab-new-project.spec.ts --timeout 120000
 
       - name: Run migrate codelab e2e tests
-        run: bun test e2e/codelab-migrate-existing.spec.ts --timeout 120000
+        run: bun test tests/e2e/codelab-migrate-existing.spec.ts --timeout 120000
 
       - name: Stop PostgreSQL containers
         if: always()
-        run: docker compose -f e2e/docker-compose.yml down
+        run: docker compose -f tests/e2e/docker-compose.yml down

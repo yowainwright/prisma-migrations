@@ -10,10 +10,10 @@
       "outputs": ["dist/**"]
     },
     "lint-lib": {
-      "inputs": ["src/**/*.{tsx,ts}", "tests/**/*.ts", "e2e/**/*.{ts,js}"]
+      "inputs": ["src/**/*.{tsx,ts}", "tests/**/*.ts"]
     },
     "//#lint-lib": {
-      "inputs": ["src/**/*.ts", "tests/**/*.ts", "e2e/**/*.{ts,js}"]
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
     "test-lib": {
       "inputs": ["src/**/*.ts", "tests/**/*.ts"]

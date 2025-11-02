@@ -46,7 +46,7 @@ function runCLI(
       DATABASE_URL,
       ...options.env,
     };
-    const cliPath = path.join(import.meta.dir, "..", "dist", "cli.js");
+    const cliPath = path.join(import.meta.dir, "..", "..", "dist", "cli.js");
 
     const child = spawn("node", [cliPath, ...args], {
       cwd,
@@ -79,7 +79,7 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return;
-    } catch (error) {
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
@@ -90,14 +90,10 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
  * Clean up database
  */
 async function cleanDatabase(): Promise<void> {
-  try {
-    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS users CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS posts CASCADE`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS comments CASCADE`;
-  } catch (error) {
-    // Tables might not exist yet, that's fine
-  }
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS users CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS posts CASCADE`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS comments CASCADE`;
 }
 
 beforeAll(async () => {
@@ -108,7 +104,12 @@ beforeAll(async () => {
   mkdirSync(TEST_DIR, { recursive: true });
 
   const { symlinkSync, cpSync } = require("fs");
-  const parentNodeModules = path.join(import.meta.dir, "..", "node_modules");
+  const parentNodeModules = path.join(
+    import.meta.dir,
+    "..",
+    "..",
+    "node_modules",
+  );
   const testNodeModules = path.join(TEST_DIR, "node_modules");
 
   try {
@@ -116,7 +117,7 @@ beforeAll(async () => {
       rmSync(testNodeModules, { recursive: true, force: true });
     }
     symlinkSync(parentNodeModules, testNodeModules, "dir");
-  } catch (error) {
+  } catch {
     cpSync(parentNodeModules, testNodeModules, { recursive: true });
   }
 
@@ -155,7 +156,7 @@ generator client {
       env: { ...process.env, DATABASE_URL },
       stdio: "inherit",
     });
-  } catch (error) {
+  } catch {
     throw new Error("Failed to generate Prisma client");
   }
 
@@ -302,7 +303,7 @@ describe("CLI Commands E2E", () => {
 
   describe("fresh command", () => {
     it("should rollback all migrations and re-run them", async () => {
-      const result = await runCLI(["fresh"]);
+      const result = await runCLI(["fresh", "--force"]);
 
       expect(result.code).toBe(0);
     });
@@ -313,7 +314,7 @@ describe("CLI Commands E2E", () => {
       // First run some migrations
       await runCLI(["up"]);
 
-      const result = await runCLI(["reset"]);
+      const result = await runCLI(["reset", "--force"]);
 
       expect(result.code).toBe(0);
 
@@ -330,7 +331,7 @@ describe("CLI Commands E2E", () => {
 
   describe("refresh command", () => {
     it("should be an alias for fresh command", async () => {
-      const result = await runCLI(["refresh"]);
+      const result = await runCLI(["refresh", "--force"]);
 
       expect(result.code).toBe(0);
     });
