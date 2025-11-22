@@ -97,7 +97,7 @@ export async function linkTypes(
           stdio: "pipe",
         });
         console.log(colors.cyan(`  Installed dependencies`));
-      } catch (error) {
+      } catch {
         console.log(
           colors.yellow(
             `  Warning: Could not auto-install. Run '${packageManager} install' manually`,

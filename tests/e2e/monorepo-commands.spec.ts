@@ -190,7 +190,7 @@ describe("Monorepo Commands E2E", () => {
     });
 
     it("should detect workspace setup", async () => {
-      const result = await runCLI(["link-types", "@test/source"], {
+      await runCLI(["link-types", "@test/source"], {
         cwd: CONSUMER_DIR,
       });
 

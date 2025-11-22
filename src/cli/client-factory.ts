@@ -28,7 +28,7 @@ async function createAdapterForUrl(databaseUrl: string): Promise<any> {
         const pgPkg = await import("pg" as string);
         const pool = new pgPkg.Pool({ connectionString: databaseUrl });
         return new adapterPkg.PrismaPg(pool);
-      } catch (error) {
+      } catch {
         throw new Error(
           "Prisma 7 with PostgreSQL requires adapter packages.\n" +
             "Install them with:\n" +
@@ -45,7 +45,7 @@ async function createAdapterForUrl(databaseUrl: string): Promise<any> {
         const mysqlPkg = await import("mysql2/promise" as string);
         const pool = mysqlPkg.createPool(databaseUrl);
         return new adapterPkg.PrismaMysql(pool);
-      } catch (error) {
+      } catch {
         throw new Error(
           "Prisma 7 with MySQL requires adapter packages.\n" +
             "Install them with:\n" +
@@ -63,7 +63,7 @@ async function createAdapterForUrl(databaseUrl: string): Promise<any> {
         const sqlitePkg = await import("better-sqlite3" as string);
         const db = new sqlitePkg.default(url.pathname);
         return new adapterPkg.PrismaSQLite(db);
-      } catch (error) {
+      } catch {
         throw new Error(
           "Prisma 7 with SQLite requires adapter packages.\n" +
             "Install them with:\n" +

@@ -5,7 +5,6 @@ import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
 const TEST_DIR = path.join(import.meta.dir, "prisma-wrapper-test");
-const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5435/cli_test";
 
 let prisma: PrismaClient;
