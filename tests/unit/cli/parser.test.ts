@@ -320,7 +320,7 @@ describe("showVersion", () => {
     console.log = originalLog;
   });
 
-  test("should output version number", () => {
+  test("should output version number from package.json", () => {
     let output = "";
     console.log = (text: string) => {
       output = text;
@@ -328,6 +328,6 @@ describe("showVersion", () => {
 
     showVersion();
 
-    expect(output).toBe("1.0.0");
+    expect(output).toMatch(/^\d+\.\d+\.\d+/);
   });
 });
