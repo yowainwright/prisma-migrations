@@ -11,7 +11,9 @@ interface PackageJson {
 function readPackageJson(cwd: string): PackageJson {
   const pkgPath = join(cwd, "package.json");
   if (!existsSync(pkgPath)) {
-    throw new Error("package.json not found. Run this command from a package directory.");
+    throw new Error(
+      "package.json not found. Run this command from a package directory.",
+    );
   }
   return JSON.parse(readFileSync(pkgPath, "utf-8"));
 }
@@ -37,11 +39,17 @@ function updatePrismaSchema(schemaPath: string): void {
     if (!hasOutput) {
       schema = schema.replace(
         /(generator\s+client\s*\{[^}]*)/,
-        '$1\n  output = "../src/generated/client"'
+        '$1\n  output = "../src/generated/client"',
       );
-      console.log(colors.cyan("  Updated existing Prisma generator with custom output"));
+      console.log(
+        colors.cyan("  Updated existing Prisma generator with custom output"),
+      );
     } else {
-      console.log(colors.yellow("  Prisma generator already has custom output - skipping"));
+      console.log(
+        colors.yellow(
+          "  Prisma generator already has custom output - skipping",
+        ),
+      );
     }
   } else {
     // Add generator
@@ -54,7 +62,7 @@ generator client {
     // Insert after datasource block
     schema = schema.replace(
       /(datasource\s+\w+\s*\{[^}]*\})/,
-      `$1\n${generatorBlock}`
+      `$1\n${generatorBlock}`,
     );
     console.log(colors.cyan("  Added Prisma generator with custom output"));
   }
@@ -95,7 +103,10 @@ export const db = new PrismaClient();
   console.log(colors.cyan("  Created src/db/index.ts"));
 }
 
-function updatePackageJsonExports(pkg: PackageJson, _packageName: string): PackageJson {
+function updatePackageJsonExports(
+  pkg: PackageJson,
+  _packageName: string,
+): PackageJson {
   const updated = { ...pkg };
 
   if (!updated.exports) {
@@ -105,12 +116,12 @@ function updatePackageJsonExports(pkg: PackageJson, _packageName: string): Packa
   // Add db exports
   updated.exports["./db"] = {
     types: "./dist/db/index.d.ts",
-    default: "./dist/db/index.js"
+    default: "./dist/db/index.js",
   };
 
   // Add db/types exports (type-only)
   updated.exports["./db/types"] = {
-    types: "./dist/db/types.d.ts"
+    types: "./dist/db/types.d.ts",
   };
 
   console.log(colors.cyan(`  Updated package.json exports`));
@@ -121,7 +132,11 @@ function updateTsConfig(cwd: string): void {
   const tsconfigPath = join(cwd, "tsconfig.json");
 
   if (!existsSync(tsconfigPath)) {
-    console.log(colors.yellow("  tsconfig.json not found - you may need to configure TypeScript manually"));
+    console.log(
+      colors.yellow(
+        "  tsconfig.json not found - you may need to configure TypeScript manually",
+      ),
+    );
     return;
   }
 
@@ -158,10 +173,7 @@ function updateTsConfig(cwd: string): void {
 
 function addToGitignore(cwd: string): void {
   const gitignorePath = join(cwd, ".gitignore");
-  const entries = [
-    "src/generated/",
-    "dist/"
-  ];
+  const entries = ["src/generated/", "dist/"];
 
   let gitignore = existsSync(gitignorePath)
     ? readFileSync(gitignorePath, "utf-8")
@@ -181,7 +193,10 @@ function addToGitignore(cwd: string): void {
   }
 }
 
-export async function setupSource(options: { cwd?: string; skipTypes?: boolean }) {
+export async function setupSource(options: {
+  cwd?: string;
+  skipTypes?: boolean;
+}) {
   const cwd = options.cwd || process.cwd();
 
   console.log(colors.bold("\nSetting up source package for type exports...\n"));
@@ -227,10 +242,13 @@ export async function setupSource(options: { cwd?: string; skipTypes?: boolean }
     console.log(colors.gray("  3. In consumer packages, run:"));
     console.log(colors.gray(`     prisma-migrations link-types ${pkg.name}`));
     console.log("");
-
   } catch (error) {
     console.log("");
-    console.log(colors.red(`✗ Error: ${error instanceof Error ? error.message : String(error)}`));
+    console.log(
+      colors.red(
+        `✗ Error: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     process.exit(1);
   }
 }

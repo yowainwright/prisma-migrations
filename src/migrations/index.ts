@@ -101,7 +101,6 @@ export class Migrations {
     }
   }
 
-
   async dryRun(steps?: number): Promise<MigrationFile[]> {
     const pending = await this.pending();
     return steps ? pending.slice(0, steps) : pending;

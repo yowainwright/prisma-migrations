@@ -13,7 +13,9 @@ interface PackageJson {
 function readPackageJson(cwd: string): PackageJson {
   const pkgPath = join(cwd, "package.json");
   if (!existsSync(pkgPath)) {
-    throw new Error("package.json not found. Run this command from a package directory.");
+    throw new Error(
+      "package.json not found. Run this command from a package directory.",
+    );
   }
   return JSON.parse(readFileSync(pkgPath, "utf-8"));
 }
@@ -51,7 +53,10 @@ function isWorkspacePackage(_sourcePackage: string, cwd: string): boolean {
   return false;
 }
 
-export async function linkTypes(sourcePackage: string, options: { cwd?: string }) {
+export async function linkTypes(
+  sourcePackage: string,
+  options: { cwd?: string },
+) {
   const cwd = options.cwd || process.cwd();
 
   console.log(colors.bold(`\nLinking types from ${sourcePackage}...\n`));
@@ -84,17 +89,20 @@ export async function linkTypes(sourcePackage: string, options: { cwd?: string }
       // 4. Install dependency
       try {
         console.log(colors.gray(`  Running ${packageManager} install...`));
-        const installCmd = packageManager === "yarn"
-          ? "yarn"
-          : `${packageManager} install`;
+        const installCmd =
+          packageManager === "yarn" ? "yarn" : `${packageManager} install`;
 
         execSync(installCmd, {
           cwd,
-          stdio: "pipe"
+          stdio: "pipe",
         });
         console.log(colors.cyan(`  Installed dependencies`));
       } catch (error) {
-        console.log(colors.yellow(`  Warning: Could not auto-install. Run '${packageManager} install' manually`));
+        console.log(
+          colors.yellow(
+            `  Warning: Could not auto-install. Run '${packageManager} install' manually`,
+          ),
+        );
       }
     } else {
       console.log(colors.gray(`  ${sourcePackage} already in devDependencies`));
@@ -104,7 +112,11 @@ export async function linkTypes(sourcePackage: string, options: { cwd?: string }
     console.log(colors.green("✓ Types linked!"));
     console.log("");
     console.log(colors.bold("Usage:"));
-    console.log(colors.gray(`  import type * as Prisma from "${sourcePackage}/db/types";`));
+    console.log(
+      colors.gray(
+        `  import type * as Prisma from "${sourcePackage}/db/types";`,
+      ),
+    );
     console.log("");
     console.log(colors.bold("Example with Kysely:"));
     console.log(colors.gray(`  type Database = {`));
@@ -112,10 +124,13 @@ export async function linkTypes(sourcePackage: string, options: { cwd?: string }
     console.log(colors.gray(`    Domain: Prisma.Domain;`));
     console.log(colors.gray(`  };`));
     console.log("");
-
   } catch (error) {
     console.log("");
-    console.log(colors.red(`✗ Error: ${error instanceof Error ? error.message : String(error)}`));
+    console.log(
+      colors.red(
+        `✗ Error: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     process.exit(1);
   }
 }

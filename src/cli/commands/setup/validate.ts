@@ -53,10 +53,10 @@ function validateSourcePackage(cwd: string): ValidationResult {
   } else {
     const schema = readFileSync(schemaPath, "utf-8");
 
-    if (!schema.includes('output')) {
+    if (!schema.includes("output")) {
       result.warnings.push("Prisma generator missing custom output path");
       result.warnings.push("  Run: prisma-migrations setup-source");
-    } else if (schema.includes('../src/generated/client')) {
+    } else if (schema.includes("../src/generated/client")) {
       result.info.push("✓ Custom output configured");
     }
   }
@@ -96,7 +96,9 @@ function validateSourcePackage(cwd: string): ValidationResult {
   const distPath = join(cwd, "dist");
   if (!existsSync(distPath)) {
     result.warnings.push("Built output (dist/) not found");
-    result.warnings.push("  Run your build command (e.g., tsc or npm run build)");
+    result.warnings.push(
+      "  Run your build command (e.g., tsc or npm run build)",
+    );
   } else {
     const distDbTypes = join(distPath, "db", "types.d.ts");
     if (!existsSync(distDbTypes)) {
@@ -110,7 +112,10 @@ function validateSourcePackage(cwd: string): ValidationResult {
   return result;
 }
 
-function validateConsumerPackage(cwd: string, sourcePackage?: string): ValidationResult {
+function validateConsumerPackage(
+  cwd: string,
+  sourcePackage?: string,
+): ValidationResult {
   const result: ValidationResult = {
     isValid: true,
     errors: [],
@@ -132,8 +137,12 @@ function validateConsumerPackage(cwd: string, sourcePackage?: string): Validatio
     const hasInDevDeps = pkg.devDependencies?.[sourcePackage];
 
     if (!hasInDeps && !hasInDevDeps) {
-      result.errors.push(`Source package "${sourcePackage}" not found in dependencies`);
-      result.errors.push(`  Run: prisma-migrations link-types ${sourcePackage}`);
+      result.errors.push(
+        `Source package "${sourcePackage}" not found in dependencies`,
+      );
+      result.errors.push(
+        `  Run: prisma-migrations link-types ${sourcePackage}`,
+      );
       result.isValid = false;
     } else {
       const version = hasInDevDeps || hasInDeps;
@@ -141,13 +150,19 @@ function validateConsumerPackage(cwd: string, sourcePackage?: string): Validatio
     }
   } else {
     result.warnings.push("No source package specified for validation");
-    result.warnings.push("  Usage: prisma-migrations validate --source <package-name>");
+    result.warnings.push(
+      "  Usage: prisma-migrations validate --source <package-name>",
+    );
   }
 
   return result;
 }
 
-export async function validate(options: { cwd?: string; source?: boolean; check?: string }) {
+export async function validate(options: {
+  cwd?: string;
+  source?: boolean;
+  check?: string;
+}) {
   const cwd = options.cwd || process.cwd();
 
   console.log(colors.bold("\nValidating monorepo setup...\n"));
@@ -158,7 +173,11 @@ export async function validate(options: { cwd?: string; source?: boolean; check?
     console.log(colors.gray("Mode: Source package\n"));
     result = validateSourcePackage(cwd);
   } else {
-    console.log(colors.gray(`Mode: Consumer package${options.check ? ` (checking ${options.check})` : ""}\n`));
+    console.log(
+      colors.gray(
+        `Mode: Consumer package${options.check ? ` (checking ${options.check})` : ""}\n`,
+      ),
+    );
     result = validateConsumerPackage(cwd, options.check);
   }
 
