@@ -2,7 +2,8 @@
 
 > Rollback and programmatic migrations for Prisma
 
-[![npm version](https://badge.fury.io/js/prisma-migrations.svg)](https://www.npmjs.com/package/prisma-migrations)
+[![npm](https://img.shields.io/npm/v/prisma-migrations)](https://www.npmjs.com/package/prisma-migrations)
+[![codecov](https://codecov.io/gh/yowainwright/prisma-migrations/branch/main/graph/badge.svg)](https://codecov.io/gh/yowainwright/prisma-migrations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Adds `up`/`down` migrations, rollback, programmatic API, and monorepo type-sharing to Prisma. Compatible with Prisma 5, 6, and 7.

@@ -53,8 +53,17 @@ jobs:
       - name: Generate Prisma client
         run: bunx prisma generate || echo "Prisma schema not found, skipping generate"
 
-      - name: Run unit tests
-        run: bun run test
+      - name: Run unit tests with coverage
+        run: bun run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   cli-smoke-test:
     runs-on: ubuntu-latest

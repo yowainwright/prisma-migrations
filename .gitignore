@@ -179,3 +179,4 @@ app/.astro/
 .DS_Store
 **/.DS_Store
 prisma
+coverage/

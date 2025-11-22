@@ -26,6 +26,7 @@
     "test": "turbo run test-lib",
     "test-lib": "bun test ./tests/unit",
     "test:watch": "bun test ./tests/unit --watch",
+    "test:coverage": "bun test ./tests/unit --coverage --coverage-reporter=lcov",
     "e2e": "./tests/e2e/run-e2e.sh",
     "e2e:esm": "bun run build && bun test tests/e2e/test.js",
     "e2e:cjs": "bun run build && bun test tests/e2e/test-cjs.js",
