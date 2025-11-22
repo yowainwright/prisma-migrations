@@ -1,8 +1,4 @@
-import type {
-  PrismaClient,
-  MigrationsConfig,
-  MigrationFile,
-} from "../../../types";
+import type { PrismaClient, MigrationFile } from "../../../types";
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
 import inquirer from "inquirer";
@@ -11,7 +7,7 @@ import { spinner, createTable, colors } from "../../../utils";
 export async function up(
   prisma: PrismaClient,
   steps?: number,
-  config?: MigrationsConfig,
+  config?: { migrationsDir?: string },
   interactive?: boolean,
 ) {
   const migrations = new Migrations(prisma, config);

@@ -240,7 +240,7 @@ export default function Search({ searchData }: SearchProps) {
                                 />
                               </svg>
                               <span className="text-base-content/70">
-                                Introduction to Pastoralist
+                                Introduction to Prisma Migrations
                               </span>
                             </div>
                           </a>

@@ -263,6 +263,42 @@ describe("CLI Commands E2E", () => {
 
       expect(result.code).toBe(0);
     });
+
+    it("should show pending migrations with --dry-run flag without executing them", async () => {
+      await runCLI(["create", "add_comments_table"]);
+
+      const beforeMigrations = await prisma.$queryRaw<
+        Array<{ migration_name: string }>
+      >`
+        SELECT migration_name FROM _prisma_migrations
+        WHERE rolled_back_at IS NULL
+        ORDER BY started_at
+      `;
+
+      const result = await runCLI(["up", "--dry-run"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("Would run");
+
+      const afterMigrations = await prisma.$queryRaw<
+        Array<{ migration_name: string }>
+      >`
+        SELECT migration_name FROM _prisma_migrations
+        WHERE rolled_back_at IS NULL
+        ORDER BY started_at
+      `;
+
+      expect(afterMigrations.length).toBe(beforeMigrations.length);
+    });
+
+    it("should show no pending migrations with --dry-run when all are applied", async () => {
+      await runCLI(["up"]);
+
+      const result = await runCLI(["up", "--dry-run"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("No pending migrations");
+    });
   });
 
   describe("applied command", () => {

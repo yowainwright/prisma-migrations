@@ -3,331 +3,181 @@ title: Writing Migrations
 description: Learn how to write effective database migrations with Prisma Migrations
 ---
 
-This guide covers how to write migrations in TypeScript or JavaScript with full type safety.
+This guide covers how to write migrations using SQL with up/down sections.
 
 ## Migration File Structure
 
-Each migration is stored in its own directory with a `migration.ts` (or `migration.js`) file:
+Each migration is stored in its own directory with a `migration.sql` file:
 
 ```bash
 prisma/migrations/
 └── [timestamp]_migration_name/
-    └── migration.ts
+    └── migration.sql
 ```
 
-The migration file exports two functions:
-- `up()` - Applies the migration
-- `down()` - Rolls back the migration
+The timestamp format is the same as Prisma's default: `20240101000000_migration_name`
 
-## Basic Migration Template
+## Basic Migration Format
 
-### TypeScript
+Each SQL file contains two sections separated by marker comments:
 
-```typescript
-import type { PrismaClient } from 'prisma-migrations';
+```sql
+-- Migration: Up
+-- This section runs when you do: npx prisma-migrations up
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
-export async function up(prisma: PrismaClient) {
-  // Your migration code here
-}
-
-export async function down(prisma: PrismaClient) {
-  // Your rollback code here
-}
+-- Migration: Down
+-- This section runs when you do: npx prisma-migrations down
+DROP TABLE IF EXISTS users;
 ```
 
-### JavaScript
-
-```javascript
-exports.up = async function(prisma) {
-  // Your migration code here
-};
-
-exports.down = async function(prisma) {
-  // Your rollback code here
-};
-```
-
-## Writing SQL Migrations
-
-Use `$executeRaw` for SQL statements:
-
-```typescript
-import type { PrismaClient } from 'prisma-migrations';
-
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
-```
-
-## Using Prisma Client Operations
-
-You can use any Prisma Client method in migrations:
-
-```typescript
-import type { PrismaClient } from 'prisma-migrations';
-
-export async function up(prisma: PrismaClient) {
-  // Create table with raw SQL
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      role VARCHAR(50) DEFAULT 'user'
-    )
-  `;
-
-  // Seed initial data using Prisma Client
-  await prisma.user.createMany({
-    data: [
-      { email: 'admin@example.com', role: 'admin' },
-      { email: 'user@example.com', role: 'user' },
-    ],
-  });
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
-```
+**Important:** The marker comments must be exactly:
+- `-- Migration: Up`
+- `-- Migration: Down`
 
 ## Common Migration Patterns
 
 ### Creating Tables
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE TABLE posts (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT,
-      author_id INTEGER REFERENCES users(id),
-      published BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
+```sql
+-- Migration: Up
+CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  author_id INTEGER REFERENCES users(id),
+  published BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
-  // Create indexes
-  await prisma.$executeRaw`
-    CREATE INDEX idx_posts_author_id ON posts(author_id)
-  `;
+CREATE INDEX idx_posts_author_id ON posts(author_id);
+CREATE INDEX idx_posts_published ON posts(published);
 
-  await prisma.$executeRaw`
-    CREATE INDEX idx_posts_published ON posts(published)
-  `;
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
-}
+-- Migration: Down
+DROP TABLE IF EXISTS posts;
 ```
 
 ### Adding Columns
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ADD COLUMN last_login TIMESTAMP
-  `;
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
+ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT true;
 
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ADD COLUMN is_active BOOLEAN DEFAULT true
-  `;
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    DROP COLUMN last_login
-  `;
-
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    DROP COLUMN is_active
-  `;
-}
+-- Migration: Down
+ALTER TABLE users DROP COLUMN last_login;
+ALTER TABLE users DROP COLUMN is_active;
 ```
 
 ### Modifying Columns
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Change column type
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN email TYPE TEXT
-  `;
+```sql
+-- Migration: Up
+ALTER TABLE users ALTER COLUMN email TYPE TEXT;
+ALTER TABLE users ALTER COLUMN name SET NOT NULL;
+ALTER TABLE users ALTER COLUMN role SET DEFAULT 'member';
 
-  // Add constraint
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN name SET NOT NULL
-  `;
-
-  // Set default value
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN role SET DEFAULT 'member'
-  `;
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN email TYPE VARCHAR(255)
-  `;
-
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN name DROP NOT NULL
-  `;
-
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN role DROP DEFAULT
-  `;
-}
+-- Migration: Down
+ALTER TABLE users ALTER COLUMN email TYPE VARCHAR(255);
+ALTER TABLE users ALTER COLUMN name DROP NOT NULL;
+ALTER TABLE users ALTER COLUMN role DROP DEFAULT;
 ```
 
 ### Data Migrations
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Migrate existing data
-  const users = await prisma.$queryRaw`
-    SELECT id, name FROM users WHERE email IS NULL
-  `;
+```sql
+-- Migration: Up
+INSERT INTO roles (name, permissions) VALUES
+  ('admin', '{"all": true}'),
+  ('user', '{"read": true}'),
+  ('guest', '{"read": true, "write": false}');
 
-  for (const user of users) {
-    await prisma.$executeRaw`
-      UPDATE users
-      SET email = ${`${user.name}@example.com`}
-      WHERE id = ${user.id}
-    `;
-  }
-
-  // Now make email required
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN email SET NOT NULL
-  `;
-}
-
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    ALTER TABLE users
-    ALTER COLUMN email DROP NOT NULL
-  `;
-}
+-- Migration: Down
+DELETE FROM roles WHERE name IN ('admin', 'user', 'guest');
 ```
 
 ### Creating Indexes
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE INDEX idx_users_email ON users(email)
-  `;
+```sql
+-- Migration: Up
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_created_at ON users(created_at);
+CREATE UNIQUE INDEX idx_users_username ON users(username);
 
-  await prisma.$executeRaw`
-    CREATE INDEX idx_users_created_at ON users(created_at)
-  `;
+-- Migration: Down
+DROP INDEX IF EXISTS idx_users_email;
+DROP INDEX IF EXISTS idx_users_created_at;
+DROP INDEX IF EXISTS idx_users_username;
+```
 
-  // Unique index
-  await prisma.$executeRaw`
-    CREATE UNIQUE INDEX idx_users_username ON users(username)
-  `;
-}
+### Renaming Columns
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_email`;
-  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_created_at`;
-  await prisma.$executeRaw`DROP INDEX IF EXISTS idx_users_username`;
-}
+```sql
+-- Migration: Up
+ALTER TABLE users RENAME COLUMN old_email TO email;
+
+-- Migration: Down
+ALTER TABLE users RENAME COLUMN email TO old_email;
 ```
 
 ## Best Practices
 
 ### 1. Always Write Down Migrations
 
-Every `up()` should have a corresponding `down()` that reverses it:
+Every `Up` section should have a corresponding `Down` that reverses it:
 
-```typescript
-// ✓ Good
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`CREATE TABLE foo (...)`;
-}
+```sql
+-- ✓ Good
+-- Migration: Up
+CREATE TABLE foo (id SERIAL PRIMARY KEY);
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS foo`;
-}
-
-// ✗ Bad - Empty down function
-export async function down(prisma: PrismaClient) {
-  // Nothing here!
-}
+-- Migration: Down
+DROP TABLE IF EXISTS foo;
 ```
 
-### 2. Use Transactions for Complex Migrations
+```sql
+-- ✗ Bad - Empty down section
+-- Migration: Up
+CREATE TABLE foo (id SERIAL PRIMARY KEY);
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`CREATE TABLE foo (id SERIAL PRIMARY KEY)`;
-    await tx.$executeRaw`CREATE TABLE bar (id SERIAL PRIMARY KEY)`;
-    await tx.$executeRaw`ALTER TABLE bar ADD FOREIGN KEY (foo_id) REFERENCES foo(id)`;
-  });
-}
+-- Migration: Down
+-- Nothing here!
 ```
 
-### 3. Handle Data Migrations Safely
-
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Get existing data
-  const users = await prisma.user.findMany();
-
-  // Transform and update
-  for (const user of users) {
-    if (!user.displayName) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { displayName: user.email.split('@')[0] }
-      });
-    }
-  }
-}
-```
-
-### 4. Use Descriptive Migration Names
+### 2. Use Descriptive Migration Names
 
 ```bash
 # ✓ Good
 npx prisma-migrations create add_user_email_verification
-npx prisma-migrations create modify_posts_add_published_at
+npx prisma-migrations create add_posts_published_at_column
 
 # ✗ Bad
 npx prisma-migrations create update
 npx prisma-migrations create changes
 ```
 
-### 5. Test Migrations Thoroughly
+### 3. Keep Migrations Focused
 
-Test both up and down:
+Each migration should do one logical thing:
+
+```bash
+# ✓ Good - Separate migrations
+npx prisma-migrations create add_users_table
+npx prisma-migrations create add_posts_table
+npx prisma-migrations create add_users_last_login
+
+# ✗ Bad - Too much in one migration
+npx prisma-migrations create add_all_tables_and_columns
+```
+
+### 4. Test Both Directions
+
+Always test both up and down:
 
 ```bash
 # Test up
@@ -339,133 +189,153 @@ psql -d mydb -c "\d users"
 # Test down
 npx prisma-migrations down
 
-# Verify rollback
+# Verify rollback worked
 psql -d mydb -c "\d users"
+
+# Test up again
+npx prisma-migrations up
 ```
 
-## Advanced Patterns
+### 5. Use IF EXISTS/IF NOT EXISTS
 
-### Conditional Migrations
+Make migrations more resilient:
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Check if column exists
-  const result = await prisma.$queryRaw`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_name='users' AND column_name='email'
-  `;
+```sql
+-- Migration: Up
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY
+);
 
-  if (result.length === 0) {
-    await prisma.$executeRaw`
-      ALTER TABLE users ADD COLUMN email VARCHAR(255)
-    `;
-  }
-}
+-- Migration: Down
+DROP TABLE IF EXISTS users;
 ```
 
-### Multi-Step Migrations
+## Multi-Step Data Migrations
 
-```typescript
-export async function up(prisma: PrismaClient) {
-  // Step 1: Add new column
-  await prisma.$executeRaw`
-    ALTER TABLE users ADD COLUMN new_email VARCHAR(255)
-  `;
+When you need to transform data, break it into steps:
 
-  // Step 2: Copy data
-  await prisma.$executeRaw`
-    UPDATE users SET new_email = old_email
-  `;
+```sql
+-- Migration: Up
+-- Step 1: Add new column
+ALTER TABLE users ADD COLUMN full_name VARCHAR(255);
 
-  // Step 3: Drop old column
-  await prisma.$executeRaw`
-    ALTER TABLE users DROP COLUMN old_email
-  `;
+-- Step 2: Populate from existing data
+UPDATE users SET full_name = first_name || ' ' || last_name;
 
-  // Step 4: Rename new column
-  await prisma.$executeRaw`
-    ALTER TABLE users RENAME COLUMN new_email TO email
-  `;
-}
+-- Step 3: Make it required
+ALTER TABLE users ALTER COLUMN full_name SET NOT NULL;
 
-export async function down(prisma: PrismaClient) {
-  // Reverse all steps
-  await prisma.$executeRaw`
-    ALTER TABLE users RENAME COLUMN email TO new_email
-  `;
+-- Step 4: Drop old columns
+ALTER TABLE users DROP COLUMN first_name;
+ALTER TABLE users DROP COLUMN last_name;
 
-  await prisma.$executeRaw`
-    ALTER TABLE users ADD COLUMN old_email VARCHAR(255)
-  `;
+-- Migration: Down
+-- Reverse all steps
+ALTER TABLE users ADD COLUMN first_name VARCHAR(255);
+ALTER TABLE users ADD COLUMN last_name VARCHAR(255);
 
-  await prisma.$executeRaw`
-    UPDATE users SET old_email = new_email
-  `;
+UPDATE users
+SET first_name = split_part(full_name, ' ', 1),
+    last_name = split_part(full_name, ' ', 2);
 
-  await prisma.$executeRaw`
-    ALTER TABLE users DROP COLUMN new_email
-  `;
-}
+ALTER TABLE users DROP COLUMN full_name;
 ```
 
-### Environment-Specific Logic
-
-```typescript
-export async function up(prisma: PrismaClient) {
-  const isDev = process.env.NODE_ENV === 'development';
-
-  await prisma.$executeRaw`CREATE TABLE users (id SERIAL PRIMARY KEY)`;
-
-  // Seed data in development only
-  if (isDev) {
-    await prisma.user.createMany({
-      data: [
-        { email: 'dev@example.com' },
-        { email: 'test@example.com' }
-      ]
-    });
-  }
-}
-```
-
-## Database-Specific Examples
+## Database-Specific Features
 
 ### PostgreSQL
 
-```typescript
-// JSON columns
-await prisma.$executeRaw`
-  ALTER TABLE users ADD COLUMN metadata JSONB DEFAULT '{}'
-`;
+**JSON columns:**
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN metadata JSONB DEFAULT '{}';
+CREATE INDEX idx_users_metadata ON users USING GIN(metadata);
 
-// Arrays
-await prisma.$executeRaw`
-  ALTER TABLE users ADD COLUMN tags TEXT[] DEFAULT ARRAY[]::TEXT[]
-`;
+-- Migration: Down
+DROP INDEX IF EXISTS idx_users_metadata;
+ALTER TABLE users DROP COLUMN metadata;
+```
 
-// Full-text search
-await prisma.$executeRaw`
-  ALTER TABLE posts ADD COLUMN search_vector TSVECTOR
-`;
+**Arrays:**
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN tags TEXT[] DEFAULT ARRAY[]::TEXT[];
 
-await prisma.$executeRaw`
-  CREATE INDEX idx_posts_search ON posts USING GIN(search_vector)
-`;
+-- Migration: Down
+ALTER TABLE users DROP COLUMN tags;
+```
+
+**Full-text search:**
+```sql
+-- Migration: Up
+ALTER TABLE posts ADD COLUMN search_vector TSVECTOR;
+CREATE INDEX idx_posts_search ON posts USING GIN(search_vector);
+
+UPDATE posts SET search_vector = to_tsvector('english', title || ' ' || content);
+
+-- Migration: Down
+DROP INDEX IF EXISTS idx_posts_search;
+ALTER TABLE posts DROP COLUMN search_vector;
 ```
 
 ### MySQL
 
-```typescript
-// JSON columns
-await prisma.$executeRaw`
-  ALTER TABLE users ADD COLUMN metadata JSON
-`;
+**JSON columns:**
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN metadata JSON;
 
-// Fulltext index
-await prisma.$executeRaw`
-  ALTER TABLE posts ADD FULLTEXT INDEX idx_posts_content (content)
-`;
+-- Migration: Down
+ALTER TABLE users DROP COLUMN metadata;
+```
+
+**Fulltext indexes:**
+```sql
+-- Migration: Up
+ALTER TABLE posts ADD FULLTEXT INDEX idx_posts_content (content);
+
+-- Migration: Down
+DROP INDEX idx_posts_content ON posts;
+```
+
+### SQLite
+
+**Adding columns (SQLite limitations):**
+```sql
+-- Migration: Up
+ALTER TABLE users ADD COLUMN email TEXT;
+
+-- Migration: Down
+-- Note: SQLite doesn't support DROP COLUMN easily
+-- You'd need to recreate the table without the column
+CREATE TABLE users_backup AS SELECT id, name FROM users;
+DROP TABLE users;
+ALTER TABLE users_backup RENAME TO users;
+```
+
+## Handling Schema and Data Together
+
+Sometimes you need to mix schema changes with data migrations:
+
+```sql
+-- Migration: Up
+-- 1. Add new column (nullable first)
+ALTER TABLE users ADD COLUMN status VARCHAR(50);
+
+-- 2. Set default for existing rows
+UPDATE users SET status = 'active' WHERE is_active = true;
+UPDATE users SET status = 'inactive' WHERE is_active = false;
+
+-- 3. Make it required
+ALTER TABLE users ALTER COLUMN status SET NOT NULL;
+
+-- 4. Drop old column
+ALTER TABLE users DROP COLUMN is_active;
+
+-- Migration: Down
+ALTER TABLE users ADD COLUMN is_active BOOLEAN;
+UPDATE users SET is_active = (status = 'active');
+ALTER TABLE users DROP COLUMN status;
 ```
 
 ## Troubleshooting
@@ -474,37 +344,46 @@ await prisma.$executeRaw`
 
 If a migration fails partway through:
 
-1. Check your database state
-2. Fix the migration code
+1. Check your database state manually
+2. Fix the SQL in the migration file
 3. Either:
-   - Manually clean up partial changes and retry
-   - Or write a new migration to continue from current state
+   - Clean up partial changes manually and re-run
+   - Write a new migration to continue from current state
 
-### Type Errors
+### Testing Rollbacks
 
-If you get TypeScript errors, ensure you're importing the correct PrismaClient type:
+Always test your down migrations in a staging environment first:
 
-```typescript
-// ✓ Correct
-import type { PrismaClient } from 'prisma-migrations';
-
-// ✗ Wrong
-import { PrismaClient } from '@prisma/client';
+```bash
+# In staging
+npx prisma-migrations up
+# Test the app
+npx prisma-migrations down
+# Verify rollback worked
+npx prisma-migrations up
+# Test again
 ```
 
-### Down Migration Doesn't Work
+### Syntax Errors
 
-Make sure your down() properly reverses up():
+If you get SQL syntax errors:
+- Check your SQL syntax for your specific database (PostgreSQL, MySQL, SQLite)
+- Test the SQL directly in your database client first
+- Make sure marker comments are exact: `-- Migration: Up` and `-- Migration: Down`
 
-```typescript
-// Test both directions
-await migrations.up();
-await migrations.down();
-await migrations.up(); // Should work again
-```
+### Reversing Complex Migrations
+
+Some operations are hard to reverse:
+- Dropping columns (data loss)
+- Complex data transformations
+
+For these, consider:
+- Backing up data before dropping
+- Documenting manual steps in comments
+- Testing extensively in staging
 
 ## Next Steps
 
-- Learn about [Advanced Features](/prisma-migrations/docs/advanced-features) like interactive mode
-- Explore the [API Reference](/prisma-migrations/docs/api-reference) for programmatic usage
-- Check [Troubleshooting](/prisma-migrations/docs/troubleshooting) for common issues
+- [Installation & Setup](/docs/setup) - Get started with Prisma Migrations
+- [CLI Commands](/docs/api-reference#cli-commands) - Learn all available commands
+- [Code Labs](/docs/codelab-new-project) - Step-by-step tutorials

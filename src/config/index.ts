@@ -1,8 +1,11 @@
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import type { MigrationsConfig } from "../types";
 import { validateConfig } from "./schema";
+
+export interface MigrationsConfig {
+  migrationsDir?: string;
+}
 
 async function searchConfig(): Promise<Record<string, unknown> | null> {
   const cwd = process.cwd();

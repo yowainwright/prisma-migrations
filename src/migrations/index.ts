@@ -1,9 +1,8 @@
 import { readdir, readFile, access } from "fs/promises";
 import type { Dirent } from "fs";
 import { join } from "path";
-import type { PrismaClient, MigrationsConfig, MigrationFile } from "../types";
+import type { PrismaClient, MigrationFile } from "../types";
 import { logger } from "../logger";
-import { Discovery } from "../discovery";
 import { generateChecksum } from "../utils";
 import {
   createMigrationNotFoundError,
@@ -79,13 +78,16 @@ async function loadSqlMigration(migrationPath: string): Promise<{
 
 export class Migrations {
   private prisma: PrismaClient;
-  private migrationsDir?: string;
-  private config?: MigrationsConfig;
+  private migrationsDir: string;
 
-  constructor(prisma: PrismaClient, config?: MigrationsConfig) {
+  constructor(
+    prisma: PrismaClient,
+    options?: {
+      migrationsDir?: string;
+    },
+  ) {
     this.prisma = prisma;
-    this.config = config;
-    this.migrationsDir = config?.migrationsDir;
+    this.migrationsDir = options?.migrationsDir || "./prisma/migrations";
   }
 
   private async validateMigrationFile(
@@ -99,47 +101,14 @@ export class Migrations {
     }
   }
 
-  private async executeWithHooks<T>(
-    migration: MigrationFile,
-    hookType: "up" | "down",
-    fn: () => Promise<T>,
-  ): Promise<T> {
-    const beforeHook =
-      hookType === "up"
-        ? this.config?.hooks?.beforeUp
-        : this.config?.hooks?.beforeDown;
-    const afterHook =
-      hookType === "up"
-        ? this.config?.hooks?.afterUp
-        : this.config?.hooks?.afterDown;
-
-    if (beforeHook) {
-      await beforeHook(migration);
-    }
-
-    const result = await fn();
-
-    if (afterHook) {
-      await afterHook(migration);
-    }
-
-    return result;
-  }
 
   async dryRun(steps?: number): Promise<MigrationFile[]> {
     const pending = await this.pending();
     return steps ? pending.slice(0, steps) : pending;
   }
 
-  private async getMigrationsDir(): Promise<string> {
-    if (this.migrationsDir) {
-      logger.debug(`Using cached migrations dir: ${this.migrationsDir}`);
-      return this.migrationsDir;
-    }
-
-    const discovery = new Discovery();
-    this.migrationsDir = await discovery.findMigrationsDir(this.config);
-    logger.debug(`Discovered migrations dir: ${this.migrationsDir}`);
+  private getMigrationsDir(): string {
+    logger.debug(`Using migrations dir: ${this.migrationsDir}`);
     return this.migrationsDir;
   }
 
@@ -160,29 +129,27 @@ export class Migrations {
         await prev;
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
-          await this.executeWithHooks(migration, "up", async () => {
-            const isValid = await this.validateMigrationFile(migration);
-            if (!isValid) {
-              throw createInvalidMigrationError(
-                `${migration.id}_${migration.name}`,
-                "missing up or down function",
-              );
-            }
+          const isValid = await this.validateMigrationFile(migration);
+          if (!isValid) {
+            throw createInvalidMigrationError(
+              `${migration.id}_${migration.name}`,
+              "missing up or down function",
+            );
+          }
 
-            const mod = await loadSqlMigration(migration.path);
+          const mod = await loadSqlMigration(migration.path);
 
-            const hasUpFunction = typeof mod.up === "function";
-            if (!hasUpFunction) {
-              throw new Error(
-                `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
-              );
-            }
-            await mod.up!(this.prisma);
-            const checksum = await generateChecksum(migration.path);
-            await this.prisma
-              .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
-            logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-          });
+          const hasUpFunction = typeof mod.up === "function";
+          if (!hasUpFunction) {
+            throw new Error(
+              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
+            );
+          }
+          await mod.up!(this.prisma);
+          const checksum = await generateChecksum(migration.path);
+          await this.prisma
+            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
+          logger.info(`✓ Applied ${migration.id}_${migration.name}`);
         } catch (error) {
           logger.error(
             `Failed to apply migration ${migration.id}_${migration.name}`,
@@ -213,20 +180,18 @@ export class Migrations {
 
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
-        await this.executeWithHooks(migration, "down", async () => {
-          const mod = await loadSqlMigration(migration.path);
+        const mod = await loadSqlMigration(migration.path);
 
-          const hasDownFunction = typeof mod.down === "function";
-          if (!hasDownFunction) {
-            throw new Error(
-              `Migration ${id}_${migration.name} does not export a 'down' function`,
-            );
-          }
-          await mod.down!(this.prisma);
-          await this.prisma
-            .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
-          logger.info(`✓ Rolled back ${id}_${migration.name}`);
-        });
+        const hasDownFunction = typeof mod.down === "function";
+        if (!hasDownFunction) {
+          throw new Error(
+            `Migration ${id}_${migration.name} does not export a 'down' function`,
+          );
+        }
+        await mod.down!(this.prisma);
+        await this.prisma
+          .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
+        logger.info(`✓ Rolled back ${id}_${migration.name}`);
       } catch (error) {
         logger.error(`Failed to rollback migration ${id}_${migration.name}`);
         logger.error(error instanceof Error ? error.message : String(error));
@@ -336,29 +301,27 @@ export class Migrations {
         await prev;
         logger.info(`Running ${migration.id}_${migration.name}...`);
         try {
-          await this.executeWithHooks(migration, "up", async () => {
-            const isValid = await this.validateMigrationFile(migration);
-            if (!isValid) {
-              throw createInvalidMigrationError(
-                `${migration.id}_${migration.name}`,
-                "missing up or down function",
-              );
-            }
+          const isValid = await this.validateMigrationFile(migration);
+          if (!isValid) {
+            throw createInvalidMigrationError(
+              `${migration.id}_${migration.name}`,
+              "missing up or down function",
+            );
+          }
 
-            const mod = await loadSqlMigration(migration.path);
+          const mod = await loadSqlMigration(migration.path);
 
-            const hasUpFunction = typeof mod.up === "function";
-            if (!hasUpFunction) {
-              throw new Error(
-                `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
-              );
-            }
-            await mod.up!(this.prisma);
-            const checksum = await generateChecksum(migration.path);
-            await this.prisma
-              .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
-            logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-          });
+          const hasUpFunction = typeof mod.up === "function";
+          if (!hasUpFunction) {
+            throw new Error(
+              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
+            );
+          }
+          await mod.up!(this.prisma);
+          const checksum = await generateChecksum(migration.path);
+          await this.prisma
+            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
+          logger.info(`✓ Applied ${migration.id}_${migration.name}`);
         } catch (error) {
           logger.error(
             `Failed to apply migration ${migration.id}_${migration.name}`,
@@ -399,20 +362,18 @@ export class Migrations {
 
       logger.info(`Rolling back ${id}_${migration.name}...`);
       try {
-        await this.executeWithHooks(migration, "down", async () => {
-          const mod = await loadSqlMigration(migration.path);
+        const mod = await loadSqlMigration(migration.path);
 
-          const hasDownFunction = typeof mod.down === "function";
-          if (!hasDownFunction) {
-            throw new Error(
-              `Migration ${id}_${migration.name} does not export a 'down' function`,
-            );
-          }
-          await mod.down!(this.prisma);
-          await this.prisma
-            .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
-          logger.info(`✓ Rolled back ${id}_${migration.name}`);
-        });
+        const hasDownFunction = typeof mod.down === "function";
+        if (!hasDownFunction) {
+          throw new Error(
+            `Migration ${id}_${migration.name} does not export a 'down' function`,
+          );
+        }
+        await mod.down!(this.prisma);
+        await this.prisma
+          .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
+        logger.info(`✓ Rolled back ${id}_${migration.name}`);
       } catch (error) {
         logger.error(`Failed to rollback migration ${id}_${migration.name}`);
         logger.error(error instanceof Error ? error.message : String(error));
@@ -484,7 +445,7 @@ export class Migrations {
   }
 
   private async getAllMigrations(): Promise<MigrationFile[]> {
-    const migrationsDir = await this.getMigrationsDir();
+    const migrationsDir = this.getMigrationsDir();
     logger.debug(`Reading migrations from: ${migrationsDir}`);
 
     const entries = await readdir(migrationsDir, { withFileTypes: true });
