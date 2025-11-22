@@ -1,7 +1,20 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
 interface ParsedArgs {
   command?: string;
   args: string[];
   options: Record<string, unknown>;
+}
+
+function getVersion(): string {
+  try {
+    const packageJsonPath = join(__dirname, "../../package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    return packageJson.version;
+  } catch {
+    return "unknown";
+  }
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -209,7 +222,7 @@ function showHelp(): void {
 }
 
 function showVersion(): void {
-  console.log("1.0.0");
+  console.log(getVersion());
 }
 
 export { parseArgs, showHelp, showVersion };
