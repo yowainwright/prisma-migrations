@@ -4,9 +4,12 @@ import { down } from "./commands/down";
 import { init } from "./commands/init";
 import { create } from "./commands/create";
 import * as prisma from "./commands/prisma";
+import { setupSource } from "./commands/setup/source";
+import { linkTypes } from "./commands/setup/link-types";
+import { validate } from "./commands/setup/validate";
 import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
-import { Discovery } from "../discovery";
+import { createPrismaClient } from "./client-factory";
 import { setLogLevel, logger } from "../logger";
 import type { MigrationFile } from "../types";
 import { MigrationError } from "../errors";
@@ -34,7 +37,7 @@ const program = new Command();
 program
   .name("prisma-migrations")
   .description("Simple up/down migrations for Prisma")
-  .version("0.1.3")
+  .version("1.0.0")
   .option("-v, --verbose", "Enable verbose logging")
   .option(
     "--log-level <level>",
@@ -64,13 +67,47 @@ program
   });
 
 program
+  .command("setup-source")
+  .description("Set up source package for type exports (monorepo)")
+  .action(async () => {
+    try {
+      await setupSource({ cwd: process.cwd() });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("link-types <source-package>")
+  .description("Link Prisma types from source package (monorepo)")
+  .action(async (sourcePackage) => {
+    try {
+      await linkTypes(sourcePackage, { cwd: process.cwd() });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("validate")
+  .description("Validate monorepo type setup")
+  .option("--source", "Validate as source package")
+  .option("--check <package>", "Check if consumer package has source linked")
+  .action(async (options) => {
+    try {
+      await validate({ cwd: process.cwd(), ...options });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
   .command("up")
   .description("Run pending migrations")
   .option("-s, --steps <number>", "Number of migrations to run")
   .option("-i, --interactive", "Interactive mode")
   .option("--dry-run", "Show what migrations would run without executing them")
   .action(async (options, command) => {
-    const discovery = new Discovery();
     try {
       const parentOpts = command.parent.opts();
       const logLevel = parentOpts.verbose
@@ -79,7 +116,7 @@ program
       setLogLevel(logLevel);
 
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
 
       if (options.dryRun) {
         const migrations = new Migrations(prisma, config);
@@ -115,7 +152,6 @@ program
   .option("-s, --steps <number>", "Number of migrations to rollback", "1")
   .option("-i, --interactive", "Interactive mode")
   .action(async (options, command) => {
-    const discovery = new Discovery();
     try {
       const parentOpts = command.parent.opts();
       const logLevel = parentOpts.verbose
@@ -124,7 +160,7 @@ program
       setLogLevel(logLevel);
 
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const steps = parseInt(options.steps);
       const interactive = options.interactive || false;
       await down(prisma, steps, config, interactive);
@@ -138,10 +174,9 @@ program
   .command("status")
   .description("Show migration status")
   .action(async () => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
       await migrations.status();
       await prisma.$disconnect();
@@ -154,10 +189,9 @@ program
   .command("pending")
   .description("List pending migrations")
   .action(async () => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
       const pending = await migrations.pending();
 
@@ -179,10 +213,9 @@ program
   .command("applied")
   .description("List applied migrations")
   .action(async () => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
       const applied = await migrations.applied();
 
@@ -204,10 +237,9 @@ program
   .command("latest")
   .description("Show the latest applied migration")
   .action(async () => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
       const latest = await migrations.latest();
 
@@ -228,10 +260,9 @@ program
   .description("Rollback all migrations")
   .option("-f, --force", "Skip confirmation prompt")
   .action(async (options) => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
       const applied = await migrations.applied();
 
@@ -271,10 +302,9 @@ program
   .description("Rollback all migrations and re-run them")
   .option("-f, --force", "Skip confirmation prompt")
   .action(async (options) => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
 
       const shouldProceed =
@@ -304,10 +334,9 @@ program
   .description("Rollback all migrations and re-run them (alias for fresh)")
   .option("-f, --force", "Skip confirmation prompt")
   .action(async (options) => {
-    const discovery = new Discovery();
     try {
       const config = await loadConfig();
-      const prisma = await discovery.findPrismaClient(config);
+      const prisma = await createPrismaClient();
       const migrations = new Migrations(prisma, config);
 
       const shouldProceed =

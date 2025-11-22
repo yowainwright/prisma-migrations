@@ -1,6 +1,6 @@
 ---
 title: Introduction to Prisma Migrations
-description: "Simple, powerful migration management for Prisma with rollback support and programmatic control"
+description: "Add rollback and programmatic control to Prisma migrations"
 ---
 
 <div className="flex flex-wrap gap-2 mb-8">
@@ -20,46 +20,66 @@ description: "Simple, powerful migration management for Prisma with rollback sup
 
 ## What is Prisma Migrations?
 
-Prisma Migrations adds the rollback functionality and programmatic control that Prisma's native migrations lack, while maintaining 100% compatibility with Prisma's standard migration system. Write your migrations in TypeScript or JavaScript with full type safety and run them from your code.
+If you're using Prisma but miss having rollback and programmatic migration control like other ORMs, this tool fills those gaps. It wraps Prisma's migration system and adds the features that should have been there from the start.
 
-## Why Prisma Migrations?
+## The Problem
 
-### The Problem
+Prisma's `prisma migrate` works well for forward migrations, but has some limitations:
 
-Prisma's native `prisma migrate` is excellent for forward migrations, but has critical limitations:
+- **No rollback** - Once a migration is applied, there's no built-in way to undo it
+- **No programmatic API** - You can't run migrations from your Node.js code
+- **Limited control** - Can't run specific numbers of migrations or choose which to apply
 
-- **No rollback support**: Once a migration is applied, there's no built-in way to undo it
-- **No programmatic API**: You can't run migrations from your JavaScript runtime code
-- **Limited control**: Can't run specific numbers of migrations or interactive selection
-- **No programmatic control**: Can't write migrations in TypeScript/JavaScript with type safety
+Meanwhile, pretty much every other ORM (Knex, TypeORM, Sequelize, Rails, Laravel) has had these features for years.
 
-When you need to rollback a migration in production or run migrations programmatically during deployment, you're stuck with manual SQL or third-party tools that don't integrate with Prisma.
+When you hit these limitations in production, you're stuck manually writing SQL or working around Prisma's constraints.
 
-### The Solution
+## The Solution
 
-Prisma Migrations extends Prisma with powerful features while staying 100% compatible:
+This tool wraps Prisma and adds what's missing:
 
-```typescript
-// Write migrations in TypeScript with full type safety
-import type { PrismaClient } from 'prisma-migrations';
+| Feature | Prisma Migrate | prisma-migrations |
+|---------|---------------|-------------------|
+| Run migrations forward | ✓ | ✓ |
+| Deploy to production | ✓ | ✓ |
+| Rollback migrations | ✗ | ✓ |
+| Run from Node.js code | ✗ | ✓ |
+| Step-by-step control | ✗ | ✓ |
+| Interactive mode | ✗ | ✓ |
+| Up/down migrations | ✗ | ✓ |
 
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
+**Key point:** This is 100% compatible with Prisma. It uses Prisma's standard `_prisma_migrations` table and works alongside `prisma migrate` commands.
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
+## Quick Example
+
+### CLI Usage
+
+```bash
+# Create a migration
+npx prisma-migrations create add_users
+
+# Run migrations
+npx prisma-migrations up
+
+# Rollback when needed
+npx prisma-migrations down
 ```
 
-Run migrations from your code:
+### Migration File
+
+```sql
+-- Migration: Up
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Migration: Down
+DROP TABLE IF EXISTS users;
+```
+
+### Programmatic API
 
 ```typescript
 import { Migrations } from 'prisma-migrations';
@@ -75,35 +95,33 @@ await migrations.up();
 await migrations.down();
 ```
 
-Or use the CLI:
-
-```bash
-# Run migrations
-npx prisma-migrations up
-
-# Rollback migrations
-npx prisma-migrations down
-
-# Interactive mode
-npx prisma-migrations up --interactive
-```
-
 ## Key Features
 
-- **Rollback migrations**: Full `up` and `down` migration support
-- **TypeScript/JavaScript migrations**: Write migrations in TS/JS with full type safety
-- **SQL migration support**: Execute existing Prisma .sql migrations
-- **Programmatic API**: Run migrations from your Node.js code
-- **Prisma compatible**: Uses Prisma's standard `_prisma_migrations` table
-- **Step control**: Run or rollback specific numbers of migrations
-- **Interactive mode**: Select which migrations to apply
-- **AI assistant (MCP)**: 15 migration tools for Claude Desktop and other AI assistants
-- **Zero configuration**: Works out of the box with any Prisma project
+- **Rollback support** - Up and down migrations like other ORMs
+- **Programmatic API** - Run migrations from your Node.js/TypeScript code
+- **Step control** - Run or rollback N migrations at a time
+- **Interactive mode** - Choose which migrations to apply
+- **SQL migrations** - Standard SQL format with up/down sections
+- **Zero config** - Works out of the box with existing Prisma projects
+- **Prisma compatible** - Uses Prisma's `_prisma_migrations` table
 
-## Benefits
+## When to Use This
 
-- **Safe deployments**: Rollback problematic migrations in production
-- **Type safety**: Full TypeScript support for migration code
-- **Flexibility**: Run migrations programmatically during CI/CD or app startup
-- **Compatible**: Works alongside `prisma migrate` commands
-- **Developer enhanced**: Interactive mode for development workflows
+**Use this tool if:**
+- You need to rollback migrations (especially in production)
+- You want to run migrations programmatically
+- You want step-by-step control over migrations
+- You're coming from Knex/TypeORM/etc and miss those features
+
+**Use Prisma Migrate if:**
+- You only ever need forward migrations
+- CLI-only execution is fine for you
+- You don't need rollback
+
+Both can coexist - they use the same migration table.
+
+## Next Steps
+
+- [Installation & Quick Start](/docs/setup) - Get started in 5 minutes
+- [Code Labs](/docs/codelab-new-project) - Step-by-step tutorials
+- [API Reference](/docs/api-reference) - Full documentation

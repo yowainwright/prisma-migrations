@@ -1,6 +1,6 @@
 {
   "name": "prisma-migrations",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "A Node.js library to manage Prisma ORM migrations like other ORMs",
   "type": "module",
   "main": "dist/index.js",
@@ -31,9 +31,9 @@
     "e2e:cjs": "bun run build && bun test tests/e2e/test-cjs.js",
     "e2e:cli": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-cli && bun test tests/e2e/cli-commands.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
     "e2e:bun": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-bun && bun test tests/e2e/bun-only.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
-    "e2e:codelab-new": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-codelab-new && bun test tests/e2e/codelab-new-project.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
-    "e2e:codelab-migrate": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-codelab-migrate && bun test tests/e2e/codelab-migrate-existing.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
-    "e2e:all": "bun run e2e:cli && bun run e2e:bun && bun run e2e:codelab-new && bun run e2e:codelab-migrate",
+    "e2e:monorepo": "bun run build && bun test tests/e2e/monorepo-commands.spec.ts",
+    "e2e:prisma-wrapper": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-cli && bun test tests/e2e/prisma-wrapper-commands.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
+    "e2e:all": "bun run e2e:cli && bun run e2e:bun && bun run e2e:monorepo && bun run e2e:prisma-wrapper",
     "docker": "docker-compose -f tests/e2e/docker-compose.yml up --build --abort-on-container-exit",
     "docker:clean": "docker-compose -f tests/e2e/docker-compose.yml down -v",
     "lint": "turbo run lint-lib",
@@ -68,19 +68,20 @@
   "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^6.18.0",
     "commander": "^14.0.1",
     "fast-glob": "^3.3.3",
     "inquirer": "^12.10.0"
   },
   "devDependencies": {
+    "@prisma/client": "^6.18.0",
     "@types/node": "^20.0.0",
+    "prettier": "3.6.2",
     "prisma": "^6.18.0",
     "turbo": "^2.5.8",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "prisma": ">=2.0.0"
+    "@prisma/client": ">=5.0.0 <8.0.0"
   },
   "files": [
     "dist/",
