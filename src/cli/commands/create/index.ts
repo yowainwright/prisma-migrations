@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import inquirer from "inquirer";
+import { Prompt } from "../../../utils/prompts";
 import {
   generateMigrationId,
   validateMigrationName,
@@ -12,21 +12,19 @@ export async function create(name?: string) {
   let migrationName = name;
 
   if (!migrationName) {
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "name",
-        message: "Migration name:",
-        validate: (input: string) => {
-          if (input.length === 0) return "Name is required";
-          if (!validateMigrationName(input)) {
-            return "Name must contain only lowercase letters, numbers, and underscores";
-          }
-          return true;
-        },
+    const prompt = new Prompt();
+    migrationName = await prompt.input(
+      "Migration name:",
+      undefined,
+      (input: string) => {
+        if (input.length === 0) return "Name is required";
+        if (!validateMigrationName(input)) {
+          return "Name must contain only lowercase letters, numbers, and underscores";
+        }
+        return true;
       },
-    ]);
-    migrationName = answers.name;
+    );
+    prompt.close();
   } else if (!validateMigrationName(migrationName)) {
     throw new Error(
       "Migration name must contain only lowercase letters, numbers, and underscores",

@@ -26,7 +26,6 @@ describe("up command", () => {
       expect(count).toBe(3);
     });
 
-
     test("should return 0 for unknown mode", async () => {
       const mockMigrations = {} as Migrations;
       const pending = [];

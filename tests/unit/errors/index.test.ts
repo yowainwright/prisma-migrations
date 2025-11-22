@@ -30,7 +30,11 @@ describe("MigrationError", () => {
   });
 
   test("should create error with help command", () => {
-    const error = new MigrationError("Test error", [], "prisma-migrations help");
+    const error = new MigrationError(
+      "Test error",
+      [],
+      "prisma-migrations help",
+    );
 
     expect(error.helpCommand).toBe("prisma-migrations help");
   });
@@ -97,9 +101,9 @@ describe("Error factory functions", () => {
 
       expect(error.message).toContain("123_test");
       expect(error.message).toContain("modified");
-      expect(
-        error.suggestions.some((s) => s.includes("production")),
-      ).toBe(true);
+      expect(error.suggestions.some((s) => s.includes("production"))).toBe(
+        true,
+      );
     });
   });
 
@@ -139,9 +143,9 @@ describe("Error factory functions", () => {
       const error = createPrismaClientNotFoundError();
 
       expect(error.message).toContain("Prisma Client not found");
-      expect(
-        error.suggestions.some((s) => s.includes("@prisma/client")),
-      ).toBe(true);
+      expect(error.suggestions.some((s) => s.includes("@prisma/client"))).toBe(
+        true,
+      );
     });
   });
 });

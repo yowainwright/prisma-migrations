@@ -25,7 +25,6 @@ describe("down command", () => {
       expect(count).toBe(1);
     });
 
-
     test("should return 0 for unknown mode", async () => {
       const mockMigrations = {} as Migrations;
       const applied = [];

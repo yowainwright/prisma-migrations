@@ -1,4 +1,3 @@
-import { Command } from "commander";
 import { up } from "./commands/up";
 import { down } from "./commands/down";
 import { init } from "./commands/init";
@@ -14,8 +13,9 @@ import { setLogLevel, logger } from "../logger";
 import type { MigrationFile } from "../types";
 import { MigrationError } from "../errors";
 import { colors } from "../utils/colors";
-import inquirer from "inquirer";
+import { Prompt } from "../utils/prompts";
 import { PROMPTS, MESSAGES } from "./constants";
+import { parseArgs, showHelp, showVersion } from "./parser";
 
 console.log(
   `\n   ╭───────────────────────╮\n   │                       │\n   │   ${colors.bold(colors.cyan("Prisma Migrations"))}   │\n   │                       │\n   ╰───────────────────────╯\n`,
@@ -32,398 +32,300 @@ function handleError(error: unknown) {
   process.exit(1);
 }
 
-const program = new Command();
+async function main() {
+  const parsed = parseArgs(process.argv);
 
-program
-  .name("prisma-migrations")
-  .description("Simple up/down migrations for Prisma")
-  .version("1.0.0")
-  .option("-v, --verbose", "Enable verbose logging")
-  .option(
-    "--log-level <level>",
-    "Set log level (silent, error, warn, info, debug, trace)",
-  );
+  if (parsed.options.help) {
+    showHelp();
+    process.exit(0);
+  }
 
-program
-  .command("init")
-  .description("Initialize migrations directory")
-  .action(async () => {
-    try {
-      await init();
-    } catch (error) {
-      handleError(error);
-    }
-  });
+  if (parsed.options.version) {
+    showVersion();
+    process.exit(0);
+  }
 
-program
-  .command("create [name]")
-  .description("Create a new migration")
-  .action(async (name) => {
-    try {
-      await create(name);
-    } catch (error) {
-      handleError(error);
-    }
-  });
+  const logLevel = parsed.options.verbose
+    ? "debug"
+    : (parsed.options.logLevel as string) || "silent";
+  setLogLevel(logLevel);
 
-program
-  .command("setup-source")
-  .description("Set up source package for type exports (monorepo)")
-  .action(async () => {
-    try {
-      await setupSource({ cwd: process.cwd() });
-    } catch (error) {
-      handleError(error);
-    }
-  });
+  try {
+    switch (parsed.command) {
+      case "init":
+        await init();
+        break;
 
-program
-  .command("link-types <source-package>")
-  .description("Link Prisma types from source package (monorepo)")
-  .action(async (sourcePackage) => {
-    try {
-      await linkTypes(sourcePackage, { cwd: process.cwd() });
-    } catch (error) {
-      handleError(error);
-    }
-  });
+      case "create":
+        await create(parsed.args[0]);
+        break;
 
-program
-  .command("validate")
-  .description("Validate monorepo type setup")
-  .option("--source", "Validate as source package")
-  .option("--check <package>", "Check if consumer package has source linked")
-  .action(async (options) => {
-    try {
-      await validate({ cwd: process.cwd(), ...options });
-    } catch (error) {
-      handleError(error);
-    }
-  });
+      case "setup-source":
+        await setupSource({ cwd: process.cwd() });
+        break;
 
-program
-  .command("up")
-  .description("Run pending migrations")
-  .option("-s, --steps <number>", "Number of migrations to run")
-  .option("-i, --interactive", "Interactive mode")
-  .option("--dry-run", "Show what migrations would run without executing them")
-  .action(async (options, command) => {
-    try {
-      const parentOpts = command.parent.opts();
-      const logLevel = parentOpts.verbose
-        ? "debug"
-        : parentOpts.logLevel || "silent";
-      setLogLevel(logLevel);
+      case "link-types": {
+        const sourcePackage = parsed.args[0];
+        if (!sourcePackage) {
+          throw new Error("source-package argument is required");
+        }
+        await linkTypes(sourcePackage, { cwd: process.cwd() });
+        break;
+      }
 
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
+      case "validate":
+        await validate({
+          cwd: process.cwd(),
+          source: parsed.options.source as boolean,
+          check: parsed.options.check as string,
+        });
+        break;
 
-      if (options.dryRun) {
-        const migrations = new Migrations(prisma, config);
-        const steps = options.steps ? parseInt(options.steps) : undefined;
-        const toRun = await migrations.dryRun(steps);
+      case "up": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
 
-        if (toRun.length === 0) {
+        if (parsed.options.dryRun) {
+          const migrations = new Migrations(client, config);
+          const steps = parsed.options.steps
+            ? parseInt(parsed.options.steps as string)
+            : undefined;
+          const toRun = await migrations.dryRun(steps);
+
+          if (toRun.length === 0) {
+            console.log(colors.green("No pending migrations"));
+          } else {
+            console.log(
+              colors.cyan(`\nWould run ${toRun.length} migration(s):\n`),
+            );
+            toRun.forEach((m: MigrationFile) =>
+              console.log(`  ${m.id}_${m.name}`),
+            );
+          }
+          await client.$disconnect();
+          return;
+        }
+
+        const steps = parsed.options.steps
+          ? parseInt(parsed.options.steps as string)
+          : undefined;
+        const interactive = parsed.options.interactive as boolean;
+        await up(client, steps, config, interactive);
+        await client.$disconnect();
+        break;
+      }
+
+      case "down": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const steps = parsed.options.steps
+          ? parseInt(parsed.options.steps as string)
+          : 1;
+        const interactive = parsed.options.interactive as boolean;
+        await down(client, steps, config, interactive);
+        await client.$disconnect();
+        break;
+      }
+
+      case "status": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+        await migrations.status();
+        await client.$disconnect();
+        break;
+      }
+
+      case "pending": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+        const pending = await migrations.pending();
+
+        if (pending.length === 0) {
           console.log(colors.green("No pending migrations"));
         } else {
           console.log(
-            colors.cyan(`\nWould run ${toRun.length} migration(s):\n`),
+            colors.cyan(`\n${pending.length} pending migration(s):\n`),
           );
-          toRun.forEach((m: MigrationFile) =>
+          pending.forEach((m: MigrationFile) =>
             console.log(`  ${m.id}_${m.name}`),
           );
         }
-        await prisma.$disconnect();
-        return;
+        await client.$disconnect();
+        break;
       }
 
-      const steps = options.steps ? parseInt(options.steps) : undefined;
-      const interactive = options.interactive || false;
-      await up(prisma, steps, config, interactive);
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
+      case "applied": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+        const applied = await migrations.applied();
 
-program
-  .command("down")
-  .description("Rollback migrations")
-  .option("-s, --steps <number>", "Number of migrations to rollback", "1")
-  .option("-i, --interactive", "Interactive mode")
-  .action(async (options, command) => {
-    try {
-      const parentOpts = command.parent.opts();
-      const logLevel = parentOpts.verbose
-        ? "debug"
-        : parentOpts.logLevel || "silent";
-      setLogLevel(logLevel);
+        if (applied.length === 0) {
+          console.log(colors.yellow("No applied migrations"));
+        } else {
+          console.log(
+            colors.cyan(`\n${applied.length} applied migration(s):\n`),
+          );
+          applied.forEach((m: MigrationFile) =>
+            console.log(`  ✓ ${m.id}_${m.name}`),
+          );
+        }
+        await client.$disconnect();
+        break;
+      }
 
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const steps = parseInt(options.steps);
-      const interactive = options.interactive || false;
-      await down(prisma, steps, config, interactive);
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
+      case "latest": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+        const latest = await migrations.latest();
 
-program
-  .command("status")
-  .description("Show migration status")
-  .action(async () => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-      await migrations.status();
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
+        if (!latest) {
+          console.log(colors.yellow("No migrations applied yet"));
+        } else {
+          console.log(colors.cyan("Latest migration:"));
+          console.log(`  ✓ ${latest.id}_${latest.name}`);
+        }
+        await client.$disconnect();
+        break;
+      }
 
-program
-  .command("pending")
-  .description("List pending migrations")
-  .action(async () => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-      const pending = await migrations.pending();
+      case "reset": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+        const applied = await migrations.applied();
 
-      if (pending.length === 0) {
-        console.log(colors.green("No pending migrations"));
-      } else {
-        console.log(colors.cyan(`\n${pending.length} pending migration(s):\n`));
-        pending.forEach((m: MigrationFile) =>
-          console.log(`  ${m.id}_${m.name}`),
+        if (applied.length === 0) {
+          console.log(colors.yellow(MESSAGES.NO_MIGRATIONS_TO_ROLLBACK));
+          await client.$disconnect();
+          return;
+        }
+
+        const shouldProceed =
+          parsed.options.force ||
+          (await (async () => {
+            const prompt = new Prompt();
+            const result = await prompt.confirm(
+              PROMPTS.RESET_CONFIRM.message(applied.length),
+              false,
+            );
+            prompt.close();
+            return result;
+          })());
+
+        if (!shouldProceed) {
+          console.log(colors.gray(MESSAGES.CANCELLED));
+          await client.$disconnect();
+          return;
+        }
+
+        const count = await migrations.reset();
+        console.log(colors.green(`\n✓ Rolled back ${count} migration(s)`));
+        await client.$disconnect();
+        break;
+      }
+
+      case "fresh": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
+
+        const shouldProceed =
+          parsed.options.force ||
+          (await (async () => {
+            const prompt = new Prompt();
+            const result = await prompt.confirm(
+              PROMPTS.FRESH_CONFIRM.message,
+              false,
+            );
+            prompt.close();
+            return result;
+          })());
+
+        if (!shouldProceed) {
+          console.log(colors.gray(MESSAGES.CANCELLED));
+          await client.$disconnect();
+          return;
+        }
+
+        const count = await migrations.fresh();
+        console.log(
+          colors.green(
+            `\n✓ Fresh migration complete. Applied ${count} migration(s)`,
+          ),
         );
+        await client.$disconnect();
+        break;
       }
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
 
-program
-  .command("applied")
-  .description("List applied migrations")
-  .action(async () => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-      const applied = await migrations.applied();
+      case "refresh": {
+        const config = await loadConfig();
+        const client = await createPrismaClient();
+        const migrations = new Migrations(client, config);
 
-      if (applied.length === 0) {
-        console.log(colors.yellow("No applied migrations"));
-      } else {
-        console.log(colors.cyan(`\n${applied.length} applied migration(s):\n`));
-        applied.forEach((m: MigrationFile) =>
-          console.log(`  ✓ ${m.id}_${m.name}`),
+        const shouldProceed =
+          parsed.options.force ||
+          (await (async () => {
+            const prompt = new Prompt();
+            const result = await prompt.confirm(
+              PROMPTS.REFRESH_CONFIRM.message,
+              false,
+            );
+            prompt.close();
+            return result;
+          })());
+
+        if (!shouldProceed) {
+          console.log(colors.gray(MESSAGES.CANCELLED));
+          await client.$disconnect();
+          return;
+        }
+
+        const result = await migrations.refresh();
+        console.log(
+          colors.green(
+            `\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`,
+          ),
         );
-      }
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("latest")
-  .description("Show the latest applied migration")
-  .action(async () => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-      const latest = await migrations.latest();
-
-      if (!latest) {
-        console.log(colors.yellow("No migrations applied yet"));
-      } else {
-        console.log(colors.cyan("Latest migration:"));
-        console.log(`  ✓ ${latest.id}_${latest.name}`);
-      }
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("reset")
-  .description("Rollback all migrations")
-  .option("-f, --force", "Skip confirmation prompt")
-  .action(async (options) => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-      const applied = await migrations.applied();
-
-      if (applied.length === 0) {
-        console.log(colors.yellow(MESSAGES.NO_MIGRATIONS_TO_ROLLBACK));
-        await prisma.$disconnect();
-        return;
+        await client.$disconnect();
+        break;
       }
 
-      const shouldProceed =
-        options.force ||
-        (
-          await inquirer.prompt([
-            {
-              ...PROMPTS.RESET_CONFIRM,
-              message: PROMPTS.RESET_CONFIRM.message(applied.length),
-            },
-          ])
-        ).confirm;
+      case "dev":
+        await prisma.dev(parsed.args[0]);
+        break;
 
-      if (!shouldProceed) {
-        console.log(colors.gray(MESSAGES.CANCELLED));
-        await prisma.$disconnect();
-        return;
-      }
+      case "deploy":
+        await prisma.deploy();
+        break;
 
-      const count = await migrations.reset();
-      console.log(colors.green(`\n✓ Rolled back ${count} migration(s)`));
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
+      case "resolve":
+        await prisma.resolve({
+          applied: parsed.options.applied as string,
+          rolledBack: parsed.options.rolledBack as string,
+        });
+        break;
+
+      case "push":
+        await prisma.dbPush({
+          skipGenerate: parsed.options.skipGenerate as boolean,
+        });
+        break;
+
+      case "generate":
+        await prisma.generate();
+        break;
+
+      default:
+        showHelp();
+        process.exit(1);
     }
-  });
+  } catch (error) {
+    handleError(error);
+  }
+}
 
-program
-  .command("fresh")
-  .description("Rollback all migrations and re-run them")
-  .option("-f, --force", "Skip confirmation prompt")
-  .action(async (options) => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-
-      const shouldProceed =
-        options.force ||
-        (await inquirer.prompt([PROMPTS.FRESH_CONFIRM])).confirm;
-
-      if (!shouldProceed) {
-        console.log(colors.gray(MESSAGES.CANCELLED));
-        await prisma.$disconnect();
-        return;
-      }
-
-      const count = await migrations.fresh();
-      console.log(
-        colors.green(
-          `\n✓ Fresh migration complete. Applied ${count} migration(s)`,
-        ),
-      );
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("refresh")
-  .description("Rollback all migrations and re-run them (alias for fresh)")
-  .option("-f, --force", "Skip confirmation prompt")
-  .action(async (options) => {
-    try {
-      const config = await loadConfig();
-      const prisma = await createPrismaClient();
-      const migrations = new Migrations(prisma, config);
-
-      const shouldProceed =
-        options.force ||
-        (await inquirer.prompt([PROMPTS.REFRESH_CONFIRM])).confirm;
-
-      if (!shouldProceed) {
-        console.log(colors.gray(MESSAGES.CANCELLED));
-        await prisma.$disconnect();
-        return;
-      }
-
-      const result = await migrations.refresh();
-      console.log(
-        colors.green(
-          `\n✓ Refresh complete. Rolled back ${result.down}, applied ${result.up} migration(s)`,
-        ),
-      );
-      await prisma.$disconnect();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("dev [name]")
-  .description(
-    "Create and apply a new Prisma schema migration (wraps prisma migrate dev)",
-  )
-  .action(async (name) => {
-    try {
-      await prisma.dev(name);
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("deploy")
-  .description(
-    "Apply pending Prisma schema migrations (wraps prisma migrate deploy)",
-  )
-  .action(async () => {
-    try {
-      await prisma.deploy();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("resolve")
-  .description("Resolve migration issues (wraps prisma migrate resolve)")
-  .option("--applied <migration>", "Mark a migration as applied")
-  .option("--rolled-back <migration>", "Mark a migration as rolled back")
-  .action(async (options) => {
-    try {
-      await prisma.resolve({
-        applied: options.applied,
-        rolledBack: options.rolledBack,
-      });
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("push")
-  .description("Push schema changes to database (wraps prisma db push)")
-  .option("--skip-generate", "Skip generating Prisma Client")
-  .action(async (options) => {
-    try {
-      await prisma.dbPush({ skipGenerate: options.skipGenerate });
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command("generate")
-  .description("Generate Prisma Client (wraps prisma generate)")
-  .action(async () => {
-    try {
-      await prisma.generate();
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program.parse();
+main();

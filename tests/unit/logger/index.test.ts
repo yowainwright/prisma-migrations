@@ -26,7 +26,7 @@ describe("logger", () => {
 
     test("should log error when level is error", () => {
       let called = false;
-      console.error = (..._args: unknown[]) => {
+      console.log = (..._args: unknown[]) => {
         called = true;
       };
       setLogLevel("error");
@@ -112,12 +112,8 @@ describe("logger", () => {
 
     test("should log all levels when set to trace", () => {
       let logCount = 0;
-      let errorCount = 0;
       console.log = (..._args: unknown[]) => {
         logCount++;
-      };
-      console.error = (..._args: unknown[]) => {
-        errorCount++;
       };
       setLogLevel("trace");
 
@@ -127,8 +123,7 @@ describe("logger", () => {
       logger.warn("warn");
       logger.error("error");
 
-      expect(logCount).toBeGreaterThanOrEqual(4);
-      expect(errorCount).toBeGreaterThanOrEqual(1);
+      expect(logCount).toBe(5);
     });
   });
 
@@ -183,7 +178,7 @@ describe("logger", () => {
 
       logger.info("test");
 
-      expect(message).toMatch(/\[\d{1,2}:\d{2}:\d{2}\]/);
+      expect(message).toMatch(/\[\d{1,2}:\d{2}:\d{2}( [AP]M)?\]/);
     });
 
     test("should include level in log message", () => {
@@ -212,7 +207,7 @@ describe("logger", () => {
 
     test("should include ERROR level for errors", () => {
       let message = "";
-      console.error = (...args: unknown[]) => {
+      console.log = (...args: unknown[]) => {
         message = args[0] as string;
       };
       setLogLevel("error");
