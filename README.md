@@ -1,127 +1,62 @@
 # Prisma Migrations
 
-> Add rollback and programmatic control to Prisma
+> Rollback and programmatic migrations for Prisma
 
 [![npm version](https://badge.fury.io/js/prisma-migrations.svg)](https://www.npmjs.com/package/prisma-migrations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-If you're using Prisma but miss having rollback and programmatic migration control like other ORMs, this fills those gaps. It wraps Prisma's migration system and adds the features that should have been there from the start.
-
-## Table of Contents
-
-- [The Problem](#the-problem)
-- [The Solution](#the-solution)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [CLI Commands](#cli-commands)
-- [Programmatic API](#programmatic-api)
-- [Migration Files](#migration-files)
-- [Configuration](#configuration)
-- [How It Works](#how-it-works)
-- [Comparison](#comparison)
-- [Alternatives](#alternatives)
-- [Development](#development)
-- [License](#license)
-
-## The Problem
-
-Prisma's `prisma migrate` works well for forward migrations, but has some gaps:
-
-- **No rollback** - Once applied, there's no built-in way to undo migrations
-- **No programmatic API** - Can't run migrations from your Node.js code
-- **Limited control** - Can't run specific numbers of migrations or choose which to apply
-
-Meanwhile, pretty much every other ORM (Knex, TypeORM, Sequelize, Rails, Laravel) has had these features for years.
-
-When you hit these limitations in production, you're stuck manually writing SQL or working around Prisma's constraints.
-
-## The Solution
-
-This tool wraps Prisma and adds what's missing:
+Adds `up`/`down` migrations, rollback, programmatic API, and monorepo type-sharing to Prisma. Compatible with Prisma 5, 6, and 7.
 
 | Feature | Prisma Migrate | This Tool |
 |---------|---------------|-----------|
 | Run migrations forward | ✓ | ✓ |
-| Deploy to production | ✓ | ✓ |
 | Rollback migrations | ✗ | ✓ |
 | Run from Node.js code | ✗ | ✓ |
 | Step-by-step control | ✗ | ✓ |
 | Interactive mode | ✗ | ✓ |
-| Up/down migrations | ✗ | ✓ |
+| Monorepo type-sharing | ✗ | ✓ |
 
-**Key point:** This is 100% compatible with Prisma. It uses Prisma's standard `_prisma_migrations` table and works alongside `prisma migrate` commands.
-
-## Features
-
-- **Rollback support** - `up` and `down` migrations like other ORMs
-- **Programmatic API** - Run migrations from your JavaScript/TypeScript code
-- **Step control** - Run or rollback N migrations at a time
-- **Interactive mode** - Choose which migrations to apply
-- **SQL migrations** - Standard SQL format with up/down sections
-- **Zero config** - Works out of the box with existing Prisma projects
-- **Prisma compatible** - Uses Prisma's `_prisma_migrations` table
-
----
+Uses Prisma's `_prisma_migrations` table. Works alongside `prisma migrate`.
 
 ## Installation
 
 ```bash
-# Install the tool
-npm install prisma-migrations
-
-# You'll need Prisma too (if you don't have it already)
-npm install @prisma/client prisma
+npm install prisma-migrations @prisma/client prisma
 ```
 
-> **Note:** For Prisma 7+, you also need database adapters:
-> ```bash
-> npm install @prisma/adapter-pg pg           # PostgreSQL
-> npm install @prisma/adapter-mysql2 mysql2   # MySQL
-> npm install @prisma/adapter-sqlite better-sqlite3  # SQLite
-> ```
-
----
+For Prisma 7+, also install database adapters:
+```bash
+npm install @prisma/adapter-pg pg           # PostgreSQL
+npm install @prisma/adapter-mysql2 mysql2   # MySQL
+```
 
 ## Quick Start
 
-### 1. Create a migration
-
 ```bash
+# Create a migration
 npx prisma-migrations create add_users_table
 ```
 
-This creates: `prisma/migrations/[timestamp]_add_users_table/migration.sql`
-
-### 2. Write your migration
-
-The migration file has two sections - one for applying, one for rolling back:
+Edit `prisma/migrations/[timestamp]_add_users_table/migration.sql`:
 
 ```sql
 -- Migration: Up
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  email VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- Migration: Down
 DROP TABLE IF EXISTS users;
 ```
 
-### 3. Run it
-
 ```bash
+# Run it
 npx prisma-migrations up
-```
 
-### 4. Roll back (when you need to)
-
-```bash
+# Roll back
 npx prisma-migrations down
 ```
-
-That's it. The basics work like Knex, TypeORM, or any other migration system you've probably used before.
 
 ---
 
@@ -130,6 +65,12 @@ That's it. The basics work like Knex, TypeORM, or any other migration system you
 ### Core Commands
 
 ```bash
+# Initialize migrations directory
+npx prisma-migrations init
+
+# Create a new migration
+npx prisma-migrations create migration_name
+
 # Run all pending migrations
 npx prisma-migrations up
 
@@ -139,14 +80,14 @@ npx prisma-migrations up --steps 2
 # Interactive mode - choose which to run
 npx prisma-migrations up --interactive
 
+# See what would run without executing
+npx prisma-migrations up --dry-run
+
 # Rollback last migration
 npx prisma-migrations down
 
 # Rollback last 3 migrations
 npx prisma-migrations down --steps 3
-
-# Create a new migration
-npx prisma-migrations create migration_name
 
 # Check status
 npx prisma-migrations status
@@ -156,7 +97,49 @@ npx prisma-migrations pending
 
 # List applied migrations
 npx prisma-migrations applied
+
+# Show latest applied migration
+npx prisma-migrations latest
+
+# Rollback all migrations
+npx prisma-migrations reset --force
+
+# Rollback all and re-run (fresh start)
+npx prisma-migrations fresh --force
+
+# Alias for fresh
+npx prisma-migrations refresh --force
 ```
+
+### Global Options
+
+```bash
+# Enable verbose logging
+npx prisma-migrations --verbose status
+
+# Set specific log level
+npx prisma-migrations --log-level debug up
+```
+
+Available log levels: `silent`, `error`, `warn`, `info`, `debug`, `trace`
+
+### Monorepo Commands
+
+For sharing Prisma types across packages in a monorepo:
+
+```bash
+# In your source package (where schema.prisma lives)
+npx prisma-migrations setup-source
+
+# In consumer packages that need the types
+npx prisma-migrations link-types @your-org/source-package
+
+# Validate setup
+npx prisma-migrations validate --source              # Validate source package
+npx prisma-migrations validate --check source-pkg    # Validate consumer package
+```
+
+See the [Monorepo Setup Guide](#monorepo-setup) below for details.
 
 ### Prisma Wrappers
 
@@ -174,6 +157,11 @@ npx prisma-migrations generate
 
 # Push schema without migrations (wraps prisma db push)
 npx prisma-migrations push
+npx prisma-migrations push --skip-generate
+
+# Resolve migration issues (wraps prisma migrate resolve)
+npx prisma-migrations resolve --applied migration_name
+npx prisma-migrations resolve --rolled-back migration_name
 ```
 
 Use one CLI for everything instead of switching between `prisma` and `prisma-migrations`.
@@ -204,12 +192,28 @@ console.log(`${pending.length} migrations pending`);
 await prisma.$disconnect();
 ```
 
+### Constructor Options
+
+```typescript
+// Default (uses ./prisma/migrations)
+const migrations = new Migrations(prisma);
+
+// Custom migrations directory
+const migrations = new Migrations(prisma, {
+  migrationsDir: './database/migrations'
+});
+```
+
 ### API Methods
 
 ```typescript
 // Run migrations
 await migrations.up()              // Run all pending
 await migrations.up(3)             // Run next 3
+
+// Dry run - see what would run without executing
+await migrations.dryRun()          // All pending migrations
+await migrations.dryRun(2)         // Next 2 migrations
 
 // Rollback migrations
 await migrations.down()            // Rollback last 1
@@ -224,7 +228,7 @@ await migrations.status()          // Print status to console
 // Bulk operations
 await migrations.reset()           // Rollback all
 await migrations.fresh()           // Rollback all + re-run
-await migrations.refresh()         // Alias for fresh()
+await migrations.refresh()         // Rollback all + re-run (returns {down, up} counts)
 ```
 
 Full TypeScript types included.
@@ -233,63 +237,39 @@ Full TypeScript types included.
 
 ## Migration Files
 
-### File Structure
+Files are stored at `prisma/migrations/[timestamp]_[name]/migration.sql` - same format as Prisma.
 
-```
-prisma/migrations/
-└── 20240101000000_add_users/
-    └── migration.sql
-```
-
-Timestamp + name format, just like Prisma's default.
-
-### SQL Format
-
-Each migration file contains two sections:
+Each file has two sections separated by marker comments:
 
 ```sql
 -- Migration: Up
--- This runs when you do: npx prisma-migrations up
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  content TEXT
+  title VARCHAR(255) NOT NULL
 );
 
 -- Migration: Down
--- This runs when you do: npx prisma-migrations down
 DROP TABLE IF EXISTS posts;
 ```
 
-The marker comments (`-- Migration: Up` and `-- Migration: Down`) separate the two sections.
+Examples:
 
-### Examples
-
-**Adding a column:**
 ```sql
+-- Add column
 -- Migration: Up
 ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
-
 -- Migration: Down
 ALTER TABLE users DROP COLUMN last_login;
-```
 
-**Creating an index:**
-```sql
+-- Create index
 -- Migration: Up
 CREATE INDEX idx_users_email ON users(email);
-
 -- Migration: Down
 DROP INDEX idx_users_email;
-```
 
-**Data migration:**
-```sql
+-- Data migration
 -- Migration: Up
-INSERT INTO roles (name, permissions) VALUES
-  ('admin', '{"all": true}'),
-  ('user', '{"read": true}');
-
+INSERT INTO roles (name) VALUES ('admin'), ('user');
 -- Migration: Down
 DELETE FROM roles WHERE name IN ('admin', 'user');
 ```
@@ -298,11 +278,7 @@ DELETE FROM roles WHERE name IN ('admin', 'user');
 
 ## Configuration
 
-Works with zero configuration, but you can customize if needed.
-
-### Config File
-
-Create `.prisma-migrationsrc.json` in your project root:
+Optional. Create `.prisma-migrationsrc.json`:
 
 ```json
 {
@@ -311,16 +287,7 @@ Create `.prisma-migrationsrc.json` in your project root:
 }
 ```
 
-Or `.prisma-migrationsrc.js`:
-
-```javascript
-module.exports = {
-  migrationsDir: './prisma/migrations',
-  logLevel: 'info'
-};
-```
-
-Or in `package.json`:
+Or add to `package.json`:
 
 ```json
 {
@@ -330,100 +297,62 @@ Or in `package.json`:
 }
 ```
 
-### Options
+---
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `migrationsDir` | `./prisma/migrations` | Where your migration files live |
-| `logLevel` | `silent` | Logging: silent, error, warn, info, debug, trace |
+## Monorepo Setup
+
+Share Prisma types across packages (useful with Kysely, Knex, etc).
+
+**Source package** (has `schema.prisma`):
+```bash
+cd packages/api
+npx prisma-migrations setup-source
+```
+
+This configures exports, updates tsconfig, and creates type files.
+
+**Consumer package** (needs the types):
+```bash
+cd packages/worker
+npx prisma-migrations link-types @your-org/api
+```
+
+**Use in consumer:**
+```typescript
+import type * as Prisma from "@your-org/api/db/types";
+
+type Database = {
+  User: Prisma.User;
+  Post: Prisma.Post;
+};
+
+const db = new Kysely<Database>({ /* ... */ });
+```
+
+**Validate:**
+```bash
+npx prisma-migrations validate --source              # In source package
+npx prisma-migrations validate --check @your-org/api  # In consumer
+```
 
 ---
 
 ## How It Works
 
-**Database table:** Uses Prisma's standard `_prisma_migrations` table to track state. This means:
-- Works with existing Prisma projects
-- Compatible with `prisma migrate` commands
-- No additional setup needed
-
-**Migration execution:**
-1. Reads migration files from `prisma/migrations/`
-2. Checks `_prisma_migrations` table for what's applied
-3. Runs pending migrations in order (for `up`)
-4. Runs down functions in reverse (for `down`)
-5. Updates `_prisma_migrations` table
-
-**File discovery:** Automatically finds migrations in the standard Prisma location (`./prisma/migrations/[timestamp]_[name]/`).
-
----
-
-## Comparison
-
-### vs Prisma Migrate
-
-**Use Prisma Migrate if:**
-- You only ever need forward migrations
-- CLI-only execution is fine
-- You don't need rollback
-
-**Use this tool if:**
-- You need to rollback migrations (especially in production)
-- You want to run migrations programmatically
-- You want step-by-step control
-- You're coming from Knex/TypeORM/etc and miss those features
-
-Both can coexist - they use the same migration table.
-
-### vs Other ORMs
-
-**Knex, TypeORM, Sequelize** have full-featured migration systems built-in. If you're starting fresh and migration control is important, consider using one of those with Prisma types (our monorepo setup guide shows how).
-
-This tool exists for when you're already using Prisma and just need to fill the gaps.
-
----
-
-## Alternatives
-
-Be honest about your options:
-
-**Option A: Stick with Prisma Migrate**
-If you don't need rollback and CLI-only works for you, just use Prisma's built-in system.
-
-**Option B: Switch to Knex migrations**
-If you're early in a project, Knex has battle-tested migrations. You can use Knex for migrations + Prisma for queries (see our monorepo guide).
-
-**Option C: Use this tool**
-If you're committed to Prisma but need rollback and programmatic control, this fills the gap without requiring a full ORM switch.
+Uses Prisma's `_prisma_migrations` table to track state. Reads SQL files from `prisma/migrations/[timestamp]_[name]/`, executes up/down sections, and updates the tracking table. Compatible with existing Prisma projects - no additional setup needed.
 
 ---
 
 ## Development
 
-### Setup
-
 ```bash
-# Install Bun
-curl -fsSL https://bun.sh/install | bash
-
-# Install dependencies
 bun install
-
-# Build
 bun run build
-
-# Test
 bun test
-
-# E2E tests (requires Docker)
-bun run e2e
+bun run e2e  # requires Docker
 ```
 
-### Contributing
-
-Contributions welcome. Please:
-1. Add tests for new features
-2. Run `bun run precommit` before submitting
-3. Keep the scope focused on migration management
+Contributions welcome. Add tests and run `bun run precommit` before submitting.
 
 ---
 
@@ -442,17 +371,11 @@ MIT
 
 ## FAQ
 
-**Q: Will this break my existing Prisma setup?**
-A: No. It uses the same `_prisma_migrations` table that Prisma uses. You can use both systems side-by-side.
+**Will this break my existing Prisma setup?**
+No. Uses the same `_prisma_migrations` table. Works alongside Prisma's tools.
 
-**Q: Do I have to migrate away from Prisma?**
-A: No. This wraps Prisma, it doesn't replace it. Keep using Prisma for everything else.
+**Can I mix Prisma migrations and this tool?**
+Yes. Schema changes via `prisma migrate dev`, data migrations via this tool.
 
-**Q: Can I mix Prisma's migrations and these migrations?**
-A: Yes. They track to the same table. Schema changes via `prisma migrate dev`, data migrations via `prisma-migrations create`.
-
-**Q: What if a rollback fails?**
-A: Your down migration is just SQL - if it fails, you'll get a clear error and can fix the SQL or handle it manually. Always test rollbacks in staging first.
-
-**Q: Is this production-ready?**
-A: It's been used in production projects. That said, test your rollback migrations thoroughly before relying on them in prod.
+**What if a rollback fails?**
+You get a clear error and can fix the SQL manually. Test rollbacks in staging first.

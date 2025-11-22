@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name("prisma-migrations")
   .description("Simple up/down migrations for Prisma")
-  .version("0.1.3")
+  .version("1.0.0")
   .option("-v, --verbose", "Enable verbose logging")
   .option(
     "--log-level <level>",
