@@ -26,6 +26,7 @@
     "test": "turbo run test-lib",
     "test-lib": "bun test ./tests/unit",
     "test:watch": "bun test ./tests/unit --watch",
+    "test:coverage": "bun test ./tests/unit --coverage --coverage-reporter=lcov",
     "e2e": "./tests/e2e/run-e2e.sh",
     "e2e:esm": "bun run build && bun test tests/e2e/test.js",
     "e2e:cjs": "bun run build && bun test tests/e2e/test-cjs.js",
@@ -67,11 +68,7 @@
   ],
   "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
-  "dependencies": {
-    "commander": "^14.0.1",
-    "fast-glob": "^3.3.3",
-    "inquirer": "^12.10.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@prisma/client": "^6.18.0",
     "@types/node": "^20.0.0",

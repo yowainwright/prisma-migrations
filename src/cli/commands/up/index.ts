@@ -1,7 +1,7 @@
 import type { PrismaClient, MigrationFile } from "../../../types";
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
-import inquirer from "inquirer";
+import { Prompt, type PromptChoice } from "../../../utils/prompts";
 import { spinner, createTable, colors } from "../../../utils";
 
 export async function up(
@@ -57,7 +57,7 @@ export async function interactiveUp(migrations: Migrations) {
 }
 
 export async function promptUpMode(): Promise<string> {
-  const choices = [
+  const choices: PromptChoice[] = [
     { name: colors.cyan("All pending migrations"), value: "all" },
     { name: colors.yellow("Select number of migrations"), value: "steps" },
     {
@@ -66,14 +66,12 @@ export async function promptUpMode(): Promise<string> {
     },
   ];
 
-  const { mode } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "mode",
-      message: "How many migrations do you want to run?",
-      choices,
-    },
-  ]);
+  const prompt = new Prompt();
+  const mode = await prompt.list(
+    "How many migrations do you want to run?",
+    choices,
+  );
+  prompt.close();
 
   return mode;
 }
@@ -121,12 +119,11 @@ export async function runStepsMigrations(
   migrations: Migrations,
   pending: MigrationFile[],
 ): Promise<number> {
-  const { steps } = await inquirer.prompt({
-    type: "number",
-    name: "steps",
-    message: `How many migrations? (1-${pending.length})`,
-    default: 1,
-    validate: (input: number | undefined) => {
+  const prompt = new Prompt();
+  const steps = await prompt.number(
+    `How many migrations? (1-${pending.length})`,
+    1,
+    (input: number | undefined) => {
       if (input === undefined) return "Please enter a number";
       const isValid = input >= 1 && input <= pending.length;
       if (!isValid) {
@@ -134,7 +131,8 @@ export async function runStepsMigrations(
       }
       return true;
     },
-  });
+  );
+  prompt.close();
 
   const spin = spinner("Running migrations...").start();
 
@@ -153,19 +151,17 @@ export async function runToSpecificMigration(
   migrations: Migrations,
   pending: MigrationFile[],
 ): Promise<number> {
-  const migrationChoices = pending.map((m) => ({
+  const migrationChoices: PromptChoice[] = pending.map((m) => ({
     name: `${m.id}_${m.name}`,
     value: m.id,
   }));
 
-  const { migrationId } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "migrationId",
-      message: "Run migrations up to (inclusive):",
-      choices: migrationChoices,
-    },
-  ]);
+  const prompt = new Prompt();
+  const migrationId = await prompt.list(
+    "Run migrations up to (inclusive):",
+    migrationChoices,
+  );
+  prompt.close();
 
   const spin = spinner("Running migrations...").start();
 

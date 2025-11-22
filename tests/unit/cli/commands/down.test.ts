@@ -3,16 +3,11 @@ import {
   runRollbackForMode,
   rollbackOne,
   showRollbackTable,
+  interactiveDown,
 } from "../../../../src/cli/commands/down";
 import type { Migrations } from "../../../../src/migrations";
 
 describe("down command", () => {
-  describe("promptDownMode", () => {
-    test("should return selected mode", async () => {
-      expect(true).toBe(true);
-    });
-  });
-
   describe("runRollbackForMode", () => {
     test('should rollback one migration when mode is "one"', async () => {
       const mockMigrations = {
@@ -54,6 +49,30 @@ describe("down command", () => {
 
       expect(mockMigrations.down).toHaveBeenCalledWith(1);
       expect(count).toBe(1);
+    });
+
+    test("should propagate errors", async () => {
+      const testError = new Error("Rollback failed");
+      const mockMigrations = {
+        down: mock(() => Promise.reject(testError)),
+      } as unknown as Migrations;
+
+      await expect(rollbackOne(mockMigrations)).rejects.toThrow(
+        "Rollback failed",
+      );
+    });
+  });
+
+  describe("interactiveDown", () => {
+    test("should return 0 when no applied migrations", async () => {
+      const mockMigrations = {
+        applied: mock(() => Promise.resolve([])),
+      } as unknown as Migrations;
+
+      const count = await interactiveDown(mockMigrations);
+
+      expect(count).toBe(0);
+      expect(mockMigrations.applied).toHaveBeenCalled();
     });
   });
 

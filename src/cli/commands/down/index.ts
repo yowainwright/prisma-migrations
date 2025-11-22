@@ -1,7 +1,7 @@
 import type { PrismaClient, MigrationFile } from "../../../types";
 import { Migrations } from "../../../migrations";
 import { logger } from "../../../logger";
-import inquirer from "inquirer";
+import { Prompt, type PromptChoice } from "../../../utils/prompts";
 import { spinner, createTable, colors } from "../../../utils";
 
 export async function down(
@@ -56,7 +56,7 @@ export async function interactiveDown(migrations: Migrations) {
 }
 
 export async function promptDownMode(): Promise<string> {
-  const choices = [
+  const choices: PromptChoice[] = [
     { name: colors.cyan("Last migration only"), value: "one" },
     { name: colors.yellow("Select number of migrations"), value: "steps" },
     {
@@ -66,14 +66,12 @@ export async function promptDownMode(): Promise<string> {
     { name: colors.red("All migrations (reset)"), value: "all" },
   ];
 
-  const { mode } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "mode",
-      message: "How many migrations do you want to rollback?",
-      choices,
-    },
-  ]);
+  const prompt = new Prompt();
+  const mode = await prompt.list(
+    "How many migrations do you want to rollback?",
+    choices,
+  );
+  prompt.close();
 
   return mode;
 }
@@ -121,14 +119,12 @@ export async function rollbackOne(migrations: Migrations): Promise<number> {
 }
 
 export async function rollbackAll(migrations: Migrations): Promise<number> {
-  const { confirm } = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "confirm",
-      message: colors.red("Are you sure you want to rollback ALL migrations?"),
-      default: false,
-    },
-  ]);
+  const prompt = new Prompt();
+  const confirm = await prompt.confirm(
+    colors.red("Are you sure you want to rollback ALL migrations?"),
+    false,
+  );
+  prompt.close();
 
   const isConfirmed = confirm === true;
   if (!isConfirmed) {
@@ -153,12 +149,11 @@ export async function rollbackSteps(
   migrations: Migrations,
   applied: MigrationFile[],
 ): Promise<number> {
-  const { steps } = await inquirer.prompt({
-    type: "number",
-    name: "steps",
-    message: `How many migrations? (1-${applied.length})`,
-    default: 1,
-    validate: (input: number | undefined) => {
+  const prompt = new Prompt();
+  const steps = await prompt.number(
+    `How many migrations? (1-${applied.length})`,
+    1,
+    (input: number | undefined) => {
       if (input === undefined) return "Please enter a number";
       const isValid = input >= 1 && input <= applied.length;
       if (!isValid) {
@@ -166,7 +161,8 @@ export async function rollbackSteps(
       }
       return true;
     },
-  });
+  );
+  prompt.close();
 
   const spin = spinner("Rolling back migrations...").start();
 
@@ -185,19 +181,17 @@ export async function rollbackToSpecific(
   migrations: Migrations,
   applied: MigrationFile[],
 ): Promise<number> {
-  const migrationChoices = applied.map((m) => ({
+  const migrationChoices: PromptChoice[] = applied.map((m) => ({
     name: `${m.id}_${m.name}`,
     value: m.id,
   }));
 
-  const { migrationId } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "migrationId",
-      message: "Rollback down to (this migration will remain applied):",
-      choices: migrationChoices,
-    },
-  ]);
+  const prompt = new Prompt();
+  const migrationId = await prompt.list(
+    "Rollback down to (this migration will remain applied):",
+    migrationChoices,
+  );
+  prompt.close();
 
   const spin = spinner("Rolling back migrations...").start();
 
