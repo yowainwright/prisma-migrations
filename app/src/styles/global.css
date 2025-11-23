@@ -7,6 +7,7 @@
 
   --color-yves-klein-blue: #002FA7;
   --color-red-accent: #DC2626;
+  --color-subtle: rgb(0 47 167 / 0.1);
 
   /* Code syntax highlighting colors */
   --color-code-bg: #031030;
@@ -24,6 +25,7 @@
 
 * {
   font-family: var(--font-family-neuton);
+  font-weight: 300;
 }
 
 code, pre {
@@ -33,6 +35,7 @@ code, pre {
 .prose pre {
   background-color: var(--color-code-bg) !important;
   color: var(--color-code-text) !important;
+  border: 1px solid var(--color-subtle) !important;
 }
 
 .prose pre * {
@@ -42,23 +45,23 @@ code, pre {
 
 .prose code:not(pre code) {
   background-color: rgba(29, 78, 216, 0.1);
-  border: 1px solid var(--color-yves-klein-blue);
+  border: 1px solid var(--color-subtle);
   padding: 0.125rem 0.25rem;
   margin: 0 0.25rem;
   border-radius: 0.25rem;
   color: var(--color-yves-klein-blue);
 }
 
-.text-xs { font-size: 1rem; }
-.text-sm { font-size: 1.25rem; }
-.text-base { font-size: 1.5rem; }
-.text-lg { font-size: 1.75rem; }
-.text-xl { font-size: 2rem; }
-.text-2xl { font-size: 2.5rem; }
-.text-3xl { font-size: 3rem; }
-.text-4xl { font-size: 3.5rem; }
-.text-5xl { font-size: 4rem; }
-.text-6xl { font-size: 5rem; }
+.text-xs { font-size: 0.875rem; }
+.text-sm { font-size: 1.1rem; }
+.text-base { font-size: 1.3rem; }
+.text-lg { font-size: 1.5rem; }
+.text-xl { font-size: 1.75rem; }
+.text-2xl { font-size: 2.125rem; }
+.text-3xl { font-size: 2.5rem; }
+.text-4xl { font-size: 3rem; }
+.text-5xl { font-size: 3.5rem; }
+.text-6xl { font-size: 4.25rem; }
 
 html {
   /* DaisyUI theme variables */

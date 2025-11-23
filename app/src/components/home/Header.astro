@@ -19,7 +19,7 @@ const pathname = new URL(Astro.request.url).pathname;
 
 <header class="sticky top-0 z-30">
   <nav
-    class="navbar min-h-0 bg-base-100/80 backdrop-blur-3xl justify-center items-center py-2 px-4 sm:px-6 md:px-20 border-b border-primary"
+    class="navbar min-h-0 bg-base-100/80 backdrop-blur-3xl justify-center items-center py-2 px-4 sm:px-6 md:px-4 border-b border-subtle"
   >
     <div class="dropdown">
       <div tabindex="0" role="button" class="btn btn-ghost btn-square text-base px-3 py-3 h-12 lg:hidden">
@@ -38,7 +38,7 @@ const pathname = new URL(Astro.request.url).pathname;
       </div>
       <ul
         tabindex="0"
-        class="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-content/10"
+        class="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-subtle"
       >
         {
           navigation.map((item) => (
