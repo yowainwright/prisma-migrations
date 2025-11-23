@@ -80,7 +80,7 @@ export default function Search({ searchData }: SearchProps) {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 100);
         }}
-        className="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors md:min-w-[300px] text-base-content/60 hover:text-base-content/80 border border-primary"
+        className="flex items-center gap-2 px-3 py-1.5 text-base bg-transparent hover:bg-primary/10 rounded-lg transition-colors md:min-w-[300px] text-base-content/60 hover:text-base-content/80 border border-subtle"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -117,10 +117,10 @@ export default function Search({ searchData }: SearchProps) {
               <div className="flex min-h-full items-start justify-center pt-[10vh] p-4">
                 <div
                   ref={searchRef}
-                  className="relative w-full max-w-2xl bg-base-100 rounded-xl shadow-2xl overflow-hidden border border-primary"
+                  className="relative w-full max-w-2xl bg-base-100 rounded-xl shadow-2xl overflow-hidden border border-subtle"
                 >
                   {/* Search Input */}
-                  <div className="flex items-center p-4 border-b border-primary">
+                  <div className="flex items-center p-4 border-b border-subtle">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 mr-3 text-primary"
