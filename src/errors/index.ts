@@ -117,3 +117,41 @@ export function createPrismaClientNotFoundError(): MigrationError {
     "Verify @prisma/client is in your dependencies",
   ]);
 }
+
+export function createMigrationLockTimeoutError(
+  timeoutMs: number,
+): MigrationError {
+  const timeoutSeconds = timeoutMs / 1000;
+
+  return new MigrationError(
+    `Failed to acquire migration lock after ${timeoutSeconds}s`,
+    [
+      "Another migration is running",
+      "",
+      "Concurrent deployment detected:",
+      "  Use upIfNotLocked() to skip if another instance is migrating",
+      "  Or increase timeout: new Migrations(prisma, { lockTimeout: 120000 })",
+      "",
+      "Check lock status:",
+      "  npx prisma-migrations lock check",
+      "",
+      "Release stuck lock:",
+      "  npx prisma-migrations lock release",
+    ],
+  );
+}
+
+export function createTransactionFailedError(
+  migrationId: string,
+  error: Error,
+): MigrationError {
+  return new MigrationError(
+    `Transaction failed for migration ${migrationId}: ${error.message}`,
+    [
+      "The migration was rolled back automatically",
+      "No changes were applied to the database",
+      "Check the SQL syntax and fix the migration",
+      "Review the error message above for details",
+    ],
+  );
+}

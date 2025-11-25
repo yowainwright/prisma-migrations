@@ -16,6 +16,9 @@ Adds `up`/`down` migrations, rollback, programmatic API, and monorepo type-shari
 | Step-by-step control | ✗ | ✓ |
 | Interactive mode | ✗ | ✓ |
 | Monorepo type-sharing | ✗ | ✓ |
+| Transaction safety | ✗ | ✓ |
+| Concurrent protection | ✗ | ✓ |
+| Checksum validation | ✗ | ✓ |
 
 Uses Prisma's `_prisma_migrations` table. Works alongside `prisma migrate`.
 
@@ -341,6 +344,73 @@ npx prisma-migrations validate --check @your-org/api  # In consumer
 ## How It Works
 
 Uses Prisma's `_prisma_migrations` table to track state. Reads SQL files from `prisma/migrations/[timestamp]_[name]/`, executes up/down sections, and updates the tracking table. Compatible with existing Prisma projects - no additional setup needed.
+
+### Production Safety
+
+- **Transactions**: Migrations run in database transactions with automatic rollback on failure
+- **Lock Protection**: Advisory locks prevent concurrent migration runs
+- **Checksum Validation**: Detects if applied migrations have been modified
+
+### Concurrent Deployments
+
+When deploying multiple instances, use `upIfNotLocked()` to skip if another instance is migrating:
+
+```typescript
+const result = await migrations.upIfNotLocked();
+
+if (result.ran) {
+  console.log(`Applied ${result.count} migrations`);
+} else {
+  console.log(result.reason);
+}
+```
+
+Configure timeout for slow migrations:
+
+```typescript
+const migrations = new Migrations(prisma, {
+  lockTimeout: 120000  // 2 minutes (default: 30s)
+});
+```
+
+---
+
+## Troubleshooting
+
+### Migration Lock Issues
+
+**Check lock status:**
+```bash
+npx prisma-migrations lock check
+```
+
+**Release stuck lock:**
+```bash
+npx prisma-migrations lock release
+```
+
+Locks can become stuck if a migration process crashes. Use `lock release` to clear.
+
+### Checksum Validation Errors
+
+If you get "migration has been modified" errors:
+
+**Skip validation (for recovery):**
+```typescript
+const migrations = new Migrations(prisma, {
+  skipChecksumValidation: true
+});
+```
+
+**Note:** Only use this to recover from checksum issues. Never modify applied migrations in production.
+
+### Disable Locking (Testing Only)
+
+```typescript
+const migrations = new Migrations(prisma, {
+  disableLocking: true  // Unit tests only
+});
+```
 
 ---
 

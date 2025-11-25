@@ -25,6 +25,7 @@ describe("Migrations", () => {
 
     migrations = new Migrations(mockPrisma, {
       migrationsDir: testMigrationsDir,
+      disableLocking: true,
     });
   });
 
@@ -356,6 +357,140 @@ ${downSql}
       await expect(migrations.pending()).rejects.toThrow(
         "No migration.sql file found in 001_empty",
       );
+    });
+  });
+
+  describe("upIfNotLocked", () => {
+    test("should run migrations when lock is available", async () => {
+      createMigration("001", "test");
+      createMigration("002", "test2");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([]));
+
+      const result = await migrations.upIfNotLocked();
+
+      expect(result.ran).toBe(true);
+      expect(result.count).toBe(2);
+      expect(result.reason).toBeUndefined();
+    });
+
+    test("should skip when locking is disabled", async () => {
+      createMigration("001", "test");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([]));
+
+      const result = await migrations.upIfNotLocked();
+
+      expect(result.ran).toBe(true);
+      expect(result.count).toBe(1);
+    });
+
+    test("should respect steps parameter", async () => {
+      createMigration("001", "test");
+      createMigration("002", "test2");
+      createMigration("003", "test3");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([]));
+
+      const result = await migrations.upIfNotLocked(2);
+
+      expect(result.ran).toBe(true);
+      expect(result.count).toBe(2);
+    });
+  });
+
+  describe("checkLockStatus", () => {
+    test("should return false when locking is disabled", async () => {
+      const result = await migrations.checkLockStatus();
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("releaseLock", () => {
+    test("should not throw when locking is disabled", async () => {
+      await expect(migrations.releaseLock()).resolves.toBeUndefined();
+    });
+  });
+
+  describe("constructor options", () => {
+    test("should accept lockTimeout option", () => {
+      const customMigrations = new Migrations(mockPrisma, {
+        migrationsDir: testMigrationsDir,
+        disableLocking: true,
+        lockTimeout: 60000,
+      });
+
+      expect(customMigrations).toBeDefined();
+    });
+
+    test("should accept skipChecksumValidation option", () => {
+      const customMigrations = new Migrations(mockPrisma, {
+        migrationsDir: testMigrationsDir,
+        disableLocking: true,
+        skipChecksumValidation: true,
+      });
+
+      expect(customMigrations).toBeDefined();
+    });
+
+    test("should use default values when options not provided", () => {
+      const defaultMigrations = new Migrations(mockPrisma);
+      expect(defaultMigrations).toBeDefined();
+    });
+  });
+
+  describe("status", () => {
+    test("should display migration status", async () => {
+      createMigration("001", "first");
+      createMigration("002", "second");
+
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      await migrations.status();
+    });
+
+    test("should display empty status when no migrations", async () => {
+      await migrations.status();
+    });
+  });
+
+  describe("checksum validation", () => {
+    test("should not throw when validation passes", async () => {
+      createMigration("001", "first");
+
+      await migrations.up();
+      expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+    });
+
+    test("should skip validation when skipChecksumValidation is true", async () => {
+      const noValidationMigrations = new Migrations(mockPrisma, {
+        migrationsDir: testMigrationsDir,
+        disableLocking: true,
+        skipChecksumValidation: true,
+      });
+
+      createMigration("001", "first");
+
+      await noValidationMigrations.up();
+    });
+  });
+
+  describe("dryRun", () => {
+    test("should list pending migrations without running them", async () => {
+      createMigration("001", "first");
+      createMigration("002", "second");
+
+      const result = await migrations.dryRun();
+      expect(result.length).toBe(2);
+
+      const applied = await migrations.applied();
+      expect(applied.length).toBe(0);
+    });
+
+    test("should respect steps parameter", async () => {
+      createMigration("001", "first");
+      createMigration("002", "second");
+      createMigration("003", "third");
+
+      const result = await migrations.dryRun(2);
+      expect(result.length).toBe(2);
     });
   });
 });

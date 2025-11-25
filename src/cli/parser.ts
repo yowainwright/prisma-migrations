@@ -176,6 +176,10 @@ COMMANDS:
   push                          Push schema changes to database
   generate                      Generate Prisma Client
 
+  Lock Management:
+  lock check                    Check if migration lock is held
+  lock release                  Release migration lock (use with caution)
+
 GLOBAL OPTIONS:
   -v, --verbose                 Enable verbose logging
   --log-level <level>           Set log level (silent, error, warn, info, debug, trace)
