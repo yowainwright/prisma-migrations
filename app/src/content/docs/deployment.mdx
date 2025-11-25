@@ -1,0 +1,156 @@
+---
+title: Production Deployment
+description: "Deploy safely with multiple instances"
+---
+
+## Concurrent Deployments
+
+When deploying multiple instances, use `upIfNotLocked()` to skip if another instance is migrating:
+
+```typescript
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+const migrations = new Migrations(prisma);
+
+async function startup() {
+  const result = await migrations.upIfNotLocked();
+
+  if (result.ran) {
+    console.log(`Applied ${result.count} migrations`);
+  } else {
+    console.log(result.reason);
+  }
+
+  await startServer();
+}
+```
+
+First instance acquires lock and runs migrations. Others skip and start immediately.
+
+## Configure Lock Timeout
+
+```typescript
+const migrations = new Migrations(prisma, {
+  lockTimeout: 120000  // 2 minutes (default: 30s)
+});
+
+await migrations.up();  // Waits for lock
+```
+
+## Kubernetes
+
+```typescript
+// server.ts
+import express from 'express';
+import { Migrations } from 'prisma-migrations';
+import { PrismaClient } from '@prisma/client';
+
+const app = express();
+const prisma = new PrismaClient();
+
+async function main() {
+  const migrations = new Migrations(prisma);
+  await migrations.upIfNotLocked();
+
+  app.get('/ready', async (req, res) => {
+    const pending = await migrations.pending();
+    if (pending.length > 0) {
+      return res.status(503).json({ ready: false });
+    }
+    res.json({ ready: true });
+  });
+
+  app.listen(3000);
+}
+
+main();
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+        - name: app
+          image: myapp:latest
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+```
+
+## Pre-Deployment Job (Alternative)
+
+Run migrations before deploying:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: myapp:latest
+          command: ["npx", "prisma-migrations", "up"]
+```
+
+```bash
+kubectl apply -f migration-job.yaml
+kubectl wait --for=condition=complete job/db-migrate
+kubectl apply -f deployment.yaml
+```
+
+## CI/CD
+
+```yaml
+# GitHub Actions
+jobs:
+  migrate:
+    steps:
+      - run: npx prisma-migrations up
+
+  deploy:
+    needs: migrate
+    steps:
+      - run: kubectl apply -f deployment.yaml
+```
+
+## Lock Management
+
+```bash
+# Check if lock is held
+npx prisma-migrations lock check
+
+# Release stuck lock
+npx prisma-migrations lock release
+```
+
+```typescript
+// Programmatic
+const isLocked = await migrations.checkLockStatus();
+await migrations.releaseLock();
+```
+
+## Troubleshooting
+
+**All instances timeout:**
+- Use `upIfNotLocked()` instead of `up()`
+- Increase `lockTimeout` if migrations are slow
+
+**Lock never released:**
+```bash
+npx prisma-migrations lock release
+```
+
+**Slow deployments:**
+- Use `upIfNotLocked()` for instant skipping
+- Run migrations in pre-deployment job

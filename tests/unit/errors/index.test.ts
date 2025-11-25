@@ -9,6 +9,8 @@ import {
   createMigrationFailedError,
   createRollbackFailedError,
   createPrismaClientNotFoundError,
+  createMigrationLockTimeoutError,
+  createTransactionFailedError,
 } from "../../../src/errors";
 
 describe("MigrationError", () => {
@@ -146,6 +148,43 @@ describe("Error factory functions", () => {
       expect(error.suggestions.some((s) => s.includes("@prisma/client"))).toBe(
         true,
       );
+    });
+  });
+
+  describe("createMigrationLockTimeoutError", () => {
+    test("should create lock timeout error with timeout in milliseconds", () => {
+      const error = createMigrationLockTimeoutError(30000);
+      expect(error.message).toContain("30s");
+      expect(error.suggestions.length).toBeGreaterThan(0);
+      expect(error.suggestions.some((s) => s.includes("upIfNotLocked"))).toBe(
+        true,
+      );
+    });
+
+    test("should include lock check commands in suggestions", () => {
+      const error = createMigrationLockTimeoutError(60000);
+      expect(error.message).toContain("60s");
+      expect(
+        error.suggestions.some((s) => s.includes("npx prisma-migrations lock")),
+      ).toBe(true);
+    });
+  });
+
+  describe("createTransactionFailedError", () => {
+    test("should create transaction failed error with migration ID", () => {
+      const dbError = new Error("Unique constraint violation");
+      const error = createTransactionFailedError("001_test_migration", dbError);
+      expect(error.message).toContain("001_test_migration");
+      expect(error.message).toContain("Unique constraint violation");
+      expect(error.suggestions.length).toBeGreaterThan(0);
+    });
+
+    test("should mention automatic rollback in suggestions", () => {
+      const dbError = new Error("Foreign key constraint");
+      const error = createTransactionFailedError("002_add_fk", dbError);
+      expect(
+        error.suggestions.some((s) => s.includes("rolled back automatically")),
+      ).toBe(true);
     });
   });
 });

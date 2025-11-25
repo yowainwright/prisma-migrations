@@ -7,7 +7,10 @@ import { generateChecksum } from "../utils";
 import {
   createMigrationNotFoundError,
   createInvalidMigrationError,
+  createChecksumMismatchError,
+  createTransactionFailedError,
 } from "../errors";
+import { MigrationLock } from "./locking";
 
 interface ParsedSqlMigration {
   up: string;
@@ -79,15 +82,26 @@ async function loadSqlMigration(migrationPath: string): Promise<{
 export class Migrations {
   private prisma: PrismaClient;
   private migrationsDir: string;
+  private lock: MigrationLock | null;
+  private disableLocking: boolean;
+  private skipChecksumValidation: boolean;
+  private lockTimeout: number;
 
   constructor(
     prisma: PrismaClient,
     options?: {
       migrationsDir?: string;
+      disableLocking?: boolean;
+      skipChecksumValidation?: boolean;
+      lockTimeout?: number;
     },
   ) {
     this.prisma = prisma;
     this.migrationsDir = options?.migrationsDir || "./prisma/migrations";
+    this.disableLocking = options?.disableLocking ?? false;
+    this.skipChecksumValidation = options?.skipChecksumValidation ?? false;
+    this.lockTimeout = options?.lockTimeout ?? 30000;
+    this.lock = this.disableLocking ? null : new MigrationLock(prisma);
   }
 
   private async validateMigrationFile(
@@ -101,6 +115,53 @@ export class Migrations {
     }
   }
 
+  private async validateAppliedMigrationChecksums(): Promise<void> {
+    const shouldSkipValidation = this.skipChecksumValidation;
+
+    if (shouldSkipValidation) {
+      logger.debug("Skipping checksum validation (disabled)");
+      return;
+    }
+
+    logger.debug("Validating checksums for applied migrations...");
+
+    const appliedMigrations = await this.prisma.$queryRaw<
+      Array<{ id: string; checksum: string; migration_name: string }>
+    >`
+      SELECT id, checksum, migration_name
+      FROM _prisma_migrations
+      WHERE finished_at IS NOT NULL
+      ORDER BY finished_at ASC
+    `;
+
+    const allMigrations = await this.getAllMigrations();
+
+    await appliedMigrations.reduce(async (prev: Promise<void>, applied) => {
+      await prev;
+
+      const migrationFile = allMigrations.find((m) => m.id === applied.id);
+
+      if (!migrationFile) {
+        logger.warn(
+          `Applied migration ${applied.id}_${applied.migration_name} not found in migrations directory`,
+        );
+        return;
+      }
+
+      const currentChecksum = await generateChecksum(migrationFile.path);
+
+      if (currentChecksum !== applied.checksum) {
+        throw createChecksumMismatchError(
+          `${applied.id}_${applied.migration_name}`,
+        );
+      }
+    }, Promise.resolve());
+
+    logger.debug(
+      `Validated ${appliedMigrations.length} applied migration checksums`,
+    );
+  }
+
   async dryRun(steps?: number): Promise<MigrationFile[]> {
     const pending = await this.pending();
     return steps ? pending.slice(0, steps) : pending;
@@ -112,6 +173,21 @@ export class Migrations {
   }
 
   async up(steps?: number) {
+    const shouldUseLocking = !this.disableLocking;
+
+    if (shouldUseLocking) {
+      return await this.lock!.withLock(
+        () => this.runUpMigrations(steps),
+        this.lockTimeout,
+      );
+    }
+
+    return await this.runUpMigrations(steps);
+  }
+
+  private async runUpMigrations(steps?: number): Promise<number> {
+    await this.validateAppliedMigrationChecksums();
+
     const applied = await this.getApplied();
     logger.debug(`Found ${applied.length} applied migrations`);
     const all = await this.getAllMigrations();
@@ -126,36 +202,7 @@ export class Migrations {
     await toRun.reduce(
       async (prev: Promise<void>, migration: MigrationFile) => {
         await prev;
-        logger.info(`Running ${migration.id}_${migration.name}...`);
-        try {
-          const isValid = await this.validateMigrationFile(migration);
-          if (!isValid) {
-            throw createInvalidMigrationError(
-              `${migration.id}_${migration.name}`,
-              "missing up or down function",
-            );
-          }
-
-          const mod = await loadSqlMigration(migration.path);
-
-          const hasUpFunction = typeof mod.up === "function";
-          if (!hasUpFunction) {
-            throw new Error(
-              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
-            );
-          }
-          await mod.up!(this.prisma);
-          const checksum = await generateChecksum(migration.path);
-          await this.prisma
-            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
-          logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-        } catch (error) {
-          logger.error(
-            `Failed to apply migration ${migration.id}_${migration.name}`,
-          );
-          logger.error(error instanceof Error ? error.message : String(error));
-          throw error;
-        }
+        await this.runMigrationInTransaction(migration, "up");
       },
       Promise.resolve(),
     );
@@ -163,7 +210,83 @@ export class Migrations {
     return toRun.length;
   }
 
+  private async runMigrationInTransaction(
+    migration: MigrationFile,
+    direction: "up" | "down",
+  ): Promise<void> {
+    const migrationName = `${migration.id}_${migration.name}`;
+    const isUpMigration = direction === "up";
+    logger.info(`Running ${migrationName}...`);
+
+    try {
+      const isValid = await this.validateMigrationFile(migration);
+      const isInvalidMigration = !isValid;
+
+      if (isInvalidMigration) {
+        throw createInvalidMigrationError(
+          migrationName,
+          "missing up or down function",
+        );
+      }
+
+      const mod = await loadSqlMigration(migration.path);
+      const migrationFn = isUpMigration ? mod.up : mod.down;
+      const isMissingMigrationFunction = typeof migrationFn !== "function";
+
+      if (isMissingMigrationFunction) {
+        throw new Error(
+          `Migration ${migrationName} does not export a '${direction}' function`,
+        );
+      }
+
+      await this.prisma.$executeRaw`BEGIN`;
+
+      try {
+        await migrationFn(this.prisma);
+
+        if (isUpMigration) {
+          const checksum = await generateChecksum(migration.path);
+          await this.prisma
+            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
+        } else {
+          await this.prisma
+            .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
+        }
+
+        await this.prisma.$executeRaw`COMMIT`;
+
+        const action = isUpMigration ? "Applied" : "Rolled back";
+        logger.info(`✓ ${action} ${migrationName}`);
+      } catch (error) {
+        await this.prisma.$executeRaw`ROLLBACK`;
+        const migrationError =
+          error instanceof Error ? error : new Error(String(error));
+        throw createTransactionFailedError(migrationName, migrationError);
+      }
+    } catch (error) {
+      const action = isUpMigration ? "apply" : "rollback";
+      logger.error(`Failed to ${action} migration ${migrationName}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error(errorMessage);
+      throw error;
+    }
+  }
+
   async down(steps: number = 1) {
+    const shouldUseLocking = !this.disableLocking;
+
+    if (shouldUseLocking) {
+      return await this.lock!.withLock(
+        () => this.runDownMigrations(steps),
+        this.lockTimeout,
+      );
+    }
+
+    return await this.runDownMigrations(steps);
+  }
+
+  private async runDownMigrations(steps: number): Promise<number> {
     const applied = await this.getApplied();
     logger.debug(`Found ${applied.length} applied migrations`);
     const toRollback = applied.slice(-steps);
@@ -173,29 +296,13 @@ export class Migrations {
     await reversed.reduce(async (prev: Promise<void>, id: string) => {
       await prev;
       const migration = await this.findMigration(id);
-      if (!migration) {
+      const migrationNotFound = !migration;
+
+      if (migrationNotFound) {
         throw createMigrationNotFoundError(id);
       }
 
-      logger.info(`Rolling back ${id}_${migration.name}...`);
-      try {
-        const mod = await loadSqlMigration(migration.path);
-
-        const hasDownFunction = typeof mod.down === "function";
-        if (!hasDownFunction) {
-          throw new Error(
-            `Migration ${id}_${migration.name} does not export a 'down' function`,
-          );
-        }
-        await mod.down!(this.prisma);
-        await this.prisma
-          .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
-        logger.info(`✓ Rolled back ${id}_${migration.name}`);
-      } catch (error) {
-        logger.error(`Failed to rollback migration ${id}_${migration.name}`);
-        logger.error(error instanceof Error ? error.message : String(error));
-        throw error;
-      }
+      await this.runMigrationInTransaction(migration, "down");
     }, Promise.resolve());
 
     return toRollback.length;
@@ -230,6 +337,19 @@ export class Migrations {
   }
 
   async reset(): Promise<number> {
+    const shouldUseLocking = !this.disableLocking;
+
+    if (shouldUseLocking) {
+      return await this.lock!.withLock(
+        () => this.runResetMigrations(),
+        this.lockTimeout,
+      );
+    }
+
+    return await this.runResetMigrations();
+  }
+
+  private async runResetMigrations(): Promise<number> {
     const applied = await this.applied();
     logger.debug(`Found ${applied.length} applied migrations to reset`);
     const count = applied.length;
@@ -238,27 +358,7 @@ export class Migrations {
     await reversed.reduce(
       async (prev: Promise<void>, migration: MigrationFile) => {
         await prev;
-        logger.info(`Rolling back ${migration.id}_${migration.name}...`);
-        try {
-          const mod = await loadSqlMigration(migration.path);
-
-          const hasDownFunction = typeof mod.down === "function";
-          if (!hasDownFunction) {
-            throw new Error(
-              `Migration ${migration.id}_${migration.name} does not export a 'down' function`,
-            );
-          }
-          await mod.down!(this.prisma);
-          await this.prisma
-            .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
-          logger.info(`✓ Rolled back ${migration.id}_${migration.name}`);
-        } catch (error) {
-          logger.error(
-            `Failed to rollback migration ${migration.id}_${migration.name}`,
-          );
-          logger.error(error instanceof Error ? error.message : String(error));
-          throw error;
-        }
+        await this.runMigrationInTransaction(migration, "down");
       },
       Promise.resolve(),
     );
@@ -278,6 +378,21 @@ export class Migrations {
   }
 
   async upTo(migrationId: string): Promise<number> {
+    const shouldUseLocking = !this.disableLocking;
+
+    if (shouldUseLocking) {
+      return await this.lock!.withLock(
+        () => this.runUpToMigration(migrationId),
+        this.lockTimeout,
+      );
+    }
+
+    return await this.runUpToMigration(migrationId);
+  }
+
+  private async runUpToMigration(migrationId: string): Promise<number> {
+    await this.validateAppliedMigrationChecksums();
+
     const applied = await this.getApplied();
     logger.debug(`Found ${applied.length} applied migrations`);
     const all = await this.getAllMigrations();
@@ -286,7 +401,9 @@ export class Migrations {
     logger.debug(`Found ${pending.length} pending migrations`);
 
     const targetIndex = pending.findIndex((m) => m.id === migrationId);
-    if (targetIndex === -1) {
+    const migrationNotFound = targetIndex === -1;
+
+    if (migrationNotFound) {
       throw new Error(
         `Migration ${migrationId} not found in pending migrations`,
       );
@@ -298,36 +415,7 @@ export class Migrations {
     await toRun.reduce(
       async (prev: Promise<void>, migration: MigrationFile) => {
         await prev;
-        logger.info(`Running ${migration.id}_${migration.name}...`);
-        try {
-          const isValid = await this.validateMigrationFile(migration);
-          if (!isValid) {
-            throw createInvalidMigrationError(
-              `${migration.id}_${migration.name}`,
-              "missing up or down function",
-            );
-          }
-
-          const mod = await loadSqlMigration(migration.path);
-
-          const hasUpFunction = typeof mod.up === "function";
-          if (!hasUpFunction) {
-            throw new Error(
-              `Migration ${migration.id}_${migration.name} does not export an 'up' function`,
-            );
-          }
-          await mod.up!(this.prisma);
-          const checksum = await generateChecksum(migration.path);
-          await this.prisma
-            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
-          logger.info(`✓ Applied ${migration.id}_${migration.name}`);
-        } catch (error) {
-          logger.error(
-            `Failed to apply migration ${migration.id}_${migration.name}`,
-          );
-          logger.error(error instanceof Error ? error.message : String(error));
-          throw error;
-        }
+        await this.runMigrationInTransaction(migration, "up");
       },
       Promise.resolve(),
     );
@@ -336,11 +424,26 @@ export class Migrations {
   }
 
   async downTo(migrationId: string): Promise<number> {
+    const shouldUseLocking = !this.disableLocking;
+
+    if (shouldUseLocking) {
+      return await this.lock!.withLock(
+        () => this.runDownToMigration(migrationId),
+        this.lockTimeout,
+      );
+    }
+
+    return await this.runDownToMigration(migrationId);
+  }
+
+  private async runDownToMigration(migrationId: string): Promise<number> {
     const appliedIds = await this.getApplied();
     logger.debug(`Found ${appliedIds.length} applied migrations`);
 
     const targetIndex = appliedIds.indexOf(migrationId);
-    if (targetIndex === -1) {
+    const migrationNotFound = targetIndex === -1;
+
+    if (migrationNotFound) {
       throw new Error(
         `Migration ${migrationId} not found in applied migrations`,
       );
@@ -355,32 +458,64 @@ export class Migrations {
     await reversed.reduce(async (prev: Promise<void>, id: string) => {
       await prev;
       const migration = await this.findMigration(id);
-      if (!migration) {
+      const migrationNotFound = !migration;
+
+      if (migrationNotFound) {
         throw createMigrationNotFoundError(id);
       }
 
-      logger.info(`Rolling back ${id}_${migration.name}...`);
-      try {
-        const mod = await loadSqlMigration(migration.path);
-
-        const hasDownFunction = typeof mod.down === "function";
-        if (!hasDownFunction) {
-          throw new Error(
-            `Migration ${id}_${migration.name} does not export a 'down' function`,
-          );
-        }
-        await mod.down!(this.prisma);
-        await this.prisma
-          .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${id}`;
-        logger.info(`✓ Rolled back ${id}_${migration.name}`);
-      } catch (error) {
-        logger.error(`Failed to rollback migration ${id}_${migration.name}`);
-        logger.error(error instanceof Error ? error.message : String(error));
-        throw error;
-      }
+      await this.runMigrationInTransaction(migration, "down");
     }, Promise.resolve());
 
     return toRollback.length;
+  }
+
+  async upIfNotLocked(steps?: number): Promise<{
+    ran: boolean;
+    count: number;
+    reason?: string;
+  }> {
+    const lockingDisabled = this.disableLocking;
+
+    if (lockingDisabled) {
+      const count = await this.runUpMigrations(steps);
+      return { ran: true, count };
+    }
+
+    const result = await this.lock!.tryLock(() => this.runUpMigrations(steps));
+
+    if (!result.acquired) {
+      logger.info("Another instance is running migrations, skipping");
+      return {
+        ran: false,
+        count: 0,
+        reason: "Another instance is running migrations",
+      };
+    }
+
+    return { ran: true, count: result.result ?? 0 };
+  }
+
+  async checkLockStatus(): Promise<boolean> {
+    const hasLock = !this.lock;
+
+    if (hasLock) {
+      logger.warn("Locking is disabled");
+      return false;
+    }
+
+    return await this.lock!.isLocked();
+  }
+
+  async releaseLock(): Promise<void> {
+    const hasNoLock = !this.lock;
+
+    if (hasNoLock) {
+      logger.warn("Locking is disabled, no lock to release");
+      return;
+    }
+
+    await this.lock!.forceRelease();
   }
 
   private async getApplied(): Promise<string[]> {

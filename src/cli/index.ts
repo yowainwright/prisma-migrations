@@ -6,6 +6,7 @@ import * as prisma from "./commands/prisma";
 import { setupSource } from "./commands/setup/source";
 import { linkTypes } from "./commands/setup/link-types";
 import { validate } from "./commands/setup/validate";
+import { checkLock, releaseLock } from "./commands/lock";
 import { loadConfig } from "../config";
 import { Migrations } from "../migrations";
 import { createPrismaClient } from "./client-factory";
@@ -318,6 +319,37 @@ async function main() {
       case "generate":
         await prisma.generate();
         break;
+
+      case "lock": {
+        const subcommand = parsed.args[0];
+        const client = await createPrismaClient();
+
+        try {
+          const isCheckCommand = subcommand === "check";
+          const isReleaseCommand = subcommand === "release";
+
+          if (isCheckCommand) {
+            const exitCode = await checkLock(client);
+            await client.$disconnect();
+            process.exit(exitCode);
+          }
+
+          if (isReleaseCommand) {
+            const force = parsed.options.force as boolean;
+            const exitCode = await releaseLock(client, force);
+            await client.$disconnect();
+            process.exit(exitCode);
+          }
+
+          logger.error(`Unknown lock subcommand: ${subcommand}`);
+          logger.info("Available subcommands: check, release");
+          await client.$disconnect();
+          process.exit(1);
+        } catch (error) {
+          await client.$disconnect();
+          throw error;
+        }
+      }
 
       default:
         showHelp();

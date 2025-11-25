@@ -4,6 +4,72 @@ import { logger } from "../../../logger";
 import { Prompt, type PromptChoice } from "../../../utils/prompts";
 import { spinner, createTable, colors } from "../../../utils";
 
+export interface DownDependencies {
+  getSteps: (maxSteps: number) => Promise<number>;
+  getMigrationId: (choices: PromptChoice[]) => Promise<string>;
+  getMode: () => Promise<string>;
+  confirmReset: () => Promise<boolean>;
+}
+
+export function createDefaultDependencies(): DownDependencies {
+  return {
+    getSteps: async (maxSteps: number) => {
+      const prompt = new Prompt();
+      const steps = await prompt.number(
+        `How many migrations? (1-${maxSteps})`,
+        1,
+        (input: number | undefined) => {
+          if (input === undefined) return "Please enter a number";
+          const isValid = input >= 1 && input <= maxSteps;
+          if (!isValid) {
+            return `Please enter a number between 1 and ${maxSteps}`;
+          }
+          return true;
+        },
+      );
+      prompt.close();
+      return steps;
+    },
+    getMigrationId: async (choices: PromptChoice[]) => {
+      const prompt = new Prompt();
+      const migrationId = await prompt.list(
+        "Rollback down to (this migration will remain applied):",
+        choices,
+      );
+      prompt.close();
+      return migrationId;
+    },
+    getMode: async () => {
+      const choices: PromptChoice[] = [
+        { name: colors.cyan("Last migration only"), value: "one" },
+        { name: colors.yellow("Select number of migrations"), value: "steps" },
+        {
+          name: colors.blue("Select specific migration to rollback to"),
+          value: "specific",
+        },
+        { name: colors.red("All migrations (reset)"), value: "all" },
+      ];
+
+      const prompt = new Prompt();
+      const mode = await prompt.list(
+        "How many migrations do you want to rollback?",
+        choices,
+      );
+      prompt.close();
+      return mode;
+    },
+    confirmReset: async () => {
+      const prompt = new Prompt();
+      const confirm = await prompt.confirm(
+        colors.red("Are you sure you want to rollback ALL migrations?"),
+        false,
+      );
+      prompt.close();
+      return confirm === true;
+    },
+  };
+}
+
 export async function down(
   prisma: PrismaClient,
   steps: number = 1,
@@ -35,7 +101,10 @@ export async function down(
   }
 }
 
-export async function interactiveDown(migrations: Migrations) {
+export async function interactiveDown(
+  migrations: Migrations,
+  deps: DownDependencies = createDefaultDependencies(),
+) {
   const applied = await migrations.applied();
   const hasApplied = applied.length > 0;
 
@@ -44,8 +113,8 @@ export async function interactiveDown(migrations: Migrations) {
     return 0;
   }
 
-  const mode = await promptDownMode();
-  const count = await runRollbackForMode(mode, migrations, applied);
+  const mode = await deps.getMode();
+  const count = await runRollbackForMode(mode, migrations, applied, deps);
 
   const hasRolledBack = count > 0;
   if (hasRolledBack) {
@@ -55,31 +124,11 @@ export async function interactiveDown(migrations: Migrations) {
   return count;
 }
 
-export async function promptDownMode(): Promise<string> {
-  const choices: PromptChoice[] = [
-    { name: colors.cyan("Last migration only"), value: "one" },
-    { name: colors.yellow("Select number of migrations"), value: "steps" },
-    {
-      name: colors.blue("Select specific migration to rollback to"),
-      value: "specific",
-    },
-    { name: colors.red("All migrations (reset)"), value: "all" },
-  ];
-
-  const prompt = new Prompt();
-  const mode = await prompt.list(
-    "How many migrations do you want to rollback?",
-    choices,
-  );
-  prompt.close();
-
-  return mode;
-}
-
 export async function runRollbackForMode(
   mode: string,
   migrations: Migrations,
   applied: MigrationFile[],
+  deps: DownDependencies = createDefaultDependencies(),
 ): Promise<number> {
   const isOneMode = mode === "one";
   if (isOneMode) {
@@ -88,17 +137,17 @@ export async function runRollbackForMode(
 
   const isAllMode = mode === "all";
   if (isAllMode) {
-    return await rollbackAll(migrations);
+    return await rollbackAll(migrations, deps);
   }
 
   const isStepsMode = mode === "steps";
   if (isStepsMode) {
-    return await rollbackSteps(migrations, applied);
+    return await rollbackSteps(migrations, applied, deps);
   }
 
   const isSpecificMode = mode === "specific";
   if (isSpecificMode) {
-    return await rollbackToSpecific(migrations, applied);
+    return await rollbackToSpecific(migrations, applied, deps);
   }
 
   return 0;
@@ -118,15 +167,12 @@ export async function rollbackOne(migrations: Migrations): Promise<number> {
   }
 }
 
-export async function rollbackAll(migrations: Migrations): Promise<number> {
-  const prompt = new Prompt();
-  const confirm = await prompt.confirm(
-    colors.red("Are you sure you want to rollback ALL migrations?"),
-    false,
-  );
-  prompt.close();
+export async function rollbackAll(
+  migrations: Migrations,
+  deps: DownDependencies = createDefaultDependencies(),
+): Promise<number> {
+  const isConfirmed = await deps.confirmReset();
 
-  const isConfirmed = confirm === true;
   if (!isConfirmed) {
     console.log(colors.yellow("Cancelled"));
     return 0;
@@ -148,21 +194,9 @@ export async function rollbackAll(migrations: Migrations): Promise<number> {
 export async function rollbackSteps(
   migrations: Migrations,
   applied: MigrationFile[],
+  deps: DownDependencies = createDefaultDependencies(),
 ): Promise<number> {
-  const prompt = new Prompt();
-  const steps = await prompt.number(
-    `How many migrations? (1-${applied.length})`,
-    1,
-    (input: number | undefined) => {
-      if (input === undefined) return "Please enter a number";
-      const isValid = input >= 1 && input <= applied.length;
-      if (!isValid) {
-        return `Please enter a number between 1 and ${applied.length}`;
-      }
-      return true;
-    },
-  );
-  prompt.close();
+  const steps = await deps.getSteps(applied.length);
 
   const spin = spinner("Rolling back migrations...").start();
 
@@ -180,18 +214,14 @@ export async function rollbackSteps(
 export async function rollbackToSpecific(
   migrations: Migrations,
   applied: MigrationFile[],
+  deps: DownDependencies = createDefaultDependencies(),
 ): Promise<number> {
   const migrationChoices: PromptChoice[] = applied.map((m) => ({
     name: `${m.id}_${m.name}`,
     value: m.id,
   }));
 
-  const prompt = new Prompt();
-  const migrationId = await prompt.list(
-    "Rollback down to (this migration will remain applied):",
-    migrationChoices,
-  );
-  prompt.close();
+  const migrationId = await deps.getMigrationId(migrationChoices);
 
   const spin = spinner("Rolling back migrations...").start();
 
