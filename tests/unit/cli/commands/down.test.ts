@@ -11,7 +11,9 @@ import {
 } from "../../../../src/cli/commands/down";
 import type { Migrations } from "../../../../src/migrations";
 
-function createMockDeps(overrides: Partial<DownDependencies> = {}): DownDependencies {
+function createMockDeps(
+  overrides: Partial<DownDependencies> = {},
+): DownDependencies {
   return {
     getSteps: mock(() => Promise.resolve(2)),
     getMigrationId: mock(() => Promise.resolve("001")),
@@ -34,7 +36,12 @@ describe("down command", () => {
       ];
 
       const deps = createMockDeps();
-      const count = await runRollbackForMode("one", mockMigrations, applied, deps);
+      const count = await runRollbackForMode(
+        "one",
+        mockMigrations,
+        applied,
+        deps,
+      );
 
       expect(mockMigrations.down).toHaveBeenCalledWith(1);
       expect(count).toBe(1);
@@ -51,8 +58,15 @@ describe("down command", () => {
         { id: "3", name: "test3", path: "/path/3" },
       ];
 
-      const deps = createMockDeps({ confirmReset: mock(() => Promise.resolve(true)) });
-      const count = await runRollbackForMode("all", mockMigrations, applied, deps);
+      const deps = createMockDeps({
+        confirmReset: mock(() => Promise.resolve(true)),
+      });
+      const count = await runRollbackForMode(
+        "all",
+        mockMigrations,
+        applied,
+        deps,
+      );
 
       expect(deps.confirmReset).toHaveBeenCalled();
       expect(mockMigrations.reset).toHaveBeenCalled();
@@ -70,7 +84,12 @@ describe("down command", () => {
       ];
 
       const deps = createMockDeps({ getSteps: mock(() => Promise.resolve(2)) });
-      const count = await runRollbackForMode("steps", mockMigrations, applied, deps);
+      const count = await runRollbackForMode(
+        "steps",
+        mockMigrations,
+        applied,
+        deps,
+      );
 
       expect(deps.getSteps).toHaveBeenCalledWith(2);
       expect(mockMigrations.down).toHaveBeenCalledWith(2);
@@ -84,8 +103,15 @@ describe("down command", () => {
 
       const applied = [{ id: "001", name: "test1", path: "/path/1" }];
 
-      const deps = createMockDeps({ getMigrationId: mock(() => Promise.resolve("001")) });
-      const count = await runRollbackForMode("specific", mockMigrations, applied, deps);
+      const deps = createMockDeps({
+        getMigrationId: mock(() => Promise.resolve("001")),
+      });
+      const count = await runRollbackForMode(
+        "specific",
+        mockMigrations,
+        applied,
+        deps,
+      );
 
       expect(deps.getMigrationId).toHaveBeenCalled();
       expect(mockMigrations.downTo).toHaveBeenCalledWith("001");
@@ -97,7 +123,12 @@ describe("down command", () => {
       const applied: any[] = [];
       const deps = createMockDeps();
 
-      const count = await runRollbackForMode("unknown", mockMigrations, applied, deps);
+      const count = await runRollbackForMode(
+        "unknown",
+        mockMigrations,
+        applied,
+        deps,
+      );
 
       expect(count).toBe(0);
     });
@@ -121,7 +152,9 @@ describe("down command", () => {
         down: mock(() => Promise.reject(testError)),
       } as unknown as Migrations;
 
-      await expect(rollbackOne(mockMigrations)).rejects.toThrow("Rollback failed");
+      await expect(rollbackOne(mockMigrations)).rejects.toThrow(
+        "Rollback failed",
+      );
     });
   });
 
@@ -131,7 +164,9 @@ describe("down command", () => {
         reset: mock(() => Promise.resolve(5)),
       } as unknown as Migrations;
 
-      const deps = createMockDeps({ confirmReset: mock(() => Promise.resolve(true)) });
+      const deps = createMockDeps({
+        confirmReset: mock(() => Promise.resolve(true)),
+      });
       const count = await rollbackAll(mockMigrations, deps);
 
       expect(deps.confirmReset).toHaveBeenCalled();
@@ -144,7 +179,9 @@ describe("down command", () => {
         reset: mock(() => Promise.resolve(0)),
       } as unknown as Migrations;
 
-      const deps = createMockDeps({ confirmReset: mock(() => Promise.resolve(false)) });
+      const deps = createMockDeps({
+        confirmReset: mock(() => Promise.resolve(false)),
+      });
       const count = await rollbackAll(mockMigrations, deps);
 
       expect(deps.confirmReset).toHaveBeenCalled();
@@ -158,9 +195,13 @@ describe("down command", () => {
         reset: mock(() => Promise.reject(testError)),
       } as unknown as Migrations;
 
-      const deps = createMockDeps({ confirmReset: mock(() => Promise.resolve(true)) });
+      const deps = createMockDeps({
+        confirmReset: mock(() => Promise.resolve(true)),
+      });
 
-      await expect(rollbackAll(mockMigrations, deps)).rejects.toThrow("Reset failed");
+      await expect(rollbackAll(mockMigrations, deps)).rejects.toThrow(
+        "Reset failed",
+      );
     });
   });
 
@@ -193,9 +234,9 @@ describe("down command", () => {
       const applied = [{ id: "1", name: "test1", path: "/path/1" }];
       const deps = createMockDeps();
 
-      await expect(rollbackSteps(mockMigrations, applied, deps)).rejects.toThrow(
-        "Rollback failed",
-      );
+      await expect(
+        rollbackSteps(mockMigrations, applied, deps),
+      ).rejects.toThrow("Rollback failed");
     });
   });
 
@@ -210,7 +251,9 @@ describe("down command", () => {
         { id: "002", name: "second", path: "/path/2" },
       ];
 
-      const deps = createMockDeps({ getMigrationId: mock(() => Promise.resolve("002")) });
+      const deps = createMockDeps({
+        getMigrationId: mock(() => Promise.resolve("002")),
+      });
       const count = await rollbackToSpecific(mockMigrations, applied, deps);
 
       expect(deps.getMigrationId).toHaveBeenCalled();
@@ -227,9 +270,9 @@ describe("down command", () => {
       const applied = [{ id: "001", name: "first", path: "/path/1" }];
       const deps = createMockDeps();
 
-      await expect(rollbackToSpecific(mockMigrations, applied, deps)).rejects.toThrow(
-        "Migration not found",
-      );
+      await expect(
+        rollbackToSpecific(mockMigrations, applied, deps),
+      ).rejects.toThrow("Migration not found");
     });
   });
 
@@ -248,11 +291,15 @@ describe("down command", () => {
 
     test("should rollback one when mode is one", async () => {
       const mockMigrations = {
-        applied: mock(() => Promise.resolve([{ id: "1", name: "test", path: "/path" }])),
+        applied: mock(() =>
+          Promise.resolve([{ id: "1", name: "test", path: "/path" }]),
+        ),
         down: mock(() => Promise.resolve(1)),
       } as unknown as Migrations;
 
-      const deps = createMockDeps({ getMode: mock(() => Promise.resolve("one")) });
+      const deps = createMockDeps({
+        getMode: mock(() => Promise.resolve("one")),
+      });
       const count = await interactiveDown(mockMigrations, deps);
 
       expect(count).toBe(1);

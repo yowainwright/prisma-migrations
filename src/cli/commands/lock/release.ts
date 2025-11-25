@@ -4,9 +4,7 @@ import { logger } from "../../../logger";
 import { colors } from "../../../utils/colors";
 import { Prompt } from "../../../utils/prompts";
 
-const checkIfLockExists = async (
-  migrations: Migrations,
-): Promise<boolean> => {
+const checkIfLockExists = async (migrations: Migrations): Promise<boolean> => {
   const isLocked = await migrations.checkLockStatus();
   const noLockToRelease = !isLocked;
 

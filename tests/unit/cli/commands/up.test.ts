@@ -10,7 +10,9 @@ import {
 } from "../../../../src/cli/commands/up";
 import type { Migrations } from "../../../../src/migrations";
 
-function createMockDeps(overrides: Partial<UpDependencies> = {}): UpDependencies {
+function createMockDeps(
+  overrides: Partial<UpDependencies> = {},
+): UpDependencies {
   return {
     getSteps: mock(() => Promise.resolve(2)),
     getMigrationId: mock(() => Promise.resolve("001")),
@@ -33,7 +35,12 @@ describe("up command", () => {
       ];
 
       const deps = createMockDeps();
-      const count = await runMigrationsForMode("all", mockMigrations, pending, deps);
+      const count = await runMigrationsForMode(
+        "all",
+        mockMigrations,
+        pending,
+        deps,
+      );
 
       expect(mockMigrations.up).toHaveBeenCalled();
       expect(count).toBe(3);
@@ -50,7 +57,12 @@ describe("up command", () => {
       ];
 
       const deps = createMockDeps({ getSteps: mock(() => Promise.resolve(2)) });
-      const count = await runMigrationsForMode("steps", mockMigrations, pending, deps);
+      const count = await runMigrationsForMode(
+        "steps",
+        mockMigrations,
+        pending,
+        deps,
+      );
 
       expect(deps.getSteps).toHaveBeenCalledWith(2);
       expect(mockMigrations.up).toHaveBeenCalledWith(2);
@@ -64,8 +76,15 @@ describe("up command", () => {
 
       const pending = [{ id: "001", name: "test1", path: "/path/1" }];
 
-      const deps = createMockDeps({ getMigrationId: mock(() => Promise.resolve("001")) });
-      const count = await runMigrationsForMode("specific", mockMigrations, pending, deps);
+      const deps = createMockDeps({
+        getMigrationId: mock(() => Promise.resolve("001")),
+      });
+      const count = await runMigrationsForMode(
+        "specific",
+        mockMigrations,
+        pending,
+        deps,
+      );
 
       expect(deps.getMigrationId).toHaveBeenCalled();
       expect(mockMigrations.upTo).toHaveBeenCalledWith("001");
@@ -77,7 +96,12 @@ describe("up command", () => {
       const pending: any[] = [];
       const deps = createMockDeps();
 
-      const count = await runMigrationsForMode("unknown", mockMigrations, pending, deps);
+      const count = await runMigrationsForMode(
+        "unknown",
+        mockMigrations,
+        pending,
+        deps,
+      );
 
       expect(count).toBe(0);
     });
@@ -136,9 +160,9 @@ describe("up command", () => {
       const pending = [{ id: "1", name: "test1", path: "/path/1" }];
       const deps = createMockDeps();
 
-      await expect(runStepsMigrations(mockMigrations, pending, deps)).rejects.toThrow(
-        "Migration failed",
-      );
+      await expect(
+        runStepsMigrations(mockMigrations, pending, deps),
+      ).rejects.toThrow("Migration failed");
     });
   });
 
@@ -153,7 +177,9 @@ describe("up command", () => {
         { id: "002", name: "second", path: "/path/2" },
       ];
 
-      const deps = createMockDeps({ getMigrationId: mock(() => Promise.resolve("002")) });
+      const deps = createMockDeps({
+        getMigrationId: mock(() => Promise.resolve("002")),
+      });
       const count = await runToSpecificMigration(mockMigrations, pending, deps);
 
       expect(deps.getMigrationId).toHaveBeenCalled();
@@ -170,9 +196,9 @@ describe("up command", () => {
       const pending = [{ id: "001", name: "first", path: "/path/1" }];
       const deps = createMockDeps();
 
-      await expect(runToSpecificMigration(mockMigrations, pending, deps)).rejects.toThrow(
-        "Migration not found",
-      );
+      await expect(
+        runToSpecificMigration(mockMigrations, pending, deps),
+      ).rejects.toThrow("Migration not found");
     });
   });
 
@@ -191,11 +217,15 @@ describe("up command", () => {
 
     test("should run all migrations when mode is all", async () => {
       const mockMigrations = {
-        pending: mock(() => Promise.resolve([{ id: "1", name: "test", path: "/path" }])),
+        pending: mock(() =>
+          Promise.resolve([{ id: "1", name: "test", path: "/path" }]),
+        ),
         up: mock(() => Promise.resolve(1)),
       } as unknown as Migrations;
 
-      const deps = createMockDeps({ getMode: mock(() => Promise.resolve("all")) });
+      const deps = createMockDeps({
+        getMode: mock(() => Promise.resolve("all")),
+      });
       const count = await interactiveUp(mockMigrations, deps);
 
       expect(count).toBe(1);

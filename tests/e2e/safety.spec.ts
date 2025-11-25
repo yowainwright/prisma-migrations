@@ -238,10 +238,12 @@ DROP TABLE users;`,
 
       const results = await Promise.allSettled([migration1, migration2]);
 
-      const successCount = results.filter((r) => r.status === "fulfilled")
-        .length;
-      const failureCount = results.filter((r) => r.status === "rejected")
-        .length;
+      const successCount = results.filter(
+        (r) => r.status === "fulfilled",
+      ).length;
+      const failureCount = results.filter(
+        (r) => r.status === "rejected",
+      ).length;
 
       expect(successCount).toBe(1);
       expect(failureCount).toBe(1);

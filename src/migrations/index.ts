@@ -136,29 +136,26 @@ export class Migrations {
 
     const allMigrations = await this.getAllMigrations();
 
-    await appliedMigrations.reduce(
-      async (prev: Promise<void>, applied) => {
-        await prev;
+    await appliedMigrations.reduce(async (prev: Promise<void>, applied) => {
+      await prev;
 
-        const migrationFile = allMigrations.find((m) => m.id === applied.id);
+      const migrationFile = allMigrations.find((m) => m.id === applied.id);
 
-        if (!migrationFile) {
-          logger.warn(
-            `Applied migration ${applied.id}_${applied.migration_name} not found in migrations directory`,
-          );
-          return;
-        }
+      if (!migrationFile) {
+        logger.warn(
+          `Applied migration ${applied.id}_${applied.migration_name} not found in migrations directory`,
+        );
+        return;
+      }
 
-        const currentChecksum = await generateChecksum(migrationFile.path);
+      const currentChecksum = await generateChecksum(migrationFile.path);
 
-        if (currentChecksum !== applied.checksum) {
-          throw createChecksumMismatchError(
-            `${applied.id}_${applied.migration_name}`,
-          );
-        }
-      },
-      Promise.resolve(),
-    );
+      if (currentChecksum !== applied.checksum) {
+        throw createChecksumMismatchError(
+          `${applied.id}_${applied.migration_name}`,
+        );
+      }
+    }, Promise.resolve());
 
     logger.debug(
       `Validated ${appliedMigrations.length} applied migration checksums`,

@@ -1,5 +1,8 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
-import { MigrationLock, MigrationLockError } from "../../../src/migrations/locking";
+import {
+  MigrationLock,
+  MigrationLockError,
+} from "../../../src/migrations/locking";
 import type { PrismaClient } from "../../../src/types";
 
 describe("MigrationLock", () => {
@@ -70,9 +73,7 @@ describe("MigrationLock", () => {
 
   describe("tryLock", () => {
     test("should execute function when lock is acquired", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: true }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: true }]));
 
       const fn = mock(() => Promise.resolve(42));
       const result = await lock.tryLock(fn);
@@ -83,9 +84,7 @@ describe("MigrationLock", () => {
     });
 
     test("should not execute function when lock is not acquired", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: false }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: false }]));
 
       const fn = mock(() => Promise.resolve(42));
       const result = await lock.tryLock(fn);
@@ -110,9 +109,7 @@ describe("MigrationLock", () => {
     });
 
     test("should release lock even if function throws", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: true }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: true }]));
 
       const fn = mock(() => Promise.reject(new Error("test error")));
 
@@ -214,9 +211,7 @@ describe("MigrationLock", () => {
 
   describe("withLock", () => {
     test("should timeout when lock cannot be acquired", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: false }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: false }]));
 
       const fn = mock(() => Promise.resolve());
 
@@ -226,9 +221,7 @@ describe("MigrationLock", () => {
     });
 
     test("should pass custom timeout to acquire", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: false }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: false }]));
 
       const fn = mock(() => Promise.resolve());
       const startTime = Date.now();
@@ -240,9 +233,7 @@ describe("MigrationLock", () => {
     });
 
     test("should execute function and release lock on success", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: true }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: true }]));
 
       const fn = mock(() => Promise.resolve(42));
       const result = await lock.withLock(fn);
@@ -254,17 +245,13 @@ describe("MigrationLock", () => {
 
   describe("acquire", () => {
     test("should acquire lock successfully", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: true }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: true }]));
 
       await expect(lock.acquire(5000)).resolves.toBeUndefined();
     });
 
     test("should throw MigrationLockError with timeout flag", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: false }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: false }]));
 
       try {
         await lock.acquire(1000);
@@ -282,9 +269,7 @@ describe("MigrationLock", () => {
     });
 
     test("should release PostgreSQL lock", async () => {
-      mockPrisma.$queryRaw = mock(() =>
-        Promise.resolve([{ locked: true }]),
-      );
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ locked: true }]));
 
       await lock.acquire(5000);
       await lock.release();
