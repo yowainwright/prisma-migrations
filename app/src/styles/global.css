@@ -9,7 +9,6 @@
   --color-red-accent: #DC2626;
   --color-subtle: rgb(0 47 167 / 0.1);
 
-  /* Code syntax highlighting colors */
   --color-code-bg: #031030;
   --color-code-text: #b3d8e5;
   --color-code-keyword: #569CD6;
@@ -64,7 +63,6 @@ code, pre {
 .text-6xl { font-size: 4.25rem; }
 
 html {
-  /* DaisyUI theme variables */
   --p: #002FA7;
   --pc: #FFFFFF;
   --s: #DC2626;
@@ -78,7 +76,6 @@ html {
   --b3: #E5E5E5;
   --bc: #002FA7;
 
-  /* Tailwind prose variables */
   --tw-prose-body: #002FA7;
   --tw-prose-headings: #002FA7;
   --tw-prose-bullets: #002FA7;
@@ -174,24 +171,55 @@ footer {
   color: #FFFFFF;
 }
 
-/* Improve mobile responsiveness */
 @media (max-width: 640px) {
-  /* Ensure code blocks are scrollable on mobile */
   pre {
     max-width: calc(100vw - 2rem);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  
-  /* Improve mockup-code on mobile */
+
+  code:not(pre code) {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
   .mockup-code {
     max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  
-  /* Ensure tables are scrollable */
+
   .prose table {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .prose pre {
+    max-width: calc(100vw - 2rem);
+    overflow-x: auto;
+  }
+
+  .text-base {
+    font-size: 1.1rem;
+  }
+
+  .text-lg {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  code, pre {
+    font-size: 0.75rem;
+  }
+
+  .text-sm {
+    font-size: 0.95rem;
+  }
+
+  .text-base {
+    font-size: 1rem;
   }
 }
