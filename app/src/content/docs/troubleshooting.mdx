@@ -1,0 +1,149 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Prisma Migrations
+---
+
+## Migration Lock Issues
+
+Advisory locks prevent concurrent migration runs. If a migration process crashes, the lock can become stuck.
+
+### Check Lock Status
+
+```bash
+npx prisma-migrations lock check
+```
+
+### Release Stuck Lock
+
+```bash
+npx prisma-migrations lock release
+```
+
+Use `lock release` only when you're certain no other migration is running.
+
+## Checksum Validation Errors
+
+If you get "migration has been modified" errors, it means an applied migration file was changed after being applied.
+
+### Skip Validation (Recovery Only)
+
+```typescript
+const migrations = new Migrations(prisma, {
+  skipChecksumValidation: true
+});
+```
+
+**Warning:** Only use this to recover from checksum issues. Never modify applied migrations in production.
+
+## Concurrent Deployment Issues
+
+When deploying multiple instances simultaneously, use `upIfNotLocked()` to avoid conflicts:
+
+```typescript
+const result = await migrations.upIfNotLocked();
+
+if (result.ran) {
+  console.log(`Applied ${result.count} migrations`);
+} else {
+  console.log(result.reason); // "locked" or "no_pending"
+}
+```
+
+### Configure Lock Timeout
+
+For slow migrations, increase the lock timeout:
+
+```typescript
+const migrations = new Migrations(prisma, {
+  lockTimeout: 120000  // 2 minutes (default: 30s)
+});
+```
+
+## Disable Locking (Testing Only)
+
+For unit tests where locking isn't needed:
+
+```typescript
+const migrations = new Migrations(prisma, {
+  disableLocking: true  // Unit tests only
+});
+```
+
+## Migration Failed Mid-Way
+
+If a migration fails partway through:
+
+1. Check your database state manually
+2. Fix the SQL in the migration file
+3. Either:
+   - Clean up partial changes manually and re-run
+   - Write a new migration to continue from current state
+
+## SQL Syntax Errors
+
+If you get SQL syntax errors:
+
+- Check your SQL syntax for your specific database (PostgreSQL, MySQL, SQLite)
+- Test the SQL directly in your database client first
+- Make sure marker comments are exact: `-- Migration: Up` and `-- Migration: Down`
+
+## Rollback Not Working
+
+Some operations are difficult to reverse:
+
+- **Dropping columns** - Data is lost permanently
+- **Complex data transformations** - May not be perfectly reversible
+
+For these cases:
+- Back up data before dropping columns
+- Document manual recovery steps in comments
+- Test rollbacks extensively in staging
+
+## Database-Specific Issues
+
+### PostgreSQL
+
+Advisory locks use `pg_advisory_lock`. If you see lock timeouts:
+
+```sql
+-- Check active locks
+SELECT * FROM pg_locks WHERE locktype = 'advisory';
+
+-- Force release (use with caution)
+SELECT pg_advisory_unlock_all();
+```
+
+### MySQL
+
+Advisory locks use `GET_LOCK()`. Check locks with:
+
+```sql
+SELECT * FROM performance_schema.metadata_locks;
+```
+
+### SQLite
+
+SQLite uses file-based locking. Ensure only one process accesses the database file during migrations.
+
+## Common Error Messages
+
+### "Migration lock timeout"
+
+Another migration is running or a lock is stuck. Wait or use `lock release`.
+
+### "Checksum mismatch for migration X"
+
+The migration file was modified after being applied. Use `skipChecksumValidation` to recover.
+
+### "No pending migrations"
+
+All migrations are already applied. Check with `npx prisma-migrations status`.
+
+### "Migration not found: X"
+
+The migration ID doesn't exist. Verify with `npx prisma-migrations pending`.
+
+## Getting Help
+
+- **Issues:** [github.com/yowainwright/prisma-migrations/issues](https://github.com/yowainwright/prisma-migrations/issues)
+- **Discussions:** [github.com/yowainwright/prisma-migrations/discussions](https://github.com/yowainwright/prisma-migrations/discussions)

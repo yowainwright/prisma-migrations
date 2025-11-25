@@ -180,18 +180,58 @@ footer {
   pre {
     max-width: calc(100vw - 2rem);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  
+
+  /* Inline code should wrap on mobile */
+  code:not(pre code) {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
   /* Improve mockup-code on mobile */
   .mockup-code {
     max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Ensure tables are scrollable */
   .prose table {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prose code blocks */
+  .prose pre {
+    max-width: calc(100vw - 2rem);
+    overflow-x: auto;
+  }
+
+  /* Reduce font sizes slightly on very small screens */
+  .text-base {
+    font-size: 1.1rem;
+  }
+
+  .text-lg {
+    font-size: 1.25rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  /* Even smaller code text for tiny screens */
+  code, pre {
+    font-size: 0.75rem;
+  }
+
+  .text-sm {
+    font-size: 0.95rem;
+  }
+
+  .text-base {
+    font-size: 1rem;
   }
 }

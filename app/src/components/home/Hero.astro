@@ -48,7 +48,7 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
         </a>
 
           <div
-            class="flex items-center bg-transparent border border-subtle rounded-lg shadow-sm justify-between w-full sm:w-auto p-2"
+            class="flex items-center bg-transparent border border-subtle rounded-lg shadow-sm justify-between w-full sm:w-auto p-2 min-w-0 overflow-hidden"
           >
               <svg
                 width="22"
@@ -56,12 +56,12 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
                 viewBox="0 0 22 13"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                class="relative ml-4 mr-2 block w-3 -rotate-90"
+                class="relative ml-2 sm:ml-4 mr-2 block w-3 -rotate-90 flex-shrink-0"
               >
                 <path d="M1 1L11 11L21 1" stroke="currentColor" stroke-Width="2"
                 ></path>
               </svg>
-              <code class="flex-1 text-left leading-none mr-4 text-base whitespace-nowrap">
+              <code class="flex-1 text-left leading-none mr-2 sm:mr-4 text-sm sm:text-base truncate sm:whitespace-nowrap">
                 npm install prisma-migrations
               </code>
               <CopyButton client:only="react" />
