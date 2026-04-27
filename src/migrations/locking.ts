@@ -21,7 +21,10 @@ export class MigrationLock {
   private lockAcquired: boolean = false;
   private readonly staleLockThresholdMs: number;
 
-  constructor(prisma: PrismaClient, staleLockThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS) {
+  constructor(
+    prisma: PrismaClient,
+    staleLockThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS,
+  ) {
     this.prisma = prisma;
     this.staleLockThresholdMs = staleLockThresholdMs;
   }
