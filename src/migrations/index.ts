@@ -1,7 +1,12 @@
 import { readdir, readFile, access } from "fs/promises";
 import type { Dirent } from "fs";
 import { join } from "path";
-import type { PrismaClient, MigrationFile } from "../types";
+import { randomUUID } from "crypto";
+import type {
+  PrismaClient,
+  PrismaMigrationClient,
+  MigrationFile,
+} from "../types";
 import { logger } from "../logger";
 import { generateChecksum } from "../utils";
 import {
@@ -15,6 +20,65 @@ import { MigrationLock } from "./locking";
 interface ParsedSqlMigration {
   up: string;
   down: string;
+}
+
+export interface MigrationHooks {
+  beforeUp?: () => void | Promise<void>;
+  afterUp?: () => void | Promise<void>;
+  beforeDown?: () => void | Promise<void>;
+  afterDown?: () => void | Promise<void>;
+}
+
+export interface MigrationsOptions {
+  migrationsDir?: string;
+  disableLocking?: boolean;
+  skipChecksumValidation?: boolean;
+  lockTimeout?: number;
+  hooks?: MigrationHooks;
+}
+
+interface AppliedMigrationRow {
+  id: string;
+  checksum?: string;
+  migration_name?: string;
+}
+
+function formatMigrationFile(migration: MigrationFile): string {
+  return `${migration.id}_${migration.name}`;
+}
+
+function parseMigrationDirectoryName(
+  name: string | undefined,
+): { id: string; name: string } | null {
+  if (!name) return null;
+  const match = name.match(/^(\d+)_(.+)$/);
+  if (!match) return null;
+  const [, id, migrationName] = match;
+  return { id, name: migrationName };
+}
+
+function getAppliedMigrationId(row: AppliedMigrationRow): string {
+  return parseMigrationDirectoryName(row.migration_name)?.id ?? row.id;
+}
+
+function getAppliedMigrationName(row: AppliedMigrationRow): string {
+  if (parseMigrationDirectoryName(row.migration_name)) {
+    return row.migration_name!;
+  }
+
+  if (/^\d+$/.test(row.id) && row.migration_name) {
+    return `${row.id}_${row.migration_name}`;
+  }
+
+  return row.migration_name ?? row.id;
+}
+
+function validateSteps(steps: number | undefined, optionName = "steps"): void {
+  if (steps === undefined) return;
+  const isValid = Number.isSafeInteger(steps) && steps > 0;
+  if (!isValid) {
+    throw new Error(`${optionName} must be a positive integer`);
+  }
 }
 
 function parseSqlMigration(sql: string): ParsedSqlMigration {
@@ -43,21 +107,126 @@ function parseSqlMigration(sql: string): ParsedSqlMigration {
 }
 
 function splitSqlStatements(sql: string): string[] {
-  return sql
-    .split(";")
-    .map((stmt) => stmt.trim())
-    .filter((stmt) => stmt.length > 0);
+  const statements: string[] = [];
+  let statementStart = 0;
+  let i = 0;
+  let singleQuoted = false;
+  let doubleQuoted = false;
+  let lineComment = false;
+  let blockComment = false;
+  let dollarQuoteTag: string | null = null;
+
+  while (i < sql.length) {
+    const char = sql[i];
+    const next = sql[i + 1];
+
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      i++;
+      continue;
+    }
+
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        i += 2;
+      } else {
+        i++;
+      }
+      continue;
+    }
+
+    if (dollarQuoteTag) {
+      if (sql.startsWith(dollarQuoteTag, i)) {
+        i += dollarQuoteTag.length;
+        dollarQuoteTag = null;
+      } else {
+        i++;
+      }
+      continue;
+    }
+
+    if (singleQuoted) {
+      if (char === "'" && next === "'") {
+        i += 2;
+        continue;
+      }
+      if (char === "'") singleQuoted = false;
+      i++;
+      continue;
+    }
+
+    if (doubleQuoted) {
+      if (char === '"' && next === '"') {
+        i += 2;
+        continue;
+      }
+      if (char === '"') doubleQuoted = false;
+      i++;
+      continue;
+    }
+
+    if (char === "-" && next === "-") {
+      lineComment = true;
+      i += 2;
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      i += 2;
+      continue;
+    }
+
+    if (char === "'") {
+      singleQuoted = true;
+      i++;
+      continue;
+    }
+
+    if (char === '"') {
+      doubleQuoted = true;
+      i++;
+      continue;
+    }
+
+    if (char === "$") {
+      const match = sql.slice(i).match(/^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/);
+      if (match) {
+        dollarQuoteTag = match[0];
+        i += dollarQuoteTag.length;
+        continue;
+      }
+    }
+
+    if (char === ";") {
+      const statement = sql.slice(statementStart, i).trim();
+      if (statement.length > 0) {
+        statements.push(statement);
+      }
+      statementStart = i + 1;
+    }
+
+    i++;
+  }
+
+  const trailingStatement = sql.slice(statementStart).trim();
+  if (trailingStatement.length > 0) {
+    statements.push(trailingStatement);
+  }
+
+  return statements;
 }
 
 async function loadSqlMigration(migrationPath: string): Promise<{
-  up: (prisma: PrismaClient) => Promise<void>;
-  down: (prisma: PrismaClient) => Promise<void>;
+  up: (prisma: PrismaMigrationClient) => Promise<void>;
+  down: (prisma: PrismaMigrationClient) => Promise<void>;
 }> {
   const sql = await readFile(migrationPath, "utf-8");
   const parsed = parseSqlMigration(sql);
 
   return {
-    up: async (prisma: PrismaClient) => {
+    up: async (prisma: PrismaMigrationClient) => {
       if (!parsed.up) {
         throw new Error(`No up migration found in ${migrationPath}`);
       }
@@ -66,7 +235,7 @@ async function loadSqlMigration(migrationPath: string): Promise<{
         await prisma.$executeRawUnsafe(statement);
       }
     },
-    down: async (prisma: PrismaClient) => {
+    down: async (prisma: PrismaMigrationClient) => {
       if (!parsed.down) {
         logger.warn(`No down migration available for: ${migrationPath}`);
         return;
@@ -86,33 +255,16 @@ export class Migrations {
   private disableLocking: boolean;
   private skipChecksumValidation: boolean;
   private lockTimeout: number;
+  private hooks: MigrationHooks;
 
-  constructor(
-    prisma: PrismaClient,
-    options?: {
-      migrationsDir?: string;
-      disableLocking?: boolean;
-      skipChecksumValidation?: boolean;
-      lockTimeout?: number;
-    },
-  ) {
+  constructor(prisma: PrismaClient, options?: MigrationsOptions) {
     this.prisma = prisma;
     this.migrationsDir = options?.migrationsDir || "./prisma/migrations";
     this.disableLocking = options?.disableLocking ?? false;
     this.skipChecksumValidation = options?.skipChecksumValidation ?? false;
     this.lockTimeout = options?.lockTimeout ?? 30000;
+    this.hooks = options?.hooks ?? {};
     this.lock = this.disableLocking ? null : new MigrationLock(prisma);
-  }
-
-  private async validateMigrationFile(
-    migration: MigrationFile,
-  ): Promise<boolean> {
-    try {
-      const mod = await loadSqlMigration(migration.path);
-      return typeof mod.up === "function" && typeof mod.down === "function";
-    } catch {
-      return false;
-    }
   }
 
   private async validateAppliedMigrationChecksums(): Promise<void> {
@@ -126,7 +278,7 @@ export class Migrations {
     logger.debug("Validating checksums for applied migrations...");
 
     const appliedMigrations = await this.prisma.$queryRaw<
-      Array<{ id: string; checksum: string; migration_name: string }>
+      AppliedMigrationRow[]
     >`
       SELECT id, checksum, migration_name
       FROM _prisma_migrations
@@ -139,21 +291,23 @@ export class Migrations {
     await appliedMigrations.reduce(async (prev: Promise<void>, applied) => {
       await prev;
 
-      const migrationFile = allMigrations.find((m) => m.id === applied.id);
+      const appliedMigrationId = getAppliedMigrationId(applied);
+      const appliedMigrationName = getAppliedMigrationName(applied);
+      const migrationFile = allMigrations.find(
+        (m) => m.id === appliedMigrationId,
+      );
 
       if (!migrationFile) {
         logger.warn(
-          `Applied migration ${applied.id}_${applied.migration_name} not found in migrations directory`,
+          `Applied migration ${appliedMigrationName} not found in migrations directory`,
         );
         return;
       }
 
       const currentChecksum = await generateChecksum(migrationFile.path);
 
-      if (currentChecksum !== applied.checksum) {
-        throw createChecksumMismatchError(
-          `${applied.id}_${applied.migration_name}`,
-        );
+      if (applied.checksum && currentChecksum !== applied.checksum) {
+        throw createChecksumMismatchError(appliedMigrationName);
       }
     }, Promise.resolve());
 
@@ -163,8 +317,9 @@ export class Migrations {
   }
 
   async dryRun(steps?: number): Promise<MigrationFile[]> {
+    validateSteps(steps);
     const pending = await this.pending();
-    return steps ? pending.slice(0, steps) : pending;
+    return steps === undefined ? pending : pending.slice(0, steps);
   }
 
   private getMigrationsDir(): string {
@@ -173,6 +328,7 @@ export class Migrations {
   }
 
   async up(steps?: number) {
+    validateSteps(steps);
     const shouldUseLocking = !this.disableLocking;
 
     if (shouldUseLocking) {
@@ -186,6 +342,9 @@ export class Migrations {
   }
 
   private async runUpMigrations(steps?: number): Promise<number> {
+    validateSteps(steps);
+    await this.hooks.beforeUp?.();
+
     await this.validateAppliedMigrationChecksums();
 
     const applied = await this.getApplied();
@@ -195,8 +354,7 @@ export class Migrations {
     const pending = all.filter((m) => !applied.includes(m.id));
     logger.debug(`Found ${pending.length} pending migrations`);
 
-    let toRun = pending;
-    if (steps) toRun = pending.slice(0, steps);
+    const toRun = steps === undefined ? pending : pending.slice(0, steps);
     logger.debug(`Will run ${toRun.length} migrations`);
 
     await toRun.reduce(
@@ -207,6 +365,7 @@ export class Migrations {
       Promise.resolve(),
     );
 
+    await this.hooks.afterUp?.();
     return toRun.length;
   }
 
@@ -214,22 +373,22 @@ export class Migrations {
     migration: MigrationFile,
     direction: "up" | "down",
   ): Promise<void> {
-    const migrationName = `${migration.id}_${migration.name}`;
+    const migrationName = formatMigrationFile(migration);
     const isUpMigration = direction === "up";
     logger.info(`Running ${migrationName}...`);
 
     try {
-      const isValid = await this.validateMigrationFile(migration);
-      const isInvalidMigration = !isValid;
-
-      if (isInvalidMigration) {
+      let mod: Awaited<ReturnType<typeof loadSqlMigration>>;
+      try {
+        mod = await loadSqlMigration(migration.path);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
         throw createInvalidMigrationError(
           migrationName,
-          "missing up or down function",
+          reason || "missing up or down function",
         );
       }
 
-      const mod = await loadSqlMigration(migration.path);
       const migrationFn = isUpMigration ? mod.up : mod.down;
       const isMissingMigrationFunction = typeof migrationFn !== "function";
 
@@ -239,26 +398,21 @@ export class Migrations {
         );
       }
 
-      await this.prisma.$executeRaw`BEGIN`;
-
       try {
-        await migrationFn(this.prisma);
+        await this.prisma.$transaction(async (tx) => {
+          await migrationFn(tx);
 
-        if (isUpMigration) {
-          const checksum = await generateChecksum(migration.path);
-          await this.prisma
-            .$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${migration.id}, ${checksum}, NOW(), ${migration.name}, NULL, NOW(), 1)`;
-        } else {
-          await this.prisma
-            .$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id}`;
-        }
-
-        await this.prisma.$executeRaw`COMMIT`;
+          if (isUpMigration) {
+            const checksum = await generateChecksum(migration.path);
+            await tx.$executeRaw`INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, started_at, applied_steps_count) VALUES (${randomUUID()}, ${checksum}, CURRENT_TIMESTAMP, ${migrationName}, NULL, CURRENT_TIMESTAMP, 1)`;
+          } else {
+            await tx.$executeRaw`DELETE FROM _prisma_migrations WHERE id = ${migration.id} OR migration_name = ${migrationName}`;
+          }
+        });
 
         const action = isUpMigration ? "Applied" : "Rolled back";
         logger.info(`✓ ${action} ${migrationName}`);
       } catch (error) {
-        await this.prisma.$executeRaw`ROLLBACK`;
         const migrationError =
           error instanceof Error ? error : new Error(String(error));
         throw createTransactionFailedError(migrationName, migrationError);
@@ -274,6 +428,7 @@ export class Migrations {
   }
 
   async down(steps: number = 1) {
+    validateSteps(steps);
     const shouldUseLocking = !this.disableLocking;
 
     if (shouldUseLocking) {
@@ -287,6 +442,9 @@ export class Migrations {
   }
 
   private async runDownMigrations(steps: number): Promise<number> {
+    validateSteps(steps);
+    await this.hooks.beforeDown?.();
+
     const applied = await this.getApplied();
     logger.debug(`Found ${applied.length} applied migrations`);
     const toRollback = applied.slice(-steps);
@@ -305,6 +463,7 @@ export class Migrations {
       await this.runMigrationInTransaction(migration, "down");
     }, Promise.resolve());
 
+    await this.hooks.afterDown?.();
     return toRollback.length;
   }
 
@@ -350,6 +509,8 @@ export class Migrations {
   }
 
   private async runResetMigrations(): Promise<number> {
+    await this.hooks.beforeDown?.();
+
     const applied = await this.applied();
     logger.debug(`Found ${applied.length} applied migrations to reset`);
     const count = applied.length;
@@ -363,6 +524,7 @@ export class Migrations {
       Promise.resolve(),
     );
 
+    await this.hooks.afterDown?.();
     return count;
   }
 
@@ -391,6 +553,8 @@ export class Migrations {
   }
 
   private async runUpToMigration(migrationId: string): Promise<number> {
+    await this.hooks.beforeUp?.();
+
     await this.validateAppliedMigrationChecksums();
 
     const applied = await this.getApplied();
@@ -420,6 +584,7 @@ export class Migrations {
       Promise.resolve(),
     );
 
+    await this.hooks.afterUp?.();
     return toRun.length;
   }
 
@@ -437,6 +602,8 @@ export class Migrations {
   }
 
   private async runDownToMigration(migrationId: string): Promise<number> {
+    await this.hooks.beforeDown?.();
+
     const appliedIds = await this.getApplied();
     logger.debug(`Found ${appliedIds.length} applied migrations`);
 
@@ -467,6 +634,7 @@ export class Migrations {
       await this.runMigrationInTransaction(migration, "down");
     }, Promise.resolve());
 
+    await this.hooks.afterDown?.();
     return toRollback.length;
   }
 
@@ -475,6 +643,7 @@ export class Migrations {
     count: number;
     reason?: string;
   }> {
+    validateSteps(steps);
     const lockingDisabled = this.disableLocking;
 
     if (lockingDisabled) {
@@ -519,10 +688,10 @@ export class Migrations {
   }
 
   private async getApplied(): Promise<string[]> {
-    const result = await this.prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY finished_at ASC
+    const result = await this.prisma.$queryRaw<AppliedMigrationRow[]>`
+      SELECT id, migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY finished_at ASC
     `;
-    return result.map((r) => r.id);
+    return result.map(getAppliedMigrationId);
   }
 
   private async detectMigrationFile(
@@ -582,7 +751,20 @@ export class Migrations {
     const migrationsDir = this.getMigrationsDir();
     logger.debug(`Reading migrations from: ${migrationsDir}`);
 
-    const entries = await readdir(migrationsDir, { withFileTypes: true });
+    let entries: Dirent[];
+    try {
+      entries = await readdir(migrationsDir, { withFileTypes: true });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        logger.debug(`Migrations directory not found: ${migrationsDir}`);
+        return [];
+      }
+      throw error;
+    }
     logger.debug(`Found ${entries.length} entries in migrations directory`);
 
     const validDirs = this.filterValidDirectories(entries);

@@ -1,4 +1,4 @@
-export interface PrismaClient {
+export interface PrismaMigrationClient {
   $executeRaw(
     query: TemplateStringsArray,
     ...values: unknown[]
@@ -8,10 +8,19 @@ export interface PrismaClient {
     query: TemplateStringsArray,
     ...values: unknown[]
   ): Promise<T>;
+}
+
+export interface PrismaClient extends PrismaMigrationClient {
+  $transaction<T>(
+    fn: (tx: PrismaMigrationClient) => Promise<T>,
+    options?: unknown,
+  ): Promise<T>;
   $disconnect(): Promise<void>;
 }
 
-export type MigrationFunction = (prisma: PrismaClient) => Promise<void>;
+export type MigrationFunction = (
+  prisma: PrismaMigrationClient,
+) => Promise<void>;
 
 export interface Migration {
   up: MigrationFunction;

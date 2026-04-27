@@ -2,9 +2,15 @@ import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { validateConfig } from "./schema";
+import type { MigrationHooks } from "../migrations";
 
 export interface MigrationsConfig {
   migrationsDir?: string;
+  disableLocking?: boolean;
+  skipChecksumValidation?: boolean;
+  lockTimeout?: number;
+  logLevel?: "silent" | "error" | "warn" | "info" | "debug" | "trace";
+  hooks?: MigrationHooks;
 }
 
 async function searchConfig(): Promise<Record<string, unknown> | null> {
