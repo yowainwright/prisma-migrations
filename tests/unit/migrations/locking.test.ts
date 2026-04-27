@@ -24,7 +24,7 @@ describe("MigrationLock", () => {
           locked = true;
         }
 
-        if (queryString.includes("DELETE FROM _prisma_migrations_lock")) {
+        if (queryString.includes("DELETE FROM _prisma_migrations_lock") && !queryString.includes("locked_at")) {
           locked = false;
         }
 

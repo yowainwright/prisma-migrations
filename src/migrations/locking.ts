@@ -3,6 +3,9 @@ import { logger } from "../logger";
 
 type CountValue = number | bigint | string;
 
+const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_STALE_THRESHOLD_MS = 30 * 60 * 1000;
+
 export class MigrationLockError extends Error {
   public readonly isTimeout: boolean;
 
@@ -16,9 +19,11 @@ export class MigrationLockError extends Error {
 export class MigrationLock {
   private prisma: PrismaClient;
   private lockAcquired: boolean = false;
+  private readonly staleLockThresholdMs: number;
 
-  constructor(prisma: PrismaClient) {
+  constructor(prisma: PrismaClient, staleLockThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS) {
     this.prisma = prisma;
+    this.staleLockThresholdMs = staleLockThresholdMs;
   }
 
   private async ensureLockTable(): Promise<void> {
@@ -30,10 +35,18 @@ export class MigrationLock {
     `;
   }
 
-  async acquire(timeoutMs: number = 30000): Promise<void> {
+  private async clearStaleLock(): Promise<void> {
+    const staleThreshold = new Date(Date.now() - this.staleLockThresholdMs);
+    await this.prisma.$executeRaw`
+      DELETE FROM _prisma_migrations_lock WHERE id = 1 AND locked_at < ${staleThreshold}
+    `;
+  }
+
+  async acquire(timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<void> {
     const startTime = Date.now();
 
     logger.debug("Attempting to acquire migration lock...");
+    await this.ensureLockTable();
 
     while (Date.now() - startTime < timeoutMs) {
       const acquired = await this.tryAcquire();
@@ -55,8 +68,7 @@ export class MigrationLock {
   }
 
   private async tryAcquire(): Promise<boolean> {
-    await this.ensureLockTable();
-
+    await this.clearStaleLock();
     try {
       await this.prisma.$executeRaw`
         INSERT INTO _prisma_migrations_lock (id) VALUES (1)
@@ -93,6 +105,7 @@ export class MigrationLock {
   async tryLock<T>(
     fn: () => Promise<T>,
   ): Promise<{ acquired: boolean; result?: T }> {
+    await this.ensureLockTable();
     const acquired = await this.tryAcquire();
 
     if (!acquired) {
@@ -123,8 +136,9 @@ export class MigrationLock {
   async isLocked(): Promise<boolean> {
     try {
       await this.ensureLockTable();
+      const staleThreshold = new Date(Date.now() - this.staleLockThresholdMs);
       const result = await this.prisma.$queryRaw<Array<{ count: CountValue }>>`
-        SELECT COUNT(*) as count FROM _prisma_migrations_lock WHERE id = 1
+        SELECT COUNT(*) as count FROM _prisma_migrations_lock WHERE id = 1 AND locked_at >= ${staleThreshold}
       `;
       return Number(result[0]?.count ?? 0) > 0;
     } catch (error) {
