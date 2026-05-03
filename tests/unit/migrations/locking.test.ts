@@ -125,7 +125,7 @@ describe("MigrationLock", () => {
       locked = true;
       const fn = mock(() => Promise.resolve());
 
-      await expect(lock.withLock(fn, 1000)).rejects.toThrow(
+      await expect(lock.withLock(fn, 50)).rejects.toThrow(
         "Failed to acquire migration lock",
       );
       expect(fn).not.toHaveBeenCalled();
@@ -151,7 +151,7 @@ describe("MigrationLock", () => {
       locked = true;
 
       try {
-        await lock.acquire(1000);
+        await lock.acquire(50);
         expect(true).toBe(false);
       } catch (error: any) {
         expect(error.name).toBe("MigrationLockError");

@@ -17,6 +17,8 @@ import {
 } from "../errors";
 import { MigrationLock } from "./locking";
 
+const DOLLAR_QUOTE_TAG_PATTERN = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/;
+
 interface ParsedSqlMigration {
   up: string;
   down: string;
@@ -191,7 +193,7 @@ function splitSqlStatements(sql: string): string[] {
     }
 
     if (char === "$") {
-      const match = sql.slice(i).match(/^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/);
+      const match = sql.slice(i).match(DOLLAR_QUOTE_TAG_PATTERN);
       if (match) {
         dollarQuoteTag = match[0];
         i += dollarQuoteTag.length;
