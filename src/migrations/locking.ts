@@ -79,7 +79,8 @@ export class MigrationLock {
       `;
       return true;
     } catch (error) {
-      const isLockConflict = error instanceof Error && LOCK_CONFLICT_PATTERN.test(error.message);
+      const isLockConflict =
+        error instanceof Error && LOCK_CONFLICT_PATTERN.test(error.message);
       if (!isLockConflict) throw error;
       return false;
     }
