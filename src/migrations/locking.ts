@@ -5,6 +5,7 @@ type CountValue = number | bigint | string;
 
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_STALE_THRESHOLD_MS = 30 * 60 * 1000;
+const LOCK_CONFLICT_PATTERN = /unique|duplicate|constraint/i;
 
 export class MigrationLockError extends Error {
   public readonly isTimeout: boolean;
@@ -77,7 +78,9 @@ export class MigrationLock {
         INSERT INTO _prisma_migrations_lock (id) VALUES (1)
       `;
       return true;
-    } catch {
+    } catch (error) {
+      const isLockConflict = error instanceof Error && LOCK_CONFLICT_PATTERN.test(error.message);
+      if (!isLockConflict) throw error;
       return false;
     }
   }

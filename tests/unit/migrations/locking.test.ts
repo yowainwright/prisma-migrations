@@ -19,7 +19,7 @@ describe("MigrationLock", () => {
 
         if (queryString.includes("INSERT INTO _prisma_migrations_lock")) {
           if (locked) {
-            return Promise.reject(new Error("Lock already exists"));
+            return Promise.reject(new Error("UNIQUE constraint failed: _prisma_migrations_lock.id"));
           }
           locked = true;
         }
