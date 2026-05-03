@@ -71,8 +71,8 @@ export class MigrationLock {
   }
 
   private async tryAcquire(): Promise<boolean> {
-    await this.clearStaleLock();
     try {
+      await this.clearStaleLock();
       await this.prisma.$executeRaw`
         INSERT INTO _prisma_migrations_lock (id) VALUES (1)
       `;
