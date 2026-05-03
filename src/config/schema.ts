@@ -9,7 +9,9 @@ interface ConfigHooks {
 
 interface ValidatedConfig {
   migrationsDir?: string;
-  prismaClient?: unknown;
+  disableLocking?: boolean;
+  skipChecksumValidation?: boolean;
+  lockTimeout?: number;
   logLevel?: LogLevel;
   hooks?: ConfigHooks;
 }
@@ -26,8 +28,20 @@ export function validateConfig(config: unknown): ValidatedConfig {
     validated.migrationsDir = cfg.migrationsDir;
   }
 
-  if (cfg.prismaClient !== undefined) {
-    validated.prismaClient = cfg.prismaClient;
+  if (typeof cfg.disableLocking === "boolean") {
+    validated.disableLocking = cfg.disableLocking;
+  }
+
+  if (typeof cfg.skipChecksumValidation === "boolean") {
+    validated.skipChecksumValidation = cfg.skipChecksumValidation;
+  }
+
+  if (
+    typeof cfg.lockTimeout === "number" &&
+    Number.isSafeInteger(cfg.lockTimeout) &&
+    cfg.lockTimeout > 0
+  ) {
+    validated.lockTimeout = cfg.lockTimeout;
   }
 
   if (typeof cfg.logLevel === "string") {

@@ -17,6 +17,11 @@ class Logger {
   }
 
   set level(level: string) {
+    if (!isLogLevel(level)) {
+      throw new Error(
+        `Invalid log level "${level}". Expected one of: ${Object.keys(LOG_LEVELS).join(", ")}`,
+      );
+    }
     this.currentLevel = level as LogLevel;
   }
 
@@ -61,12 +66,22 @@ class Logger {
   }
 }
 
+function isLogLevel(level: string): level is LogLevel {
+  return level in LOG_LEVELS;
+}
+
+const envLogLevel = process.env.PRISMA_MIGRATIONS_LOG_LEVEL;
 let logLevel: LogLevel =
-  (process.env.PRISMA_MIGRATIONS_LOG_LEVEL as LogLevel) || "silent";
+  envLogLevel && isLogLevel(envLogLevel) ? envLogLevel : "silent";
 
 export const logger = new Logger(logLevel);
 
 export function setLogLevel(level: string) {
-  logLevel = level as LogLevel;
+  if (!isLogLevel(level)) {
+    throw new Error(
+      `Invalid log level "${level}". Expected one of: ${Object.keys(LOG_LEVELS).join(", ")}`,
+    );
+  }
+  logLevel = level;
   logger.level = level;
 }

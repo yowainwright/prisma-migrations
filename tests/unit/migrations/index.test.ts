@@ -20,6 +20,8 @@ describe("Migrations", () => {
       $executeRaw: mock(() => Promise.resolve(1)),
       $executeRawUnsafe: mock(() => Promise.resolve(1)),
       $queryRaw: mock(() => Promise.resolve([])),
+      $transaction: mock((fn) => fn(mockPrisma)),
+      $disconnect: mock(() => Promise.resolve()),
       $raw: mock((value: string) => value),
     };
 
@@ -97,6 +99,24 @@ ${downSql}
       const pending = await migrations.pending();
       expect(pending.length).toBe(1);
       expect(pending[0].id).toBe("003");
+    });
+
+    test("should recognize Prisma Migrate migration_name rows", async () => {
+      createMigration("001", "first");
+      createMigration("002", "second");
+
+      mockPrisma.$queryRaw = mock(() =>
+        Promise.resolve([
+          {
+            id: "91c65487-6ea6-4a3b-93c0-d46bdc5bd4c8",
+            migration_name: "001_first",
+          },
+        ]),
+      );
+
+      const pending = await migrations.pending();
+      expect(pending.length).toBe(1);
+      expect(pending[0].id).toBe("002");
     });
 
     test("should sort migrations by id", async () => {
@@ -185,9 +205,33 @@ ${downSql}
       mkdirSync(migrationDir, { recursive: true });
       writeFileSync(join(migrationDir, "migration.sql"), `SELECT 1;`);
 
-      await expect(migrations.up()).rejects.toThrow(
-        "missing up or down function",
+      await expect(migrations.up()).rejects.toThrow("Invalid migration format");
+    });
+
+    test("should reject zero steps", async () => {
+      createMigration("001", "first");
+
+      await expect(migrations.up(0)).rejects.toThrow(
+        "steps must be a positive integer",
       );
+    });
+
+    test("should not split semicolons inside strings or dollar quotes", async () => {
+      createMigration(
+        "001",
+        "function_body",
+        `CREATE FUNCTION test_fn() RETURNS void AS $$
+BEGIN
+  RAISE NOTICE 'hello; world';
+END;
+$$ LANGUAGE plpgsql;
+SELECT 'done; ok';`,
+        "SELECT 1;",
+      );
+
+      await migrations.up();
+
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -214,6 +258,14 @@ ${downSql}
       await migrations.down(1);
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+    });
+
+    test("should reject zero steps", async () => {
+      createMigration("001", "first");
+
+      await expect(migrations.down(0)).rejects.toThrow(
+        "steps must be a positive integer",
+      );
     });
 
     test("should throw error if migration file not found", async () => {

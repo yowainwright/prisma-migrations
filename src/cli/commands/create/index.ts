@@ -1,5 +1,5 @@
 import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { resolve } from "path";
 import { Prompt } from "../../../utils/prompts";
 import {
   generateMigrationId,
@@ -8,7 +8,10 @@ import {
   colors,
 } from "../../../utils";
 
-export async function create(name?: string) {
+export async function create(
+  name?: string,
+  config?: { migrationsDir?: string },
+) {
   let migrationName = name;
 
   if (!migrationName) {
@@ -34,11 +37,17 @@ export async function create(name?: string) {
   const spin = spinner("Creating migration...").start();
 
   try {
-    const migrationsDir = join(process.cwd(), "prisma", "migrations");
+    const migrationsDir = resolve(
+      process.cwd(),
+      config?.migrationsDir || "prisma/migrations",
+    );
     await mkdir(migrationsDir, { recursive: true });
 
     const timestamp = generateMigrationId();
-    const migrationDir = join(migrationsDir, `${timestamp}_${migrationName}`);
+    const migrationDir = resolve(
+      migrationsDir,
+      `${timestamp}_${migrationName}`,
+    );
 
     await mkdir(migrationDir, { recursive: true });
 
@@ -53,7 +62,7 @@ export async function create(name?: string) {
 
 `;
 
-    await writeFile(join(migrationDir, "migration.sql"), migrationContent);
+    await writeFile(resolve(migrationDir, "migration.sql"), migrationContent);
 
     spin.succeed("Migration created");
 
