@@ -7,7 +7,9 @@
       "devDependencies": {
         "@prisma/client": "^6.18.0",
         "@types/node": "^20.0.0",
+        "codependence": "^1.0.1",
         "oxlint": "1.73.0",
+        "pastoralist": "^1.12.8",
         "prettier": "3.6.2",
         "prisma": "^6.18.0",
         "turbo": "^2.5.8",
@@ -672,6 +674,8 @@
 
     "clsx": ["clsx@2.1.1", "", {}, "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA=="],
 
+    "codependence": ["codependence@1.0.1", "", { "bin": { "codependence": "dist/cli.js", "cdp": "dist/cli.js" } }, "sha512-penEMyPpyfkqThU67ey4mJAs6vX8Z3EI4A/fhrMkEk+9a+RZYgxhxAdq4vW5jjdwkBMR3CVvHkuavThPmfF/QQ=="],
+
     "collapse-white-space": ["collapse-white-space@2.1.0", "", {}, "sha512-loKTxY1zCOuG4j9f6EPnuyyYkf58RnhhWTvRoZEokgB+WbdXehfjFviyOVYkqzEWz1Q5kRiZdBYS5SwxbQYwzw=="],
 
     "color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
@@ -1123,6 +1127,8 @@
     "parse-latin": ["parse-latin@7.0.0", "", { "dependencies": { "@types/nlcst": "^2.0.0", "@types/unist": "^3.0.0", "nlcst-to-string": "^4.0.0", "unist-util-modify-children": "^4.0.0", "unist-util-visit-children": "^3.0.0", "vfile": "^6.0.0" } }, "sha512-mhHgobPPua5kZ98EF4HWiH167JWBfl4pvAIXXdbaVohtK7a6YBOy56kvhCqduqyo/f3yrHFWmqmiMg/BkBkYYQ=="],
 
     "parse5": ["parse5@7.3.0", "", { "dependencies": { "entities": "^6.0.0" } }, "sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw=="],
+
+    "pastoralist": ["pastoralist@1.12.8", "", { "bin": { "pastoralist": "dist/index.js", "pastoralist-setup-local-dev": "scripts/setup-local-dev.sh", "pastoralist-setup-skill": "scripts/setup-pastoralist-skill.sh" } }, "sha512-5w6rTXIpu43G9uLxipPnu6gHA4YCaJydXcB+Y/v6JxunFN2dvu6iMulRiNUQgTihP9kVoSnAzvYOE5Dn4cWWdA=="],
 
     "path-browserify": ["path-browserify@1.0.1", "", {}, "sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g=="],
 
