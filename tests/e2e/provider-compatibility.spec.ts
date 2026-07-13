@@ -2,54 +2,55 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { PrismaClient } from "@prisma/client";
-import { Migrations } from "../../src/migrations";
+import { Migrations } from "prisma-migrations";
+import { createProviderClient, type ProviderClient } from "./provider-client";
 
-let prisma: PrismaClient;
+let prisma: ProviderClient;
 let migrations: Migrations;
 let testDirectory: string;
 
-async function dropTestTables(): Promise<void> {
-  await prisma.$executeRawUnsafe("DROP TABLE IF EXISTS provider_widgets");
-  await prisma.$executeRawUnsafe(
+async function dropTestTables(client: ProviderClient): Promise<void> {
+  await client.$executeRawUnsafe("DROP TABLE IF EXISTS provider_widgets");
+  await client.$executeRawUnsafe(
     "DROP TABLE IF EXISTS _prisma_migrations_lock_v2",
   );
-  await prisma.$executeRawUnsafe("DROP TABLE IF EXISTS _prisma_migrations");
+  await client.$executeRawUnsafe("DROP TABLE IF EXISTS _prisma_migrations");
+}
+
+async function createMigrationFiles(directory: string): Promise<void> {
+  const migrationDirectory = join(directory, "001_create_widgets");
+  const upPath = join(migrationDirectory, "migration.sql");
+  const downPath = join(migrationDirectory, "down.sql");
+  const upSql =
+    "CREATE TABLE provider_widgets (id INTEGER PRIMARY KEY, name VARCHAR(50));";
+  const downSql = "DROP TABLE provider_widgets;";
+  const options = { recursive: true };
+  await mkdir(migrationDirectory, options);
+  await writeFile(upPath, upSql);
+  await writeFile(downPath, downSql);
 }
 
 beforeAll(async () => {
   testDirectory = await mkdtemp(join(tmpdir(), "prisma-provider-"));
-  const migrationDirectory = join(testDirectory, "001_create_widgets");
-  await mkdir(migrationDirectory, { recursive: true });
-  await writeFile(
-    join(migrationDirectory, "migration.sql"),
-    "CREATE TABLE provider_widgets (id INTEGER PRIMARY KEY, name VARCHAR(50));",
-  );
-  await writeFile(
-    join(migrationDirectory, "down.sql"),
-    "DROP TABLE provider_widgets;",
-  );
-  prisma = new PrismaClient();
-  await dropTestTables();
+  await createMigrationFiles(testDirectory);
+  prisma = await createProviderClient();
+  await dropTestTables(prisma);
   migrations = new Migrations(prisma, { migrationsDir: testDirectory });
 });
 
 afterAll(async () => {
-  await dropTestTables();
+  await dropTestTables(prisma);
   await prisma.$disconnect();
   await rm(testDirectory, { recursive: true, force: true });
 });
 
 describe("provider compatibility", () => {
-  test("bootstraps history and applies a migration", async () => {
+  test("applies and rolls back a migration", async () => {
     await expect(migrations.up()).resolves.toBe(1);
 
     const statuses = await migrations.status();
     expect(statuses).toHaveLength(1);
     expect(statuses[0].applied).toBe(true);
-  });
-
-  test("runs down.sql and retains rollback history", async () => {
     await expect(migrations.down()).resolves.toBe(1);
 
     const rows = await prisma.$queryRawUnsafe<

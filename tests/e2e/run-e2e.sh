@@ -5,12 +5,14 @@ ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT_DIR"
 
 cleanup() {
-  docker compose -f tests/e2e/docker-compose.yml down
+  docker compose -f tests/e2e/docker-compose.yml down || true
+  bun install --force --frozen-lockfile
 }
 
 trap cleanup EXIT
 
 bun run build-lib
+bun add --no-save --exact prisma@6.19.2 @prisma/client@6.19.2
 DATABASE_URL="postgresql://test:test@localhost:5434/prisma_migrations_test" \
   bunx prisma generate --schema tests/e2e/schema.prisma
 

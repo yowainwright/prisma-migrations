@@ -10,6 +10,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
+import { createHash } from "crypto";
 import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "child_process";
@@ -19,6 +20,53 @@ const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5438/codelab_migrate";
 
 let prisma: PrismaClient;
+
+const INITIAL_UP_SQL = `CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);\n`;
+const INITIAL_DOWN_SQL = "DROP TABLE users;\n";
+const POSTS_UP_SQL = `CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  user_id INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);\n`;
+const POSTS_DOWN_SQL = "DROP TABLE posts;\n";
+
+type ExistingChecksums = {
+  initial: string;
+  posts: string;
+};
+
+function writeExistingMigration(
+  name: string,
+  up: string,
+  down: string,
+): string {
+  const directory = path.join(MIGRATIONS_DIR, name);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(path.join(directory, "migration.sql"), up);
+  writeFileSync(path.join(directory, "down.sql"), down);
+  return createHash("sha256").update(up).digest("hex");
+}
+
+function setupExistingMigrationFiles(): ExistingChecksums {
+  const initial = writeExistingMigration(
+    "20240101000000_init",
+    INITIAL_UP_SQL,
+    INITIAL_DOWN_SQL,
+  );
+  const posts = writeExistingMigration(
+    "20240102000000_add_posts",
+    POSTS_UP_SQL,
+    POSTS_DOWN_SQL,
+  );
+  return { initial, posts };
+}
 
 /**
  * Helper function to run CLI commands
@@ -107,7 +155,9 @@ async function cleanDatabase(): Promise<void> {
  * Simulate existing Prisma migrations by creating the _prisma_migrations table
  * and adding some historical migrations
  */
-async function setupExistingPrismaDatabase(): Promise<void> {
+async function setupExistingPrismaDatabase(
+  checksums: ExistingChecksums,
+): Promise<void> {
   // Create existing tables (simulating Prisma migrate)
   await prisma.$executeRaw`
     CREATE TABLE IF NOT EXISTS users (
@@ -146,8 +196,8 @@ async function setupExistingPrismaDatabase(): Promise<void> {
   await prisma.$executeRaw`
     INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, applied_steps_count)
     VALUES
-      ('20240101000000', 'checksum1', NOW(), '20240101000000_init', 1),
-      ('20240102000000', 'checksum2', NOW(), '20240102000000_add_posts', 1)
+      ('20240101000000', ${checksums.initial}, NOW(), '20240101000000_init', 1),
+      ('20240102000000', ${checksums.posts}, NOW(), '20240102000000_add_posts', 1)
   `;
 
   // Add some test data
@@ -190,6 +240,7 @@ beforeAll(async () => {
 
   const schemaDir = path.join(TEST_DIR, "prisma");
   mkdirSync(schemaDir, { recursive: true });
+  const checksums = setupExistingMigrationFiles();
 
   writeFileSync(
     path.join(schemaDir, "schema.prisma"),
@@ -257,7 +308,7 @@ model Post {
 
   await waitForPostgres();
   await cleanDatabase();
-  await setupExistingPrismaDatabase();
+  await setupExistingPrismaDatabase(checksums);
 });
 
 afterAll(async () => {
@@ -376,7 +427,6 @@ describe("Code Lab: Migrate Existing Prisma Project", () => {
       const result = await runCLI(["applied"]);
 
       expect(result.code).toBe(0);
-      // Even without migration files, the database records show as applied
     });
 
     it("should show no pending migrations initially", async () => {

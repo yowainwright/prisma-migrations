@@ -1,0 +1,16 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+  runtime  = "bun"
+}
+
+model Widget {
+  id   Int    @id
+  name String
+
+  @@map("provider_widgets")
+}

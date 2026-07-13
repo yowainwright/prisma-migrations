@@ -68,6 +68,7 @@
     "@prisma/client": "^7.8.0",
     "@types/node": "^26.1.1",
     "codependence": "^1.0.1",
+    "eslint-plugin-legibility": "0.1.13",
     "oxlint": "1.73.0",
     "pastoralist": "^1.12.8",
     "prettier": "3.9.5",
@@ -76,8 +77,8 @@
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "@prisma/client": ">=7.8.0",
-    "prisma": ">=7.8.0"
+    "@prisma/client": ">=5.0.0 <8.0.0",
+    "prisma": ">=5.0.0 <8.0.0"
   },
   "engines": {
     "node": ">=20.19.0"

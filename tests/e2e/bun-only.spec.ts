@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
-import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
+import { rmSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "bun";
 
@@ -16,6 +16,16 @@ const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5436/bun_test";
 
 let prisma: PrismaClient;
+
+function fillMigration(name: string): void {
+  const migration = readdirSync(MIGRATIONS_DIR).find((entry) =>
+    entry.includes(name),
+  );
+  if (!migration) throw new Error(`Migration not found: ${name}`);
+  const directory = path.join(MIGRATIONS_DIR, migration);
+  writeFileSync(path.join(directory, "migration.sql"), "SELECT 1;\n");
+  writeFileSync(path.join(directory, "down.sql"), "SELECT 1;\n");
+}
 
 /**
  * Helper function to run CLI commands with Bun
@@ -210,6 +220,7 @@ describe("Bun-Only E2E", () => {
       expect(result.stdout).toContain("Created migration");
       expect(result.stdout).toContain("initial_migration");
       expect(existsSync(MIGRATIONS_DIR)).toBe(true);
+      fillMigration("initial_migration");
     });
 
     it("should create migrations with Bun", async () => {
@@ -217,6 +228,7 @@ describe("Bun-Only E2E", () => {
 
       expect(result.code).toBe(0);
       expect(result.stdout).toContain("add_bun_test_users");
+      fillMigration("add_bun_test_users");
     });
 
     it("should list pending migrations with Bun", async () => {
@@ -330,6 +342,7 @@ describe("Bun-Only E2E", () => {
     it("should execute TypeScript migration files directly with Bun", async () => {
       // Create a TypeScript migration
       await runCLI(["create", "typescript_test"]);
+      fillMigration("typescript_test");
 
       // Find the migration file
       expect(existsSync(MIGRATIONS_DIR)).toBe(true);

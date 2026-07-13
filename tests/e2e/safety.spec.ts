@@ -201,8 +201,7 @@ DROP TABLE nonexistent_table;`,
       expect(failureCount).toBe(1);
 
       const rejectedResult = results.find((r) => r.status === "rejected") as
-        | PromiseRejectedResult
-        | undefined;
+        PromiseRejectedResult | undefined;
 
       if (rejectedResult) {
         expect(rejectedResult.reason.message).toContain("migration lock");
