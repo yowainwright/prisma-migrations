@@ -6,6 +6,10 @@ interface PrismaPackageJson {
   version: string;
 }
 
+interface PrismaClientModule {
+  PrismaClient: new () => PrismaClient;
+}
+
 function getPrismaMajorVersion(): number {
   const require = createRequire(import.meta.url);
   const packageJson =
@@ -29,6 +33,7 @@ export async function createPrismaClient(
   if (factory) return factory();
   const majorVersion = getPrismaMajorVersion();
   assertDefaultClientSupported(majorVersion);
-  const clientModule = await import("@prisma/client");
-  return new clientModule.PrismaClient() as unknown as PrismaClient;
+  const clientModule =
+    (await import("@prisma/client")) as unknown as PrismaClientModule;
+  return new clientModule.PrismaClient();
 }
