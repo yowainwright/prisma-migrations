@@ -1,5 +1,6 @@
 import type { PrismaClient, MigrationFile } from "../../../types";
 import { Migrations } from "../../../migrations";
+import type { MigrationsOptions } from "../../../migrations";
 import { logger } from "../../../logger";
 import { Prompt, type PromptChoice } from "../../../utils/prompts";
 import { spinner, createTable, colors } from "../../../utils";
@@ -73,7 +74,7 @@ export function createDefaultDependencies(): DownDependencies {
 export async function down(
   prisma: PrismaClient,
   steps: number = 1,
-  config?: { migrationsDir?: string },
+  config?: MigrationsOptions,
   interactive?: boolean,
 ) {
   const migrations = new Migrations(prisma, config);

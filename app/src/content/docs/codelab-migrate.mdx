@@ -10,6 +10,7 @@ This code lab shows you how to migrate an existing project using Prisma's native
 ## What You'll Learn
 
 By the end of this code lab, you'll know how to:
+
 - Integrate prisma-migrations into an existing Prisma project
 - Preserve your existing database schema and data
 - Add new migrations with rollback support
@@ -26,6 +27,7 @@ By the end of this code lab, you'll know how to:
 ## Scenario
 
 You have a running application with:
+
 - PostgreSQL database
 - Prisma ORM with existing migrations
 - Tables: `users` and `posts`
@@ -43,6 +45,7 @@ ls prisma/migrations
 ```
 
 You should see directories like:
+
 ```
 20240101000000_init/
 20240102000000_add_posts/
@@ -79,6 +82,7 @@ Your `package.json` should now include:
 ## Step 3: Use Existing Migrations Directory
 
 **Important**: prisma-migrations can work directly with your existing `prisma/migrations` directory. It supports both:
+
 - **SQL migrations** (`.sql` files) - Your existing Prisma migrations
 - **TypeScript migrations** (`.ts` files) - New migrations with rollback support
 
@@ -115,47 +119,32 @@ Now create a new migration with rollback support:
 npx prisma-migrations create add_comments_table
 ```
 
-This creates: `prisma/migrations/[timestamp]_add_comments_table/migration.ts`
+This creates `migration.sql` and `down.sql` in a new timestamped directory.
 
-**Note**: Your existing migrations are `.sql` files. New migrations are `.ts` files with `up()` and `down()` functions for rollback support. prisma-migrations handles both types automatically.
+Existing Prisma migrations may not have rollback files. New migrations include `down.sql`, so they can be rolled back safely.
 
-Edit the file:
+Edit `migration.sql`:
 
-```typescript
-import type { PrismaClient } from '@prisma/client';
+```sql
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-/**
- * Add comments table with rollback support
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`
-    CREATE TABLE comments (
-      id SERIAL PRIMARY KEY,
-      content TEXT NOT NULL,
-      post_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `;
+CREATE INDEX idx_comments_post_id ON comments(post_id);
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+```
 
-  await prisma.$executeRaw`
-    CREATE INDEX idx_comments_post_id ON comments(post_id)
-  `;
+Edit `down.sql`:
 
-  await prisma.$executeRaw`
-    CREATE INDEX idx_comments_user_id ON comments(user_id)
-  `;
-}
-
-/**
- * Rollback comments table
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS comments CASCADE`;
-}
+```sql
+DROP TABLE IF EXISTS comments CASCADE;
 ```
 
 ## Step 7: Test the Migration
@@ -209,7 +198,7 @@ npx prisma-migrations create add_user_roles
 Edit the migration:
 
 ```typescript
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from "@prisma/client";
 
 /**
  * Add role column to users and set default values
@@ -319,24 +308,24 @@ npx prisma generate
 Now you can use the new tables:
 
 ```typescript
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function createComment() {
   const comment = await prisma.comment.create({
     data: {
-      content: 'Great post!',
+      content: "Great post!",
       postId: 1,
       userId: 1,
     },
   });
-  console.log('Created comment:', comment);
+  console.log("Created comment:", comment);
 }
 
 async function getUserWithComments() {
   const user = await prisma.user.findFirst({
-    where: { role: 'admin' },
+    where: { role: "admin" },
     include: {
       posts: {
         include: {
@@ -345,7 +334,7 @@ async function getUserWithComments() {
       },
     },
   });
-  console.log('User with comments:', user);
+  console.log("User with comments:", user);
 }
 ```
 
@@ -371,16 +360,19 @@ Update your deployment scripts:
 For production deployments:
 
 1. **Test in staging first**:
+
    ```bash
    npx prisma-migrations up
    ```
 
 2. **Create a backup**:
+
    ```bash
    pg_dump your_db > backup_$(date +%Y%m%d).sql
    ```
 
 3. **Run migrations**:
+
    ```bash
    npx prisma-migrations up
    ```
@@ -425,6 +417,7 @@ Recommended approach:
 ### Version Control
 
 Add to `.gitignore`:
+
 ```
 node_modules/
 .env
@@ -432,6 +425,7 @@ dist/
 ```
 
 **Do commit**:
+
 ```
 migrations/
 .prisma-migrationsrc.json

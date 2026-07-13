@@ -56,7 +56,10 @@ function validateSourcePackage(cwd: string): ValidationResult {
     if (!schema.includes("output")) {
       result.warnings.push("Prisma generator missing custom output path");
       result.warnings.push("  Run: prisma-migrations setup-source");
-    } else if (schema.includes("../src/generated/client")) {
+    } else if (
+      schema.includes("../src/generated/client") ||
+      schema.includes("../src/generated/prisma")
+    ) {
       result.info.push("✓ Custom output configured");
     }
   }
@@ -85,8 +88,11 @@ function validateSourcePackage(cwd: string): ValidationResult {
     result.info.push("✓ Package exports configured");
   }
 
-  const generatedPath = join(cwd, "src", "generated", "client");
-  if (!existsSync(generatedPath)) {
+  const legacyGeneratedPath = join(cwd, "src", "generated", "client");
+  const generatedPath = join(cwd, "src", "generated", "prisma");
+  const hasGeneratedClient =
+    existsSync(legacyGeneratedPath) || existsSync(generatedPath);
+  if (!hasGeneratedClient) {
     result.warnings.push("Generated client not found");
     result.warnings.push("  Run: prisma generate");
   } else {

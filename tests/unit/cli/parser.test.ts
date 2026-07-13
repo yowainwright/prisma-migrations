@@ -1,4 +1,4 @@
-import { describe, test, expect, spyOn, afterEach } from "bun:test";
+import { describe, test, expect, afterEach } from "bun:test";
 import { parseArgs, showHelp, showVersion } from "../../../src/cli/parser";
 
 describe("parseArgs", () => {

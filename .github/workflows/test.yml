@@ -7,57 +7,29 @@ on:
     branches: [main, develop]
 
 jobs:
-  lint-and-typecheck:
+  quality:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Check formatting
-        run: bun run format:check
-
-      - name: Lint code
-        run: bun run lint
-
-      - name: Type check
-        run: bunx tsc --noEmit
-
-      - name: Check build
-        run: bun run build
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bunx tsc --noEmit
+      - run: bun run build
 
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build project
-        run: bun run build
-
-      - name: Generate Prisma client
-        run: bunx prisma generate || echo "Prisma schema not found, skipping generate"
-
-      - name: Run unit tests with coverage
-        run: bun run test:coverage
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - run: bun run test:coverage
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
@@ -65,94 +37,150 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
-  cli-smoke-test:
+  package-compatibility:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        prisma-version: ["5.22.0", "6.18.0", "7.8.0"]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build project
-        run: bun run build
-
-      - name: Test CLI functionality (basic smoke test)
+          node-version: 20.19.0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - run: bun run build-lib
+      - name: Install packed package
         run: |
-          # Test that CLI can be executed without errors
-          timeout 10s node dist/cli.js --help || true
+          expected_version=$(node -p "require('./package.json').version")
+          package_file=$(npm pack --pack-destination "$RUNNER_TEMP")
+          mkdir "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y
+          npm install "$RUNNER_TEMP/$package_file" \
+            "prisma@${{ matrix.prisma-version }}" \
+            "@prisma/client@${{ matrix.prisma-version }}"
+          node node_modules/prisma-migrations/dist/cli.js \
+            --version | grep "$expected_version"
+          node --input-type=module -e \
+            "import('prisma-migrations').then((value) => \
+            console.log(typeof value.Migrations))"
+      - name: Verify Prisma 7 configuration guard
+        if: matrix.prisma-version == '7.8.0'
+        run: |
+          cd "$RUNNER_TEMP/consumer"
+          if node node_modules/prisma-migrations/dist/cli.js status \
+            >output.log 2>&1; then
+            exit 1
+          fi
+          grep "Prisma 7 requires a generated client factory" output.log
+
+  provider-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        provider: [postgresql, mysql, sqlite]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: db
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -ptest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - name: Generate provider client
+        run: |
+          case "${{ matrix.provider }}" in
+            postgresql)
+              database_url="postgresql://test:test@localhost:5432/db"
+              ;;
+            mysql)
+              database_url="mysql://test:test@localhost:3306/db"
+              ;;
+            sqlite)
+              database_url="file:$RUNNER_TEMP/provider.db"
+              ;;
+          esac
+          DATABASE_URL="$database_url" bunx prisma generate \
+            --schema "tests/e2e/schema.${{ matrix.provider }}.prisma"
+          echo "DATABASE_URL=$database_url" >> "$GITHUB_ENV"
+      - name: Run provider test
+        run: >-
+          bun test tests/e2e/provider-compatibility.spec.ts
+          --timeout 120000
 
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build project
-        run: bun run build
-
-      - name: Generate Prisma Client for e2e tests
+          node-version: 20.19.0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - run: bun run build-lib
+      - name: Generate PostgreSQL client
+        env:
+          DATABASE_URL: >-
+            postgresql://test:test@localhost:5434/prisma_migrations_test
+        run: bunx prisma generate --schema tests/e2e/schema.prisma
+      - name: Start PostgreSQL containers
         run: |
-          mkdir -p prisma
-          cat > prisma/schema.prisma << 'EOF'
-          datasource db {
-            provider = "postgresql"
-            url      = env("DATABASE_URL")
-          }
-
-          generator client {
-            provider = "prisma-client-js"
-          }
-          EOF
-          bunx prisma generate
-
-      - name: Start all PostgreSQL containers
-        run: docker compose -f tests/e2e/docker-compose.yml up -d
-
+          docker compose -f tests/e2e/docker-compose.yml up -d \
+            postgres postgres-cli postgres-bun \
+            postgres-codelab-new postgres-codelab-migrate
       - name: Wait for PostgreSQL containers
         run: |
-          echo "Waiting for all PostgreSQL containers to be ready..."
-          for port in 5435 5436 5437 5438; do
-            echo "Checking port $port..."
-            for i in {1..60}; do
-              if pg_isready -h localhost -p $port -U test 2>/dev/null; then
-                echo "PostgreSQL on port $port is ready"
+          for port in 5434 5435 5436 5437 5438; do
+            for attempt in {1..60}; do
+              if pg_isready -h localhost -p "$port" -U test; then
                 break
               fi
-              if [ $i -eq 60 ]; then
-                echo "PostgreSQL on port $port failed to become ready"
+              if [ "$attempt" -eq 60 ]; then
                 exit 1
               fi
               sleep 1
             done
           done
-          echo "All PostgreSQL containers are ready"
-
-      - name: Run CLI e2e tests
-        run: bun test tests/e2e/cli-commands.spec.ts --timeout 120000
-
-      - name: Run Bun e2e tests
-        run: bun test tests/e2e/bun-only.spec.ts --timeout 120000
-
-      - name: Run new project codelab e2e tests
-        run: bun test tests/e2e/codelab-new-project.spec.ts --timeout 120000
-
-      - name: Run migrate codelab e2e tests
-        run: bun test tests/e2e/codelab-migrate-existing.spec.ts --timeout 120000
-
-      - name: Stop PostgreSQL containers
+      - name: Run end-to-end tests
+        run: |
+          bun test tests/e2e/cli-commands.spec.ts --timeout 120000
+          bun test tests/e2e/bun-only.spec.ts --timeout 120000
+          bun test tests/e2e/codelab-new-project.spec.ts --timeout 120000
+          bun test tests/e2e/codelab-migrate-existing.spec.ts --timeout 120000
+          bun test tests/e2e/prisma-wrapper-commands.spec.ts --timeout 120000
+          bun test tests/e2e/monorepo-commands.spec.ts --timeout 120000
+          bun test tests/e2e/safety.spec.ts --timeout 120000
+      - name: Stop containers
         if: always()
         run: docker compose -f tests/e2e/docker-compose.yml down

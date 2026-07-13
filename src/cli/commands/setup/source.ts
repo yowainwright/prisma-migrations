@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
+import { createRequire } from "module";
+import { dirname, join, relative, resolve } from "path";
 import { colors } from "../../../utils/colors";
 
 interface PackageJson {
@@ -23,84 +24,144 @@ function writePackageJson(cwd: string, pkg: PackageJson): void {
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 }
 
-function updatePrismaSchema(schemaPath: string): void {
-  if (!existsSync(schemaPath)) {
+function writeFileIfMissing(
+  path: string,
+  content: string,
+  label: string,
+): void {
+  if (existsSync(path)) {
+    console.log(colors.yellow(`  ${label} already exists - skipping`));
+    return;
+  }
+  writeFileSync(path, content);
+  console.log(colors.cyan(`  Created ${label}`));
+}
+
+interface SchemaUpdate {
+  schema: string;
+  provider: string;
+  output: string;
+}
+
+interface GeneratorSetup {
+  importPath: string;
+  supportsSingleton: boolean;
+}
+
+const GENERATOR_PATTERN = /generator\s+client\s*\{[^}]*\}/;
+const DATASOURCE_PATTERN = /(datasource\s+\w+\s*\{[^}]*\})/;
+const PROVIDER_PATTERN = /provider\s*=\s*"([^"]+)"/;
+const OUTPUT_PATTERN = /output\s*=\s*"([^"]+)"/;
+
+function getPrismaMajorVersion(cwd: string): number {
+  try {
+    const require = createRequire(join(cwd, "package.json"));
+    const packageJson = require("prisma/package.json") as Record<
+      string,
+      unknown
+    >;
+    return Number.parseInt(String(packageJson.version).split(".")[0], 10);
+  } catch {
+    return 6;
+  }
+}
+
+function defaultProvider(majorVersion: number): string {
+  if (majorVersion >= 7) return "prisma-client";
+  return "prisma-client-js";
+}
+
+function outputForProvider(provider: string): string {
+  if (provider === "prisma-client") return "../src/generated/prisma";
+  return "../src/generated/client";
+}
+
+function readSetting(block: string, pattern: RegExp, fallback: string): string {
+  const match = block.match(pattern);
+  if (!match) return fallback;
+  return match[1];
+}
+
+function addGenerator(schema: string, provider: string): SchemaUpdate {
+  if (!DATASOURCE_PATTERN.test(schema))
+    throw new Error("Prisma datasource not found");
+  const output = outputForProvider(provider);
+  const block = `generator client {\n  provider = "${provider}"\n  output = "${output}"\n}`;
+  const updated = schema.replace(DATASOURCE_PATTERN, `$1\n\n${block}`);
+  return { schema: updated, provider, output };
+}
+
+function updateGenerator(schema: string, block: string): SchemaUpdate {
+  const provider = readSetting(block, PROVIDER_PATTERN, "prisma-client-js");
+  const defaultOutput = outputForProvider(provider);
+  const output = readSetting(block, OUTPUT_PATTERN, defaultOutput);
+  if (OUTPUT_PATTERN.test(block)) return { schema, provider, output };
+  const updatedBlock = block.replace(/\}$/, `  output = "${output}"\n}`);
+  return { schema: schema.replace(block, updatedBlock), provider, output };
+}
+
+function configureSchema(schema: string, provider: string): SchemaUpdate {
+  const match = schema.match(GENERATOR_PATTERN);
+  if (!match) return addGenerator(schema, provider);
+  return updateGenerator(schema, match[0]);
+}
+
+function generatedImportPath(
+  schemaPath: string,
+  output: string,
+  provider: string,
+): string {
+  const dbDirectory = resolve(dirname(schemaPath), "../src/db");
+  const outputDirectory = resolve(dirname(schemaPath), output);
+  const relativePath = relative(dbDirectory, outputDirectory).replaceAll(
+    "\\",
+    "/",
+  );
+  const importPath = relativePath.startsWith(".")
+    ? relativePath
+    : `./${relativePath}`;
+  if (provider === "prisma-client") return `${importPath}/client`;
+  return importPath;
+}
+
+function updatePrismaSchema(schemaPath: string, cwd: string): GeneratorSetup {
+  if (!existsSync(schemaPath))
     throw new Error(`Prisma schema not found at ${schemaPath}`);
-  }
-
-  let schema = readFileSync(schemaPath, "utf-8");
-
-  // Check if generator client already exists
-  const hasGenerator = /generator\s+client\s*\{/.test(schema);
-
-  if (hasGenerator) {
-    // Update existing generator
-    const hasOutput = /output\s*=/.test(schema);
-    if (!hasOutput) {
-      schema = schema.replace(
-        /(generator\s+client\s*\{[^}]*)/,
-        '$1\n  output = "../src/generated/client"',
-      );
-      console.log(
-        colors.cyan("  Updated existing Prisma generator with custom output"),
-      );
-    } else {
-      console.log(
-        colors.yellow(
-          "  Prisma generator already has custom output - skipping",
-        ),
-      );
-    }
-  } else {
-    // Add generator
-    const generatorBlock = `
-generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/client"
-}
-`;
-    // Insert after datasource block
-    schema = schema.replace(
-      /(datasource\s+\w+\s*\{[^}]*\})/,
-      `$1\n${generatorBlock}`,
-    );
-    console.log(colors.cyan("  Added Prisma generator with custom output"));
-  }
-
-  writeFileSync(schemaPath, schema);
+  const schema = readFileSync(schemaPath, "utf-8");
+  const provider = defaultProvider(getPrismaMajorVersion(cwd));
+  const update = configureSchema(schema, provider);
+  writeFileSync(schemaPath, update.schema);
+  const importPath = generatedImportPath(
+    schemaPath,
+    update.output,
+    update.provider,
+  );
+  const supportsSingleton = update.provider !== "prisma-client";
+  return { importPath, supportsSingleton };
 }
 
-function createDbFiles(srcDir: string, packageName: string): void {
+function runtimeDbContent(setup: GeneratorSetup): string {
+  const exports = `export * from "${setup.importPath}";\n`;
+  if (!setup.supportsSingleton) return exports;
+  return `${exports}\nimport { PrismaClient } from "${setup.importPath}";\nexport const db = new PrismaClient();\n`;
+}
+
+function createDbFiles(srcDir: string, setup: GeneratorSetup): void {
   const dbDir = join(srcDir, "db");
 
   if (!existsSync(dbDir)) {
     mkdirSync(dbDir, { recursive: true });
   }
 
-  // Create types.ts (type-only exports)
   const typesPath = join(dbDir, "types.ts");
-  const typesContent = `// Auto-generated by prisma-migrations
-// Type-only exports - no runtime code
-// Other packages can import: import type * as Prisma from "${packageName}/db/types"
-export type * from '../generated/client';
-`;
+  const typesContent = `export type * from "${setup.importPath}";\n`;
 
-  writeFileSync(typesPath, typesContent);
-  console.log(colors.cyan("  Created src/db/types.ts"));
+  writeFileIfMissing(typesPath, typesContent, "src/db/types.ts");
 
-  // Create index.ts (runtime exports)
   const indexPath = join(dbDir, "index.ts");
-  const indexContent = `// Auto-generated by prisma-migrations
-// Runtime exports with singleton client
-export * from '../generated/client';
-export { PrismaClient } from '../generated/client';
+  const indexContent = runtimeDbContent(setup);
 
-import { PrismaClient } from '../generated/client';
-export const db = new PrismaClient();
-`;
-
-  writeFileSync(indexPath, indexContent);
-  console.log(colors.cyan("  Created src/db/index.ts"));
+  writeFileIfMissing(indexPath, indexContent, "src/db/index.ts");
 }
 
 function updatePackageJsonExports(
@@ -210,17 +271,15 @@ export async function setupSource(options: {
 
     console.log(colors.gray(`Package: ${colors.bold(pkg.name)}\n`));
 
-    // 2. Update Prisma schema
     const schemaPath = join(cwd, "prisma", "schema.prisma");
-    updatePrismaSchema(schemaPath);
+    const generatorSetup = updatePrismaSchema(schemaPath, cwd);
 
     if (!options.skipTypes) {
-      // 3. Create db files
       const srcDir = join(cwd, "src");
       if (!existsSync(srcDir)) {
         mkdirSync(srcDir, { recursive: true });
       }
-      createDbFiles(srcDir, pkg.name);
+      createDbFiles(srcDir, generatorSetup);
 
       // 4. Update package.json exports
       const updatedPkg = updatePackageJsonExports(pkg, pkg.name);

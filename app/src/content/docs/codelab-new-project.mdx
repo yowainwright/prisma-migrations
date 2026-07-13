@@ -10,6 +10,7 @@ This code lab walks you through setting up a new project with PostgreSQL, Prisma
 ## What You'll Build
 
 By the end of this code lab, you'll have:
+
 - A working Node.js project with PostgreSQL
 - Prisma ORM configured and connected
 - A migration system with rollback support
@@ -100,45 +101,29 @@ You should see output like:
 
 ```
 ✓ Created migration: 1234567890_initial_migration
-  Location: ./migrations/1234567890_initial_migration
+  Location: ./prisma/migrations/1234567890_initial_migration
 ```
 
-This creates your first migration file at `migrations/[timestamp]_initial_migration/migration.ts`.
+This creates `migration.sql` and `down.sql` inside the initial migration directory.
 
-## Step 5: Create Your First Migration - Users Table
+## Step 5: Write the Initial Migration - Users Table
 
-Create a migration for the users table:
+Open the generated `migration.sql` and add:
 
-```bash
-npx prisma-migrations create create_users_table
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
-This creates a new migration directory. Open the `migration.ts` file and add:
+Open `down.sql` and add:
 
-```typescript
-import type { PrismaClient } from '@prisma/client';
-
-/**
- * Create users table
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
-
-/**
- * Drop users table
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users CASCADE`;
-}
+```sql
+DROP TABLE IF EXISTS users CASCADE;
 ```
 
 ## Step 6: Create Second Migration - Posts Table
@@ -149,39 +134,27 @@ Create another migration for posts:
 npx prisma-migrations create create_posts_table
 ```
 
-Edit the new `migration.ts` file:
+Put the forward change in the new `migration.sql`:
 
-```typescript
-import type { PrismaClient } from '@prisma/client';
+```sql
+CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  published BOOLEAN DEFAULT false,
+  author_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-/**
- * Create posts table with foreign key to users
- */
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`
-    CREATE TABLE posts (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT,
-      published BOOLEAN DEFAULT false,
-      author_id INTEGER NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
-      FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `;
+CREATE INDEX idx_posts_author_id ON posts(author_id);
+```
 
-  await prisma.$executeRaw`
-    CREATE INDEX idx_posts_author_id ON posts(author_id)
-  `;
-}
+Put the rollback in `down.sql`:
 
-/**
- * Drop posts table
- */
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS posts CASCADE`;
-}
+```sql
+DROP TABLE IF EXISTS posts CASCADE;
 ```
 
 ## Step 7: Check Migration Status
@@ -192,7 +165,7 @@ Before running migrations, check what's pending:
 npx prisma-migrations pending
 ```
 
-You should see all three migrations listed (initial, users, and posts).
+You should see the initial users migration and the posts migration.
 
 Check the overall status:
 
@@ -237,7 +210,7 @@ npx prisma generate
 Create a test script `test.ts`:
 
 ```typescript
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -252,7 +225,7 @@ async function main() {
   const users = await prisma.$queryRaw`
     SELECT * FROM users
   `;
-  console.log('Users:', users);
+  console.log("Users:", users);
 
   // Create a post
   const [user] = await prisma.$queryRaw<Array<{ id: number }>>`
@@ -270,7 +243,7 @@ async function main() {
     FROM posts p
     JOIN users u ON p.author_id = u.id
   `;
-  console.log('Posts:', posts);
+  console.log("Posts:", posts);
 }
 
 main()
@@ -406,6 +379,7 @@ export async function down(prisma: PrismaClient): Promise<void> {
 ### Migration Fails Midway
 
 If a migration fails, check:
+
 1. Database connection is working
 2. SQL syntax is correct
 3. No conflicting constraints
@@ -414,6 +388,7 @@ If a migration fails, check:
 ### Rollback Doesn't Work
 
 Ensure your `down()` function properly reverses the `up()` function:
+
 - Drop tables created in `up()`
 - Remove columns added in `up()`
 - Delete data inserted in `up()`
@@ -431,6 +406,7 @@ Check your configuration in `.prisma-migrationsrc.json`:
 ## Summary
 
 You've successfully:
+
 - Set up a new project with Prisma and prisma-migrations
 - Created multiple migrations with relationships
 - Learned the full migration workflow (create, run, rollback)

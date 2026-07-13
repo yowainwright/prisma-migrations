@@ -1,389 +1,134 @@
 ---
 title: Writing Migrations
-description: Learn how to write effective database migrations with Prisma Migrations
+description: Write forward and rollback SQL migrations
 ---
 
-This guide covers how to write migrations using SQL with up/down sections.
+Each migration is a timestamped directory with forward and rollback SQL.
 
-## Migration File Structure
-
-Each migration is stored in its own directory with a `migration.sql` file:
-
-```bash
+```text
 prisma/migrations/
-└── [timestamp]_migration_name/
-    └── migration.sql
+└── 20240101000000_add_users/
+    ├── migration.sql
+    └── down.sql
 ```
 
-The timestamp format is the same as Prisma's default: `20240101000000_migration_name`
+The directory name must match `<numeric-id>_<name>`. IDs must be unique.
 
-## Basic Migration Format
+## Forward SQL
 
-Each SQL file contains two sections separated by marker comments:
+Put only forward changes in `migration.sql`.
 
 ```sql
--- Migration: Up
--- This section runs when you do: npx prisma-migrations up
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Migration: Down
--- This section runs when you do: npx prisma-migrations down
+CREATE INDEX idx_users_created_at ON users(created_at);
+```
+
+## Rollback SQL
+
+Put the inverse operation in `down.sql`.
+
+```sql
+DROP INDEX IF EXISTS idx_users_created_at;
 DROP TABLE IF EXISTS users;
 ```
 
-**Important:** The marker comments must be exactly:
-- `-- Migration: Up`
-- `-- Migration: Down`
+Rollback fails before changing history when `down.sql` is missing or empty.
+This prevents an irreversible migration from being marked as rolled back.
 
-## Common Migration Patterns
+## Common Patterns
 
-### Creating Tables
+### Add Columns
 
-```sql
--- Migration: Up
-CREATE TABLE posts (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  content TEXT,
-  author_id INTEGER REFERENCES users(id),
-  published BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX idx_posts_author_id ON posts(author_id);
-CREATE INDEX idx_posts_published ON posts(published);
-
--- Migration: Down
-DROP TABLE IF EXISTS posts;
-```
-
-### Adding Columns
+`migration.sql`:
 
 ```sql
--- Migration: Up
 ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
 ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT true;
+```
 
--- Migration: Down
+`down.sql`:
+
+```sql
 ALTER TABLE users DROP COLUMN last_login;
 ALTER TABLE users DROP COLUMN is_active;
 ```
 
-### Modifying Columns
+### Data Migration
+
+`migration.sql`:
 
 ```sql
--- Migration: Up
-ALTER TABLE users ALTER COLUMN email TYPE TEXT;
-ALTER TABLE users ALTER COLUMN name SET NOT NULL;
-ALTER TABLE users ALTER COLUMN role SET DEFAULT 'member';
-
--- Migration: Down
-ALTER TABLE users ALTER COLUMN email TYPE VARCHAR(255);
-ALTER TABLE users ALTER COLUMN name DROP NOT NULL;
-ALTER TABLE users ALTER COLUMN role DROP DEFAULT;
+INSERT INTO roles (name) VALUES ('admin'), ('user'), ('guest');
 ```
 
-### Data Migrations
+`down.sql`:
 
 ```sql
--- Migration: Up
-INSERT INTO roles (name, permissions) VALUES
-  ('admin', '{"all": true}'),
-  ('user', '{"read": true}'),
-  ('guest', '{"read": true, "write": false}');
-
--- Migration: Down
 DELETE FROM roles WHERE name IN ('admin', 'user', 'guest');
 ```
 
-### Creating Indexes
+### Rename a Column
+
+`migration.sql`:
 
 ```sql
--- Migration: Up
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_created_at ON users(created_at);
-CREATE UNIQUE INDEX idx_users_username ON users(username);
-
--- Migration: Down
-DROP INDEX IF EXISTS idx_users_email;
-DROP INDEX IF EXISTS idx_users_created_at;
-DROP INDEX IF EXISTS idx_users_username;
+ALTER TABLE users RENAME COLUMN old_email TO email;
 ```
 
-### Renaming Columns
+`down.sql`:
 
 ```sql
--- Migration: Up
-ALTER TABLE users RENAME COLUMN old_email TO email;
-
--- Migration: Down
 ALTER TABLE users RENAME COLUMN email TO old_email;
 ```
 
-## Best Practices
+## Legacy Combined Files
 
-### 1. Always Write Down Migrations
+Older releases stored both directions in one `migration.sql` with these markers:
 
-Every `Up` section should have a corresponding `Down` that reverses it:
+- `-- Migration: Up`
+- `-- Migration: Down`
 
-```sql
--- ✓ Good
--- Migration: Up
-CREATE TABLE foo (id SERIAL PRIMARY KEY);
+The library still reads that format so existing projects can roll back.
 
--- Migration: Down
-DROP TABLE IF EXISTS foo;
-```
+Do not run `prisma migrate deploy` while combined files remain. Native Prisma
+treats the whole file as forward SQL and can execute the rollback section. The
+`prisma-migrations deploy` wrapper detects these files and stops first.
 
-```sql
--- ✗ Bad - Empty down section
--- Migration: Up
-CREATE TABLE foo (id SERIAL PRIMARY KEY);
+Convert a legacy migration by keeping the Up section in `migration.sql`, moving
+the Down section to `down.sql`, and removing both markers.
 
--- Migration: Down
--- Nothing here!
-```
+## Transactions
 
-### 2. Use Descriptive Migration Names
+Each migration runs in a Prisma transaction. DDL differs by provider:
 
-```bash
-# ✓ Good
-npx prisma-migrations create add_user_email_verification
-npx prisma-migrations create add_posts_published_at_column
+- PostgreSQL and SQLite can roll back most schema changes.
+- MySQL implicitly commits many DDL statements.
 
-# ✗ Bad
-npx prisma-migrations create update
-npx prisma-migrations create changes
-```
+MySQL can leave partial schema changes after a failure. Inspect the database
+before retrying. Test both directions against the production provider.
 
-### 3. Keep Migrations Focused
+## Applied Migrations
 
-Each migration should do one logical thing:
+Do not edit an applied `migration.sql`. Its checksum is stored in
+`_prisma_migrations`, and later commands reject modified history. Create a new
+migration for corrective changes.
+
+## Commands
 
 ```bash
-# ✓ Good - Separate migrations
-npx prisma-migrations create add_users_table
-npx prisma-migrations create add_posts_table
-npx prisma-migrations create add_users_last_login
-
-# ✗ Bad - Too much in one migration
-npx prisma-migrations create add_all_tables_and_columns
-```
-
-### 4. Test Both Directions
-
-Always test both up and down:
-
-```bash
-# Test up
+npx prisma-migrations create add_users
 npx prisma-migrations up
-
-# Verify changes
-psql -d mydb -c "\d users"
-
-# Test down
 npx prisma-migrations down
-
-# Verify rollback worked
-psql -d mydb -c "\d users"
-
-# Test up again
-npx prisma-migrations up
+npx prisma-migrations status
 ```
-
-### 5. Use IF EXISTS/IF NOT EXISTS
-
-Make migrations more resilient:
-
-```sql
--- Migration: Up
-CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY
-);
-
--- Migration: Down
-DROP TABLE IF EXISTS users;
-```
-
-## Multi-Step Data Migrations
-
-When you need to transform data, break it into steps:
-
-```sql
--- Migration: Up
--- Step 1: Add new column
-ALTER TABLE users ADD COLUMN full_name VARCHAR(255);
-
--- Step 2: Populate from existing data
-UPDATE users SET full_name = first_name || ' ' || last_name;
-
--- Step 3: Make it required
-ALTER TABLE users ALTER COLUMN full_name SET NOT NULL;
-
--- Step 4: Drop old columns
-ALTER TABLE users DROP COLUMN first_name;
-ALTER TABLE users DROP COLUMN last_name;
-
--- Migration: Down
--- Reverse all steps
-ALTER TABLE users ADD COLUMN first_name VARCHAR(255);
-ALTER TABLE users ADD COLUMN last_name VARCHAR(255);
-
-UPDATE users
-SET first_name = split_part(full_name, ' ', 1),
-    last_name = split_part(full_name, ' ', 2);
-
-ALTER TABLE users DROP COLUMN full_name;
-```
-
-## Database-Specific Features
-
-### PostgreSQL
-
-**JSON columns:**
-```sql
--- Migration: Up
-ALTER TABLE users ADD COLUMN metadata JSONB DEFAULT '{}';
-CREATE INDEX idx_users_metadata ON users USING GIN(metadata);
-
--- Migration: Down
-DROP INDEX IF EXISTS idx_users_metadata;
-ALTER TABLE users DROP COLUMN metadata;
-```
-
-**Arrays:**
-```sql
--- Migration: Up
-ALTER TABLE users ADD COLUMN tags TEXT[] DEFAULT ARRAY[]::TEXT[];
-
--- Migration: Down
-ALTER TABLE users DROP COLUMN tags;
-```
-
-**Full-text search:**
-```sql
--- Migration: Up
-ALTER TABLE posts ADD COLUMN search_vector TSVECTOR;
-CREATE INDEX idx_posts_search ON posts USING GIN(search_vector);
-
-UPDATE posts SET search_vector = to_tsvector('english', title || ' ' || content);
-
--- Migration: Down
-DROP INDEX IF EXISTS idx_posts_search;
-ALTER TABLE posts DROP COLUMN search_vector;
-```
-
-### MySQL
-
-**JSON columns:**
-```sql
--- Migration: Up
-ALTER TABLE users ADD COLUMN metadata JSON;
-
--- Migration: Down
-ALTER TABLE users DROP COLUMN metadata;
-```
-
-**Fulltext indexes:**
-```sql
--- Migration: Up
-ALTER TABLE posts ADD FULLTEXT INDEX idx_posts_content (content);
-
--- Migration: Down
-DROP INDEX idx_posts_content ON posts;
-```
-
-### SQLite
-
-**Adding columns (SQLite limitations):**
-```sql
--- Migration: Up
-ALTER TABLE users ADD COLUMN email TEXT;
-
--- Migration: Down
--- Note: SQLite doesn't support DROP COLUMN easily
--- You'd need to recreate the table without the column
-CREATE TABLE users_backup AS SELECT id, name FROM users;
-DROP TABLE users;
-ALTER TABLE users_backup RENAME TO users;
-```
-
-## Handling Schema and Data Together
-
-Sometimes you need to mix schema changes with data migrations:
-
-```sql
--- Migration: Up
--- 1. Add new column (nullable first)
-ALTER TABLE users ADD COLUMN status VARCHAR(50);
-
--- 2. Set default for existing rows
-UPDATE users SET status = 'active' WHERE is_active = true;
-UPDATE users SET status = 'inactive' WHERE is_active = false;
-
--- 3. Make it required
-ALTER TABLE users ALTER COLUMN status SET NOT NULL;
-
--- 4. Drop old column
-ALTER TABLE users DROP COLUMN is_active;
-
--- Migration: Down
-ALTER TABLE users ADD COLUMN is_active BOOLEAN;
-UPDATE users SET is_active = (status = 'active');
-ALTER TABLE users DROP COLUMN status;
-```
-
-## Troubleshooting
-
-### Migration Failed Mid-Way
-
-If a migration fails partway through:
-
-1. Check your database state manually
-2. Fix the SQL in the migration file
-3. Either:
-   - Clean up partial changes manually and re-run
-   - Write a new migration to continue from current state
-
-### Testing Rollbacks
-
-Always test your down migrations in a staging environment first:
-
-```bash
-# In staging
-npx prisma-migrations up
-# Test the app
-npx prisma-migrations down
-# Verify rollback worked
-npx prisma-migrations up
-# Test again
-```
-
-### Syntax Errors
-
-If you get SQL syntax errors:
-- Check your SQL syntax for your specific database (PostgreSQL, MySQL, SQLite)
-- Test the SQL directly in your database client first
-- Make sure marker comments are exact: `-- Migration: Up` and `-- Migration: Down`
-
-### Reversing Complex Migrations
-
-Some operations are hard to reverse:
-- Dropping columns (data loss)
-- Complex data transformations
-
-For these, consider:
-- Backing up data before dropping
-- Documenting manual steps in comments
-- Testing extensively in staging
 
 ## Next Steps
 
-- [Installation & Setup](/docs/setup) - Get started with Prisma Migrations
-- [CLI Commands](/docs/api-reference#cli-commands) - Learn all available commands
-- [Code Labs](/docs/codelab-new-project) - Step-by-step tutorials
+- [Installation & Setup](/docs/setup)
+- [API Reference](/docs/api-reference)
+- [Production Deployment](/docs/deployment)

@@ -1,16 +1,41 @@
-import type { PrismaClient } from "../types";
+import { randomUUID } from "crypto";
 import { logger } from "../logger";
+import type { PrismaClient } from "../types";
 
 type CountValue = number | bigint | string;
+type AsyncResult<T> = Promise<T>;
+type BooleanResult = Promise<boolean>;
+type HeartbeatResult = Promise<Error | null>;
+type VoidResult = Promise<void>;
+type NumberResult = Promise<number>;
 
 const DEFAULT_TIMEOUT_MS = 30000;
-const DEFAULT_STALE_THRESHOLD_MS = 30 * 60 * 1000;
-const LOCK_CONFLICT_PATTERN = /unique|duplicate|constraint/i;
+const DEFAULT_LEASE_DURATION_MS = 30 * 60 * 1000;
+const MAX_RETRY_DELAY_MS = 1000;
+const MIN_HEARTBEAT_DELAY_MS = 10;
+const LOCK_CONFLICT_PATTERN = /unique|duplicate|constraint|23505|1062/i;
+
+function delay(durationMs: number): VoidResult {
+  return new Promise((resolve) => setTimeout(resolve, durationMs));
+}
+
+function toError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  return new Error(String(error));
+}
+
+function isLockConflict(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  let code = "";
+  if ("code" in error) code = String(error.code);
+  const details = `${code} ${error.message}`;
+  return LOCK_CONFLICT_PATTERN.test(details);
+}
 
 export class MigrationLockError extends Error {
   public readonly isTimeout: boolean;
 
-  constructor(message: string, isTimeout: boolean = false) {
+  constructor(message: string, isTimeout = false) {
     super(message);
     this.name = "MigrationLockError";
     this.isTimeout = isTimeout;
@@ -18,147 +43,193 @@ export class MigrationLockError extends Error {
 }
 
 export class MigrationLock {
-  private prisma: PrismaClient;
-  private lockAcquired: boolean = false;
-  private readonly staleLockThresholdMs: number;
+  private ensurePromise: VoidResult | null = null;
+  private ownerId: string | null = null;
+  private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTask: VoidResult | null = null;
+  private heartbeatError: Error | null = null;
+  private readonly leaseDurationMs: number;
 
   constructor(
-    prisma: PrismaClient,
-    staleLockThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS,
+    private readonly prisma: PrismaClient,
+    leaseDurationMs = DEFAULT_LEASE_DURATION_MS,
   ) {
-    this.prisma = prisma;
-    this.staleLockThresholdMs = staleLockThresholdMs;
+    this.leaseDurationMs = leaseDurationMs;
   }
 
-  private async ensureLockTable(): Promise<void> {
-    await this.prisma.$executeRaw`
-      CREATE TABLE IF NOT EXISTS _prisma_migrations_lock (
-        id INTEGER PRIMARY KEY,
-        locked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  private createLockTable(): NumberResult {
+    return this.prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS _prisma_migrations_lock_v2 (
+        id INTEGER NOT NULL PRIMARY KEY,
+        owner_id VARCHAR(36) NOT NULL,
+        locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL
       )
     `;
   }
 
-  private async clearStaleLock(): Promise<void> {
-    const staleThreshold = new Date(Date.now() - this.staleLockThresholdMs);
+  private async initializeLockTable(): VoidResult {
+    try {
+      await this.createLockTable();
+    } catch {
+      await delay(50);
+      await this.createLockTable();
+    }
+  }
+
+  private ensureLockTable(): VoidResult {
+    if (!this.ensurePromise) {
+      this.ensurePromise = this.initializeLockTable().catch((error) => {
+        this.ensurePromise = null;
+        throw error;
+      });
+    }
+    return this.ensurePromise;
+  }
+
+  private async clearExpiredLock(): VoidResult {
     await this.prisma.$executeRaw`
-      DELETE FROM _prisma_migrations_lock WHERE id = 1 AND locked_at < ${staleThreshold}
+      DELETE FROM _prisma_migrations_lock_v2
+      WHERE id = 1 AND expires_at < CURRENT_TIMESTAMP
     `;
   }
 
-  async acquire(timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<void> {
-    const startTime = Date.now();
-
-    logger.debug("Attempting to acquire migration lock...");
-    await this.ensureLockTable();
-
-    while (Date.now() - startTime < timeoutMs) {
-      const acquired = await this.tryAcquire();
-
-      if (acquired) {
-        this.lockAcquired = true;
-        logger.debug("Migration lock acquired successfully");
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      logger.debug("Lock not available, retrying...");
-    }
-
-    throw new MigrationLockError(
-      `Failed to acquire migration lock after ${timeoutMs}ms. Another migration may be in progress.`,
-      true,
-    );
-  }
-
-  private async tryAcquire(): Promise<boolean> {
+  private async tryAcquire(): BooleanResult {
+    await this.clearExpiredLock();
+    const ownerId = randomUUID();
+    const expiresAt = new Date(Date.now() + this.leaseDurationMs);
     try {
-      await this.clearStaleLock();
       await this.prisma.$executeRaw`
-        INSERT INTO _prisma_migrations_lock (id) VALUES (1)
+        INSERT INTO _prisma_migrations_lock_v2 (id, owner_id, expires_at)
+        VALUES (1, ${ownerId}, ${expiresAt})
       `;
+      this.ownerId = ownerId;
       return true;
     } catch (error) {
-      const isLockConflict =
-        error instanceof Error && LOCK_CONFLICT_PATTERN.test(error.message);
-      if (!isLockConflict) throw error;
-      return false;
-    }
-  }
-
-  async release(): Promise<void> {
-    if (!this.lockAcquired) {
-      logger.warn("Attempted to release lock that was not acquired");
-      return;
-    }
-
-    logger.debug("Releasing migration lock...");
-    await this.releaseTableLock();
-    this.lockAcquired = false;
-    logger.debug("Migration lock released");
-  }
-
-  private async releaseTableLock(): Promise<void> {
-    try {
-      await this.prisma.$executeRaw`
-        DELETE FROM _prisma_migrations_lock WHERE id = 1
-      `;
-    } catch (error) {
-      logger.error(`Failed to release migration lock: ${error}`);
+      if (isLockConflict(error)) return false;
       throw error;
     }
   }
 
-  async tryLock<T>(
-    fn: () => Promise<T>,
-  ): Promise<{ acquired: boolean; result?: T }> {
+  async acquire(timeoutMs = DEFAULT_TIMEOUT_MS): VoidResult {
+    const startedAt = Date.now();
     await this.ensureLockTable();
-    const acquired = await this.tryAcquire();
-
-    if (!acquired) {
-      logger.debug("Lock not available, skipping");
-      return { acquired: false };
+    while (Date.now() - startedAt < timeoutMs) {
+      const acquired = await this.tryAcquire();
+      if (acquired) return;
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, timeoutMs - elapsed);
+      const retryDelay = Math.min(MAX_RETRY_DELAY_MS, remaining);
+      await delay(retryDelay);
     }
+    const message =
+      `Failed to acquire migration lock after ${timeoutMs}ms. ` +
+      "Another migration may be in progress.";
+    throw new MigrationLockError(message, true);
+  }
 
-    this.lockAcquired = true;
-    logger.debug("Lock acquired");
+  private async renew(): VoidResult {
+    if (!this.ownerId) return;
+    const expiresAt = new Date(Date.now() + this.leaseDurationMs);
+    const updated = await this.prisma.$executeRaw`
+      UPDATE _prisma_migrations_lock_v2
+      SET expires_at = ${expiresAt}
+      WHERE id = 1 AND owner_id = ${this.ownerId}
+    `;
+    if (updated === 0) {
+      throw new MigrationLockError("Migration lock ownership was lost");
+    }
+  }
 
+  private scheduleHeartbeat(): void {
+    const leaseInterval = Math.floor(this.leaseDurationMs / 3);
+    const interval = Math.max(MIN_HEARTBEAT_DELAY_MS, leaseInterval);
+    this.heartbeatTimer = setTimeout(() => {
+      this.heartbeatTask = this.renew()
+        .catch((error) => {
+          this.heartbeatError = toError(error);
+        })
+        .finally(() => {
+          const shouldContinue = Boolean(this.ownerId) && !this.heartbeatError;
+          if (shouldContinue) this.scheduleHeartbeat();
+        });
+    }, interval);
+  }
+
+  private startHeartbeat(): void {
+    this.heartbeatError = null;
+    this.scheduleHeartbeat();
+  }
+
+  private async stopHeartbeat(): HeartbeatResult {
+    if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
+    this.heartbeatTimer = null;
+    if (this.heartbeatTask) await this.heartbeatTask;
+    this.heartbeatTask = null;
+    return this.heartbeatError;
+  }
+
+  async release(): VoidResult {
+    if (!this.ownerId) {
+      logger.warn("Attempted to release lock that was not acquired");
+      return;
+    }
+    const ownerId = this.ownerId;
+    this.ownerId = null;
+    await this.prisma.$executeRaw`
+      DELETE FROM _prisma_migrations_lock_v2
+      WHERE id = 1 AND owner_id = ${ownerId}
+    `;
+  }
+
+  private async runWithHeartbeat<T>(fn: () => AsyncResult<T>) {
+    this.startHeartbeat();
     try {
       const result = await fn();
-      return { acquired: true, result };
+      const heartbeatError = await this.stopHeartbeat();
+      if (heartbeatError) throw heartbeatError;
+      return result;
     } finally {
+      await this.stopHeartbeat();
       await this.release();
     }
   }
 
-  async withLock<T>(fn: () => Promise<T>, timeoutMs?: number): Promise<T> {
-    await this.acquire(timeoutMs);
-    try {
-      return await fn();
-    } finally {
-      await this.release();
-    }
-  }
-
-  async isLocked(): Promise<boolean> {
-    try {
-      await this.ensureLockTable();
-      const staleThreshold = new Date(Date.now() - this.staleLockThresholdMs);
-      const result = await this.prisma.$queryRaw<Array<{ count: CountValue }>>`
-        SELECT COUNT(*) as count FROM _prisma_migrations_lock WHERE id = 1 AND locked_at >= ${staleThreshold}
-      `;
-      return Number(result[0]?.count ?? 0) > 0;
-    } catch (error) {
-      logger.error(`Failed to check migration lock status: ${error}`);
-      return false;
-    }
-  }
-
-  async forceRelease(): Promise<void> {
-    logger.warn("Force releasing migration lock...");
+  async tryLock<T>(fn: () => AsyncResult<T>) {
     await this.ensureLockTable();
-    await this.releaseTableLock();
-    this.lockAcquired = false;
+    const acquired = await this.tryAcquire();
+    if (!acquired) return { acquired: false };
+    const result = await this.runWithHeartbeat(fn);
+    return { acquired: true, result };
+  }
+
+  async withLock<T>(
+    fn: () => AsyncResult<T>,
+    timeoutMs: number | undefined = undefined,
+  ) {
+    await this.acquire(timeoutMs);
+    return this.runWithHeartbeat(fn);
+  }
+
+  async isLocked(): BooleanResult {
+    await this.ensureLockTable();
+    await this.clearExpiredLock();
+    const result = await this.prisma.$queryRaw<Array<{ count: CountValue }>>`
+      SELECT COUNT(*) as count
+      FROM _prisma_migrations_lock_v2
+      WHERE id = 1 AND expires_at >= CURRENT_TIMESTAMP
+    `;
+    const firstRow = result[0];
+    if (!firstRow) return false;
+    return Number(firstRow.count) > 0;
+  }
+
+  async forceRelease(): VoidResult {
+    await this.ensureLockTable();
+    await this.prisma.$executeRaw`
+      DELETE FROM _prisma_migrations_lock_v2 WHERE id = 1
+    `;
+    this.ownerId = null;
     logger.info("Migration lock force released");
   }
 }
