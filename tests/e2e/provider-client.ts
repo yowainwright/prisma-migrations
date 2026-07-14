@@ -41,6 +41,7 @@ async function createMysqlAdapter(databaseUrl: string) {
     password,
     database,
     connectionLimit: 5,
+    allowPublicKeyRetrieval: true,
   };
   const adapter = new PrismaMariaDb(config);
   return adapter;
