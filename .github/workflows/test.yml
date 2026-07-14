@@ -169,7 +169,7 @@ jobs:
               database_url="postgresql://test:test@localhost:5432/db"
               ;;
             mysql)
-              database_url="mysql://test:test@localhost:3306/db"
+              database_url="mysql://test:test@127.0.0.1:3306/db"
               ;;
             sqlite)
               database_url="file:$RUNNER_TEMP/provider-$version.db"
