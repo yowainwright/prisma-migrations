@@ -14,10 +14,21 @@ interface PackageJson {
 }
 
 interface LinkTypesOptions {
-  cwd: string | undefined;
+  cwd?: string;
+  runInstall?: InstallCommand;
 }
 
 type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+interface InstallOptions {
+  cwd: string;
+  stdio: "pipe";
+}
+
+type InstallCommand = (
+  manager: PackageManager,
+  args: string[],
+  options: InstallOptions,
+) => unknown;
 
 function readPackageJson(cwd: string): PackageJson {
   const packagePath = join(cwd, "package.json");
@@ -101,9 +112,15 @@ function installArguments(manager: PackageManager): string[] {
   return ["install"];
 }
 
-function installDependencies(manager: PackageManager, cwd: string): void {
+function installDependencies(
+  manager: PackageManager,
+  cwd: string,
+  runInstall: InstallCommand,
+): void {
   try {
-    execFileSync(manager, installArguments(manager), { cwd, stdio: "pipe" });
+    const args = installArguments(manager);
+    const options: InstallOptions = { cwd, stdio: "pipe" };
+    runInstall(manager, args, options);
     console.log(colors.cyan("  Installed dependencies"));
   } catch {
     console.log(colors.yellow(`  Run '${manager} install' to finish linking`));
@@ -137,8 +154,9 @@ export async function linkTypes(
   const isWorkspace = isWorkspacePackage(sourcePackage, cwd);
   const version = dependencyVersion(isWorkspace);
   const added = addDependency(packageJson, sourcePackage, version);
+  const runInstall = options.runInstall ?? execFileSync;
   if (added) writePackageJson(cwd, packageJson);
-  if (added) installDependencies(detectPackageManager(cwd), cwd);
+  if (added) installDependencies(detectPackageManager(cwd), cwd, runInstall);
   console.log(colors.green(`Linked types from ${sourcePackage}`));
   console.log(`import type * as Prisma from "${sourcePackage}/db/types";`);
 }

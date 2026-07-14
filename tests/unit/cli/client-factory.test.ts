@@ -15,4 +15,12 @@ describe("createPrismaClient", () => {
 
     await expect(createPrismaClient(factory)).resolves.toBe(client);
   });
+
+  test("requires a client factory for Prisma 7", async () => {
+    const client = createPrismaClient();
+
+    await expect(client).rejects.toThrow(
+      "Prisma 7 requires a generated client factory",
+    );
+  });
 });
