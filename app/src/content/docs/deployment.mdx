@@ -8,8 +8,8 @@ description: "Deploy safely with multiple instances"
 When deploying multiple instances, use `upIfNotLocked()` to skip if another instance is migrating:
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const migrations = new Migrations(prisma);
@@ -33,19 +33,20 @@ First instance acquires lock and runs migrations. Others skip and start immediat
 
 ```typescript
 const migrations = new Migrations(prisma, {
-  lockTimeout: 120000  // 2 minutes (default: 30s)
+  lockTimeout: 120000,
+  lockLeaseDuration: 1800000,
 });
 
-await migrations.up();  // Waits for lock
+await migrations.up(); // Waits for lock
 ```
 
 ## Kubernetes
 
 ```typescript
 // server.ts
-import express from 'express';
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import express from "express";
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -54,7 +55,7 @@ async function main() {
   const migrations = new Migrations(prisma);
   await migrations.upIfNotLocked();
 
-  app.get('/ready', async (req, res) => {
+  app.get("/ready", async (req, res) => {
     const pending = await migrations.pending();
     if (pending.length > 0) {
       return res.status(503).json({ ready: false });
@@ -131,7 +132,7 @@ jobs:
 npx prisma-migrations lock check
 
 # Release stuck lock
-npx prisma-migrations lock release
+npx prisma-migrations lock release --force
 ```
 
 ```typescript
@@ -140,17 +141,26 @@ const isLocked = await migrations.checkLockStatus();
 await migrations.releaseLock();
 ```
 
+Locks are renewable, owner-scoped row leases. `lockLeaseDuration` controls recovery time after a process exits without releasing its lease.
+
+## Transaction Behavior
+
+Each migration runs inside a Prisma transaction. Database DDL rules still apply: MySQL implicitly commits many schema statements, so a failed migration can leave partial schema changes. Inspect the database before retrying any failed migration.
+
 ## Troubleshooting
 
 **All instances timeout:**
+
 - Use `upIfNotLocked()` instead of `up()`
 - Increase `lockTimeout` if migrations are slow
 
 **Lock never released:**
+
 ```bash
-npx prisma-migrations lock release
+npx prisma-migrations lock release --force
 ```
 
 **Slow deployments:**
+
 - Use `upIfNotLocked()` for instant skipping
 - Run migrations in pre-deployment job

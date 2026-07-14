@@ -1,28 +1,29 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Use docker compose (new CLI) or docker-compose (old CLI)
-DOCKER_COMPOSE="docker compose"
-if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
-    DOCKER_COMPOSE="docker-compose"
-fi
+ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
+cd "$ROOT_DIR"
 
-echo "Starting PostgreSQL in Docker..."
-$DOCKER_COMPOSE -f e2e/docker-compose.yml up -d
+cleanup() {
+  docker compose -f tests/e2e/docker-compose.yml down || true
+  bun install --force --frozen-lockfile
+}
 
-echo "Waiting for PostgreSQL to be ready..."
-sleep 5
+trap cleanup EXIT
 
-echo "Installing dependencies in e2e..."
-cd e2e
-bun install
-DATABASE_URL="postgresql://test:test@localhost:5434/prisma_migrations_test" bunx prisma generate --schema=schema.prisma
-cd ..
+bun run build-lib
+bun add --no-save --exact prisma@6.19.2 @prisma/client@6.19.2
+DATABASE_URL="postgresql://test:test@localhost:5434/prisma_migrations_test" \
+  bunx prisma generate --schema tests/e2e/schema.prisma
 
-echo "Running E2E tests..."
-bun test ./e2e/test.e2e.ts
+docker compose -f tests/e2e/docker-compose.yml up -d --wait \
+  postgres postgres-cli postgres-bun \
+  postgres-codelab-new postgres-codelab-migrate
 
-echo "Cleaning up..."
-$DOCKER_COMPOSE -f e2e/docker-compose.yml down -v
-
-echo "E2E tests complete!"
+bun test tests/e2e/cli-commands.spec.ts --timeout 120000
+bun test tests/e2e/bun-only.spec.ts --timeout 120000
+bun test tests/e2e/codelab-new-project.spec.ts --timeout 120000
+bun test tests/e2e/codelab-migrate-existing.spec.ts --timeout 120000
+bun test tests/e2e/prisma-wrapper-commands.spec.ts --timeout 120000
+bun test tests/e2e/monorepo-commands.spec.ts --timeout 120000
+bun test tests/e2e/safety.spec.ts --timeout 120000

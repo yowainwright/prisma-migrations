@@ -15,8 +15,7 @@ export async function init(config?: { migrationsDir?: string }) {
 
   await mkdir(migrationDir, { recursive: true });
 
-  const migrationContent = `-- Migration: Up
--- Add your forward migration SQL here
+  const migrationContent = `-- Add your forward migration SQL here
 -- This will be executed when running: prisma-migrations up
 -- Example:
 -- CREATE TABLE users (
@@ -26,8 +25,8 @@ export async function init(config?: { migrationsDir?: string }) {
 -- );
 
 
--- Migration: Down
--- Add your rollback migration SQL here
+`;
+  const rollbackContent = `-- Add your rollback migration SQL here
 -- This will be executed when running: prisma-migrations down
 -- Example:
 -- DROP TABLE IF EXISTS users;
@@ -35,10 +34,11 @@ export async function init(config?: { migrationsDir?: string }) {
 `;
 
   await writeFile(resolve(migrationDir, "migration.sql"), migrationContent);
+  await writeFile(resolve(migrationDir, "down.sql"), rollbackContent);
 
   console.log(
     colors.green(`\n✓ Created migration: ${timestamp}_${migrationName}`),
   );
   console.log(colors.gray(`  Location: ${migrationDir}`));
-  console.log(colors.gray(`  File: migration.sql`));
+  console.log(colors.gray(`  Files: migration.sql, down.sql`));
 }

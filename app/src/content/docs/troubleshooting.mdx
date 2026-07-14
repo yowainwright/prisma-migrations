@@ -5,7 +5,7 @@ description: Common issues and solutions for Prisma Migrations
 
 ## Migration Lock Issues
 
-Advisory locks prevent concurrent migration runs. If a migration process crashes, the lock can become stuck.
+An owner-scoped row lease prevents concurrent migration runs. Active migrations renew the lease; a crashed process stops renewing it and the lease expires.
 
 ### Check Lock Status
 
@@ -16,7 +16,7 @@ npx prisma-migrations lock check
 ### Release Stuck Lock
 
 ```bash
-npx prisma-migrations lock release
+npx prisma-migrations lock release --force
 ```
 
 Use `lock release` only when you're certain no other migration is running.
@@ -29,7 +29,7 @@ If you get "migration has been modified" errors, it means an applied migration f
 
 ```typescript
 const migrations = new Migrations(prisma, {
-  skipChecksumValidation: true
+  skipChecksumValidation: true,
 });
 ```
 
@@ -45,7 +45,7 @@ const result = await migrations.upIfNotLocked();
 if (result.ran) {
   console.log(`Applied ${result.count} migrations`);
 } else {
-  console.log(result.reason); // "locked" or "no_pending"
+  console.log(result.reason);
 }
 ```
 
@@ -55,7 +55,8 @@ For slow migrations, increase the lock timeout:
 
 ```typescript
 const migrations = new Migrations(prisma, {
-  lockTimeout: 120000  // 2 minutes (default: 30s)
+  lockTimeout: 120000,
+  lockLeaseDuration: 1800000,
 });
 ```
 
@@ -65,7 +66,7 @@ For unit tests where locking isn't needed:
 
 ```typescript
 const migrations = new Migrations(prisma, {
-  disableLocking: true  // Unit tests only
+  disableLocking: true, // Unit tests only
 });
 ```
 
@@ -85,7 +86,8 @@ If you get SQL syntax errors:
 
 - Check your SQL syntax for your specific database (PostgreSQL, MySQL, SQLite)
 - Test the SQL directly in your database client first
-- Make sure marker comments are exact: `-- Migration: Up` and `-- Migration: Down`
+- Put forward SQL in `migration.sql`
+- Put executable rollback SQL in `down.sql`
 
 ## Rollback Not Working
 
@@ -95,35 +97,14 @@ Some operations are difficult to reverse:
 - **Complex data transformations** - May not be perfectly reversible
 
 For these cases:
+
 - Back up data before dropping columns
 - Document manual recovery steps in comments
 - Test rollbacks extensively in staging
 
-## Database-Specific Issues
+## Database-Specific Transactions
 
-### PostgreSQL
-
-Advisory locks use `pg_advisory_lock`. If you see lock timeouts:
-
-```sql
--- Check active locks
-SELECT * FROM pg_locks WHERE locktype = 'advisory';
-
--- Force release (use with caution)
-SELECT pg_advisory_unlock_all();
-```
-
-### MySQL
-
-Advisory locks use `GET_LOCK()`. Check locks with:
-
-```sql
-SELECT * FROM performance_schema.metadata_locks;
-```
-
-### SQLite
-
-SQLite uses file-based locking. Ensure only one process accesses the database file during migrations.
+Prisma wraps each migration in a transaction, but DDL behavior is provider-specific. PostgreSQL and SQLite can roll back most schema changes. MySQL implicitly commits many DDL statements, so inspect and repair the database before retrying a failed migration.
 
 ## Common Error Messages
 

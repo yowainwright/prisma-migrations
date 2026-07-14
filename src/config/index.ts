@@ -1,54 +1,66 @@
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { pathToFileURL } from "url";
 import { validateConfig } from "./schema";
-import type { MigrationHooks } from "../migrations";
+import type { MigrationsConfig } from "./schema";
 
-export interface MigrationsConfig {
-  migrationsDir?: string;
-  disableLocking?: boolean;
-  skipChecksumValidation?: boolean;
-  lockTimeout?: number;
-  logLevel?: "silent" | "error" | "warn" | "info" | "debug" | "trace";
-  hooks?: MigrationHooks;
+export type { LogLevel, MigrationsConfig, PrismaClientFactory } from "./schema";
+
+const CONFIG_FILES = [
+  ".prisma-migrationsrc.json",
+  ".prisma-migrationsrc.js",
+  "prisma-migrations.config.js",
+  "package.json",
+];
+
+type ConfigResult = Promise<unknown | null>;
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
 }
 
-async function searchConfig(): Promise<Record<string, unknown> | null> {
-  const cwd = process.cwd();
-  const configFiles = [
-    ".prisma-migrationsrc.json",
-    ".prisma-migrationsrc.js",
-    "prisma-migrations.config.js",
-    "package.json",
-  ];
+async function readJsonConfig(filePath: string, fileName: string) {
+  const content = await readFile(filePath, "utf-8");
+  const parsed: unknown = JSON.parse(content);
+  const isPackage = fileName === "package.json";
+  if (!isPackage) return parsed;
+  const isObject = typeof parsed === "object" && parsed !== null;
+  if (!isObject) return null;
+  const packageJson = parsed as Record<string, unknown>;
+  return packageJson["prisma-migrations"] ?? null;
+}
 
-  for (const file of configFiles) {
-    const filePath = join(cwd, file);
-    if (!existsSync(filePath)) continue;
+async function readJavaScriptConfig(filePath: string) {
+  const url = pathToFileURL(filePath).href;
+  const module = await import(url);
+  return module.default ?? module;
+}
 
-    try {
-      if (file.endsWith(".json")) {
-        const content = await readFile(filePath, "utf-8");
-        const json = JSON.parse(content);
-        if (file === "package.json") {
-          return json["prisma-migrations"] || null;
-        }
-        return json;
-      }
+async function readConfigFile(filePath: string, fileName: string) {
+  const isJson = fileName.endsWith(".json");
+  if (isJson) return readJsonConfig(filePath, fileName);
+  return readJavaScriptConfig(filePath);
+}
 
-      if (file.endsWith(".js")) {
-        const mod = await import(filePath);
-        return mod.default || mod;
-      }
-    } catch {
-      continue;
-    }
+async function searchConfig(cwd: string): ConfigResult {
+  const found = CONFIG_FILES.find((fileName) => {
+    return existsSync(join(cwd, fileName));
+  });
+  if (!found) return null;
+  const filePath = join(cwd, found);
+  try {
+    return await readConfigFile(filePath, found);
+  } catch (error) {
+    const reason = toErrorMessage(error);
+    throw new Error(`Failed to load configuration from ${filePath}: ${reason}`);
   }
-
-  return null;
 }
 
-export async function loadConfig(): Promise<MigrationsConfig> {
-  const config = (await searchConfig()) || {};
-  return validateConfig(config) as MigrationsConfig;
+export async function loadConfig(
+  cwd = process.cwd(),
+): Promise<MigrationsConfig> {
+  const config = (await searchConfig(cwd)) ?? {};
+  return validateConfig(config);
 }

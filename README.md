@@ -8,12 +8,12 @@
 
 Adds `up`/`down` migrations, rollback, and programmatic API to Prisma. Compatible with Prisma 5, 6, and 7.
 
-| Feature | Prisma Migrate | This Tool |
-|---------|---------------|-----------|
-| Run migrations forward | Yes | Yes |
-| Rollback migrations | No | Yes |
-| Run from Node.js code | No | Yes |
-| Step-by-step control | No | Yes |
+| Feature                | Prisma Migrate | This Tool |
+| ---------------------- | -------------- | --------- |
+| Run migrations forward | Yes            | Yes       |
+| Rollback migrations    | No             | Yes       |
+| Run from Node.js code  | No             | Yes       |
+| Step-by-step control   | No             | Yes       |
 
 Uses Prisma's `_prisma_migrations` table. Works alongside `prisma migrate`.
 
@@ -36,16 +36,18 @@ npx prisma-migrations up
 npx prisma-migrations down
 ```
 
-Migration file (`prisma/migrations/[timestamp]_add_users_table/migration.sql`):
+Forward migration (`prisma/migrations/[timestamp]_add_users_table/migration.sql`):
 
 ```sql
--- Migration: Up
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL
 );
+```
 
--- Migration: Down
+Rollback (`prisma/migrations/[timestamp]_add_users_table/down.sql`):
+
+```sql
 DROP TABLE IF EXISTS users;
 ```
 
@@ -63,24 +65,36 @@ npx prisma-migrations reset --force   # Rollback all
 ## Programmatic API
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const migrations = new Migrations(prisma);
 
-await migrations.up();       // Run all pending
-await migrations.down();     // Rollback last
-await migrations.pending();  // Get pending list
+await migrations.up(); // Run all pending
+await migrations.down(); // Rollback last
+await migrations.pending(); // Get pending list
 
 await prisma.$disconnect();
 ```
 
 ## Production Safety
 
-- **Transactions**: Migrations run in database transactions with automatic rollback on failure
-- **Lock Protection**: Advisory locks prevent concurrent migration runs
+- **Transactions**: Prisma wraps each migration in a transaction.
+  DDL rollback still depends on the database provider.
+- **Lock Protection**: Owner-scoped database leases prevent concurrent runs.
 - **Checksum Validation**: Detects if applied migrations have been modified
+
+Prisma 7 CLI commands need a generated-client factory because each generated client has project-specific configuration:
+
+```javascript
+// prisma-migrations.config.js
+import { createDatabaseClient } from "./src/database.js";
+
+export default {
+  clientFactory: createDatabaseClient,
+};
+```
 
 For concurrent deployments:
 

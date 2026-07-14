@@ -1,5 +1,6 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 interface ParsedArgs {
   command?: string;
@@ -9,9 +10,15 @@ interface ParsedArgs {
 
 function getVersion(): string {
   try {
-    const packageJsonPath = join(__dirname, "../../package.json");
+    const moduleDirectory = dirname(fileURLToPath(import.meta.url));
+    const candidates = [
+      join(moduleDirectory, "../../package.json"),
+      join(moduleDirectory, "../package.json"),
+    ];
+    const packageJsonPath = candidates.find(existsSync);
+    if (!packageJsonPath) return "unknown";
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-    return packageJson.version;
+    return String(packageJson.version);
   } catch {
     return "unknown";
   }

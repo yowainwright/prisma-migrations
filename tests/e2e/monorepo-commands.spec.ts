@@ -173,6 +173,17 @@ describe("Monorepo Commands E2E", () => {
         expect(gitignore).toContain("dist/");
       }
     });
+
+    it("should preserve existing database modules", async () => {
+      const dbIndexPath = path.join(SOURCE_DIR, "src", "db", "index.ts");
+      const existingContent = "export const existing = true;\n";
+      writeFileSync(dbIndexPath, existingContent);
+
+      const result = await runCLI(["setup-source"], { cwd: SOURCE_DIR });
+
+      expect(result.code).toBe(0);
+      expect(readFileSync(dbIndexPath, "utf-8")).toBe(existingContent);
+    });
   });
 
   describe("link-types command", () => {
@@ -182,7 +193,7 @@ describe("Monorepo Commands E2E", () => {
       });
 
       expect(result.code).toBe(0);
-      expect(result.stdout).toContain("Types linked");
+      expect(result.stdout).toContain("Linked types");
 
       const pkgPath = path.join(CONSUMER_DIR, "package.json");
       const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));

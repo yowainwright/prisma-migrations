@@ -28,7 +28,8 @@ This creates a migration directory structure:
 ```bash
 prisma/migrations/
 └── [timestamp]_initial_migration/
-    └── migration.ts
+    ├── migration.sql
+    └── down.sql
 ```
 
 ### 2. Create a Migration
@@ -44,31 +45,27 @@ This creates:
 ```bash
 prisma/migrations/
 └── [timestamp]_add_users_table/
-    └── migration.ts
+    ├── migration.sql
+    └── down.sql
 ```
 
 ### 3. Write Your Migration
 
-Edit the generated migration file with TypeScript:
+Put forward SQL in `migration.sql`:
 
-```typescript
-// prisma/migrations/[timestamp]_add_users_table/migration.ts
-import type { PrismaClient } from 'prisma-migrations';
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
 
-export async function up(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-}
+Put rollback SQL in `down.sql`:
 
-export async function down(prisma: PrismaClient) {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
+```sql
+DROP TABLE IF EXISTS users;
 ```
 
 ### 4. Run Migrations
@@ -109,7 +106,8 @@ You can add Prisma Migrations to an existing project:
 ### Compatibility
 
 - Uses Prisma's standard `_prisma_migrations` table
-- Works with `prisma migrate` commands
+- New migrations work with `prisma migrate deploy`
+- Legacy combined up/down files must be converted before native Prisma deploy
 - No conflicts with existing migration workflows
 - Fully compatible with Prisma Client
 

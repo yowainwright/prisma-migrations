@@ -8,10 +8,11 @@ import { linkTypes } from "./commands/setup/link-types";
 import { validate } from "./commands/setup/validate";
 import { checkLock, releaseLock } from "./commands/lock";
 import { loadConfig } from "../config";
+import type { MigrationsConfig } from "../config";
 import { Migrations } from "../migrations";
 import { createPrismaClient } from "./client-factory";
-import { setLogLevel, logger } from "../logger";
-import type { MigrationFile, PrismaClient } from "../types";
+import { setLogLevel } from "../logger";
+import type { MigrationFile, MigrationStatus, PrismaClient } from "../types";
 import { MigrationError } from "../errors";
 import { colors } from "../utils/colors";
 import { Prompt } from "../utils/prompts";
@@ -24,11 +25,11 @@ console.log(
 
 function handleError(error: unknown) {
   if (error instanceof MigrationError) {
-    logger.error(error.format());
+    console.error(error.format());
   } else if (error instanceof Error) {
-    logger.error(error.message);
+    console.error(error.message);
   } else {
-    logger.error(String(error));
+    console.error(String(error));
   }
   process.exit(1);
 }
@@ -48,10 +49,23 @@ function parseStepsOption(value: unknown, defaultValue?: number) {
   return steps;
 }
 
+function showMigrationStatuses(statuses: MigrationStatus[]): void {
+  if (statuses.length === 0) {
+    console.log(colors.yellow("No migrations found"));
+    return;
+  }
+  statuses.forEach((status) => {
+    const marker = status.applied ? colors.green("[x]") : "[ ]";
+    const migration = status.migration;
+    console.log(`  ${marker} ${migration.id}_${migration.name}`);
+  });
+}
+
 async function withPrismaClient<T>(
+  config: MigrationsConfig,
   fn: (client: PrismaClient) => Promise<T>,
 ): Promise<T> {
-  const client = await createPrismaClient();
+  const client = await createPrismaClient(config.clientFactory);
 
   try {
     return await fn(client);
@@ -123,7 +137,7 @@ async function main() {
 
       case "up": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           if (parsed.options.dryRun) {
             const migrations = new Migrations(client, config);
             const steps = parseStepsOption(parsed.options.steps);
@@ -153,7 +167,7 @@ async function main() {
         const config = await loadRuntimeConfig();
         const steps = parseStepsOption(parsed.options.steps, 1);
         const interactive = parsed.options.interactive as boolean;
-        await withPrismaClient((client) =>
+        await withPrismaClient(config, (client) =>
           down(client, steps, config, interactive),
         );
         break;
@@ -161,16 +175,17 @@ async function main() {
 
       case "status": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
-          await migrations.status();
+          const statuses = await migrations.status();
+          showMigrationStatuses(statuses);
         });
         break;
       }
 
       case "pending": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
           const pending = await migrations.pending();
 
@@ -190,7 +205,7 @@ async function main() {
 
       case "applied": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
           const applied = await migrations.applied();
 
@@ -210,7 +225,7 @@ async function main() {
 
       case "latest": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
           const latest = await migrations.latest();
 
@@ -226,7 +241,7 @@ async function main() {
 
       case "reset": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
           const applied = await migrations.applied();
 
@@ -260,7 +275,7 @@ async function main() {
 
       case "fresh": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
 
           const shouldProceed =
@@ -292,7 +307,7 @@ async function main() {
 
       case "refresh": {
         const config = await loadRuntimeConfig();
-        await withPrismaClient(async (client) => {
+        await withPrismaClient(config, async (client) => {
           const migrations = new Migrations(client, config);
 
           const shouldProceed =
@@ -326,9 +341,11 @@ async function main() {
         await prisma.dev(parsed.args[0]);
         break;
 
-      case "deploy":
-        await prisma.deploy();
+      case "deploy": {
+        const config = await loadRuntimeConfig();
+        await prisma.deploy(config.migrationsDir);
         break;
+      }
 
       case "resolve":
         await prisma.resolve({
@@ -348,22 +365,23 @@ async function main() {
         break;
 
       case "lock": {
+        const config = await loadRuntimeConfig();
         const subcommand = parsed.args[0];
-        const exitCode = await withPrismaClient(async (client) => {
+        const exitCode = await withPrismaClient(config, async (client) => {
           const isCheckCommand = subcommand === "check";
           const isReleaseCommand = subcommand === "release";
 
           if (isCheckCommand) {
-            return await checkLock(client);
+            return await checkLock(client, config);
           }
 
           if (isReleaseCommand) {
             const force = parsed.options.force as boolean;
-            return await releaseLock(client, force);
+            return await releaseLock(client, force, config);
           }
 
-          logger.error(`Unknown lock subcommand: ${subcommand}`);
-          logger.info("Available subcommands: check, release");
+          console.error(`Unknown lock subcommand: ${subcommand}`);
+          console.error("Available subcommands: check, release");
           return 1;
         });
 

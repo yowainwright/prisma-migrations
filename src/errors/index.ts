@@ -53,7 +53,8 @@ export function createInvalidMigrationError(
 ): MigrationError {
   return new MigrationError(`Migration ${migrationId} is invalid: ${reason}`, [
     "Check that migration.sql exists in the migration directory",
-    "Ensure the file contains both '-- Migration: Up' and '-- Migration: Down' markers",
+    "Put forward SQL in migration.sql and rollback SQL in down.sql",
+    "Legacy combined files must contain valid Up and Down markers",
     "Verify the SQL syntax is correct",
   ]);
 }
@@ -103,9 +104,9 @@ export function createRollbackFailedError(
     `Rollback of ${migrationId} failed: ${error.message}`,
     [
       "The migration may have made irreversible changes",
-      "Check that the '-- Migration: Down' section has valid rollback SQL",
+      "Check that down.sql has valid rollback SQL",
       "You may need to manually fix the database state",
-      "Verify the SQL syntax in the down section is correct",
+      "Verify the rollback SQL is correct for your database provider",
     ],
   );
 }
@@ -148,8 +149,8 @@ export function createTransactionFailedError(
   return new MigrationError(
     `Transaction failed for migration ${migrationId}: ${error.message}`,
     [
-      "The migration was rolled back automatically",
-      "No changes were applied to the database",
+      "Inspect the database before retrying; DDL rollback depends on the provider",
+      "MySQL may retain schema changes even when the transaction fails",
       "Check the SQL syntax and fix the migration",
       "Review the error message above for details",
     ],

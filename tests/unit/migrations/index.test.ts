@@ -3,6 +3,7 @@ import { Migrations } from "../../../src/migrations";
 import type { PrismaClient } from "../../../src/types";
 import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
+import { generateChecksum } from "../../../src/utils";
 
 const testMigrationsDir = join(process.cwd(), "test-migrations");
 
@@ -54,6 +55,20 @@ ${upSql}
 ${downSql}
 `,
     );
+  };
+
+  const createPrismaMigration = (
+    id: string,
+    name: string,
+    upSql = "SELECT 1;",
+    downSql?: string,
+  ) => {
+    const migrationDir = join(testMigrationsDir, `${id}_${name}`);
+    mkdirSync(migrationDir, { recursive: true });
+    writeFileSync(join(migrationDir, "migration.sql"), upSql);
+    if (downSql !== undefined) {
+      writeFileSync(join(migrationDir, "down.sql"), downSql);
+    }
   };
 
   describe("constructor", () => {
@@ -175,6 +190,15 @@ ${downSql}
   });
 
   describe("up", () => {
+    test("should run a Prisma migration without marker comments", async () => {
+      createPrismaMigration("001", "first", "SELECT 1;");
+
+      const count = await migrations.up();
+
+      expect(count).toBe(1);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledTimes(1);
+    });
+
     test("should run all pending migrations", async () => {
       createMigration("001", "first", "SELECT 1;", "SELECT 1;");
       createMigration("002", "second", "SELECT 2;", "SELECT 2;");
@@ -198,14 +222,6 @@ ${downSql}
       await migrations.up();
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalled();
-    });
-
-    test("should throw error when migration format is invalid", async () => {
-      const migrationDir = join(testMigrationsDir, "001_missing_markers");
-      mkdirSync(migrationDir, { recursive: true });
-      writeFileSync(join(migrationDir, "migration.sql"), `SELECT 1;`);
-
-      await expect(migrations.up()).rejects.toThrow("Invalid migration format");
     });
 
     test("should reject zero steps", async () => {
@@ -236,6 +252,34 @@ SELECT 'done; ok';`,
   });
 
   describe("down", () => {
+    test("should execute a separate down.sql file", async () => {
+      createPrismaMigration("001", "first", "SELECT 1;", "SELECT 2;");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      const count = await migrations.down();
+
+      expect(count).toBe(1);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledTimes(1);
+    });
+
+    test("should reject an irreversible migration without changing history", async () => {
+      createPrismaMigration("001", "first", "SELECT 1;");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      await expect(migrations.down()).rejects.toThrow(
+        "does not have executable rollback SQL",
+      );
+    });
+
+    test("should reject an empty legacy down section", async () => {
+      createMigration("001", "first", "SELECT 1;", "-- no rollback");
+      mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
+
+      await expect(migrations.down()).rejects.toThrow(
+        "does not have executable rollback SQL",
+      );
+    });
+
     test("should rollback specified number of migrations", async () => {
       createMigration(
         "001",
@@ -250,14 +294,26 @@ SELECT 'done; ok';`,
       expect(count).toBe(1);
     });
 
-    test("should delete migration records", async () => {
+    test("should retain rollback history", async () => {
       createMigration("001", "first");
 
       mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
 
       await migrations.down(1);
 
-      expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+      const queries = mockPrisma.$executeRaw.mock.calls.map(([query]) =>
+        String(query),
+      );
+      expect(
+        queries.some((query) =>
+          query.includes("SET rolled_back_at = CURRENT_TIMESTAMP"),
+        ),
+      ).toBe(true);
+      expect(
+        queries.some((query) =>
+          query.includes("DELETE FROM _prisma_migrations WHERE"),
+        ),
+      ).toBe(false);
     });
 
     test("should reject zero steps", async () => {
@@ -367,6 +423,7 @@ SELECT 'done; ok';`,
     });
 
     test("should throw error if migration not found", async () => {
+      createMigration("001", "first");
       mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
 
       await expect(migrations.downTo("999")).rejects.toThrow(
@@ -376,6 +433,15 @@ SELECT 'done; ok';`,
   });
 
   describe("getAllMigrations", () => {
+    test("should reject duplicate migration IDs", async () => {
+      createPrismaMigration("001", "first");
+      createPrismaMigration("001", "second");
+
+      await expect(migrations.pending()).rejects.toThrow(
+        "Duplicate migration ID: 001",
+      );
+    });
+
     test("should ignore non-directory entries", async () => {
       createMigration("001", "first");
       writeFileSync(join(testMigrationsDir, "readme.txt"), "test");
@@ -489,17 +555,39 @@ SELECT 'done; ok';`,
   });
 
   describe("status", () => {
-    test("should display migration status", async () => {
+    test("should return migration status", async () => {
       createMigration("001", "first");
       createMigration("002", "second");
 
       mockPrisma.$queryRaw = mock(() => Promise.resolve([{ id: "001" }]));
 
-      await migrations.status();
+      const result = await migrations.status();
+
+      expect(result).toEqual([
+        { migration: expect.objectContaining({ id: "001" }), applied: true },
+        { migration: expect.objectContaining({ id: "002" }), applied: false },
+      ]);
     });
 
-    test("should display empty status when no migrations", async () => {
-      await migrations.status();
+    test("should return empty status when no migrations", async () => {
+      await expect(migrations.status()).resolves.toEqual([]);
+    });
+  });
+
+  describe("history bootstrap", () => {
+    test("should create Prisma migration history before applying", async () => {
+      createPrismaMigration("001", "first");
+
+      await migrations.up();
+
+      const queries = mockPrisma.$executeRaw.mock.calls.map(([query]) =>
+        String(query),
+      );
+      expect(
+        queries.some((query) =>
+          query.includes("CREATE TABLE IF NOT EXISTS _prisma_migrations"),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -521,6 +609,76 @@ SELECT 'done; ok';`,
       createMigration("001", "first");
 
       await noValidationMigrations.up();
+    });
+
+    test("should reject a changed applied migration", async () => {
+      createMigration("001", "first");
+      const rows = [{ id: "001", checksum: "invalid" }];
+      mockPrisma.$queryRaw = mock(() => Promise.resolve(rows));
+
+      const result = migrations.up();
+
+      await expect(result).rejects.toThrow(
+        "Migration 001 has been modified after being applied",
+      );
+    });
+
+    test("should accept an unchanged applied migration", async () => {
+      createMigration("001", "first");
+      const migrationPath = join(
+        testMigrationsDir,
+        "001_first",
+        "migration.sql",
+      );
+      const checksum = await generateChecksum(migrationPath);
+      const rows = [{ id: "001", checksum }];
+      mockPrisma.$queryRaw = mock(() => Promise.resolve(rows));
+
+      await expect(migrations.up()).resolves.toBe(0);
+    });
+  });
+
+  describe("history validation", () => {
+    test("should reject unresolved failed migrations", async () => {
+      createMigration("001", "first");
+      const rows = [
+        {
+          id: "uuid",
+          migration_name: "001_first",
+          finished_at: null,
+          rolled_back_at: null,
+        },
+      ];
+      mockPrisma.$queryRaw = mock(() => Promise.resolve(rows));
+
+      const result = migrations.pending();
+
+      await expect(result).rejects.toThrow(
+        "Unresolved failed migrations: 001_first",
+      );
+    });
+
+    test("should reject applied migrations missing from disk", async () => {
+      createMigration("001", "first");
+      const rows = [{ id: "999" }];
+      mockPrisma.$queryRaw = mock(() => Promise.resolve(rows));
+
+      const result = migrations.pending();
+
+      await expect(result).rejects.toThrow("Migration file not found for 999");
+    });
+
+    test("should reject migrations applied out of order", async () => {
+      createMigration("001", "first");
+      createMigration("002", "second");
+      const rows = [{ id: "002" }];
+      mockPrisma.$queryRaw = mock(() => Promise.resolve(rows));
+
+      const result = migrations.pending();
+
+      await expect(result).rejects.toThrow(
+        "Migration history is out of order: 002 is applied before 001",
+      );
     });
   });
 

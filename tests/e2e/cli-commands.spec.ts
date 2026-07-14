@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
 import { spawn } from "child_process";
-import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
+import { rmSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 
 const TEST_DIR = path.join(import.meta.dir, "cli-test");
@@ -27,6 +27,16 @@ const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5435/cli_test";
 
 let prisma: PrismaClient;
+
+function fillMigration(name: string): void {
+  const migration = readdirSync(MIGRATIONS_DIR).find((entry) => {
+    return entry.includes(name);
+  });
+  if (!migration) throw new Error(`Migration not found: ${name}`);
+  const directory = path.join(MIGRATIONS_DIR, migration);
+  writeFileSync(path.join(directory, "migration.sql"), "SELECT 1;\n");
+  writeFileSync(path.join(directory, "down.sql"), "SELECT 1;\n");
+}
 
 /**
  * Helper function to run CLI commands
@@ -171,19 +181,6 @@ generator client {
 
   await waitForPostgres();
   await cleanDatabase();
-
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS _prisma_migrations (
-      id VARCHAR(255) PRIMARY KEY,
-      checksum VARCHAR(64) NOT NULL,
-      finished_at TIMESTAMP WITH TIME ZONE,
-      migration_name VARCHAR(255) NOT NULL,
-      logs TEXT,
-      rolled_back_at TIMESTAMP WITH TIME ZONE,
-      started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-      applied_steps_count INTEGER NOT NULL DEFAULT 0
-    )
-  `;
 });
 
 afterAll(async () => {
@@ -204,6 +201,7 @@ describe("CLI Commands E2E", () => {
       expect(result.code).toBe(0);
       expect(result.stdout).toContain("initial_migration");
       expect(existsSync(MIGRATIONS_DIR)).toBe(true);
+      fillMigration("initial_migration");
     });
   });
 
@@ -213,6 +211,7 @@ describe("CLI Commands E2E", () => {
 
       expect(result.code).toBe(0);
       expect(result.stdout).toContain("add_users_table");
+      fillMigration("add_users_table");
     });
   });
 
@@ -230,6 +229,7 @@ describe("CLI Commands E2E", () => {
       const result = await runCLI(["status"]);
 
       expect(result.code).toBe(0);
+      expect(result.stdout).toContain("initial_migration");
     });
   });
 
@@ -258,6 +258,7 @@ describe("CLI Commands E2E", () => {
     it("should run migrations with --steps flag", async () => {
       // Create a new migration
       await runCLI(["create", "add_posts_table"]);
+      fillMigration("add_posts_table");
 
       const result = await runCLI(["up", "--steps", "1"]);
 
@@ -266,6 +267,7 @@ describe("CLI Commands E2E", () => {
 
     it("should show pending migrations with --dry-run flag without executing them", async () => {
       await runCLI(["create", "add_comments_table"]);
+      fillMigration("add_comments_table");
 
       const beforeMigrations = await prisma.$queryRaw<
         Array<{ migration_name: string }>

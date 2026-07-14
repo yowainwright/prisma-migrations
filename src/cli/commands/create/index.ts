@@ -51,18 +51,17 @@ export async function create(
 
     await mkdir(migrationDir, { recursive: true });
 
-    const migrationContent = `-- Migration: Up
--- Add your forward migration SQL here
+    const migrationContent = `-- Add your forward migration SQL here
 -- This will be executed when running: prisma-migrations up
 
-
--- Migration: Down
--- Add your rollback migration SQL here
+`;
+    const rollbackContent = `-- Add your rollback migration SQL here
 -- This will be executed when running: prisma-migrations down
 
 `;
 
     await writeFile(resolve(migrationDir, "migration.sql"), migrationContent);
+    await writeFile(resolve(migrationDir, "down.sql"), rollbackContent);
 
     spin.succeed("Migration created");
 

@@ -22,6 +22,7 @@ npx prisma-migrations init
 ```
 
 **Output:**
+
 ```bash
 ✓ Created migration: 1234567890_initial_migration
   Location: ./prisma/migrations/1234567890_initial_migration
@@ -38,9 +39,11 @@ npx prisma-migrations create add_users_table
 ```
 
 **Arguments:**
-- `name` (optional) - Migration name (kebab-case recommended)
+
+- `name` (optional) - Lowercase letters, numbers, and underscores
 
 **Output:**
+
 ```bash
 ✓ Created migration: 1234567890_add_users_table
   Location: ./prisma/migrations/1234567890_add_users_table
@@ -64,10 +67,13 @@ npx prisma-migrations up --interactive
 ```
 
 **Options:**
+
 - `--steps <number>` - Number of migrations to run
 - `--interactive` or `-i` - Interactive selection mode
+- `--dry-run` - List migrations without applying them
 
 **Output:**
+
 ```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
@@ -94,10 +100,12 @@ npx prisma-migrations down --interactive
 ```
 
 **Options:**
+
 - `--steps <number>` - Number of migrations to rollback (default: 1)
 - `--interactive` or `-i` - Interactive selection mode
 
 **Output:**
+
 ```bash
 ┌──────────┬──────────────────────────────────────────────────┐
 │ Status   │ Migrations                                       │
@@ -127,6 +135,7 @@ npx prisma-migrations pending
 ```
 
 **Output:**
+
 ```bash
 3 pending migration(s):
 
@@ -146,6 +155,7 @@ npx prisma-migrations applied
 ```
 
 **Output:**
+
 ```bash
 2 applied migration(s):
 
@@ -195,23 +205,6 @@ npx prisma-migrations refresh
 
 ---
 
-### `mcp`
-
-Start the MCP (Model Context Protocol) server for AI assistant integration.
-
-```bash
-npx prisma-migrations mcp
-```
-
-**Description:**
-Provides 15 tools for AI assistants to manage both data migrations and Prisma operations:
-- **Data migrations**: status, pending, applied, up, down, create, dry-run, reset, fresh, refresh
-- **Prisma operations**: migrate dev/deploy/resolve, db push, generate
-
-Use with Claude Desktop or other MCP-compatible AI assistants for AI-assisted database management.
-
----
-
 ### Global Options
 
 These options work with any command:
@@ -220,10 +213,25 @@ These options work with any command:
 - `--log-level <level>` - Set log level (silent, error, warn, info, debug, trace)
 
 **Example:**
+
 ```bash
 npx prisma-migrations up --verbose
 npx prisma-migrations --log-level debug up
 ```
+
+### Prisma 7 CLI Configuration
+
+Programmatic use accepts any compatible generated Prisma client. CLI database commands on Prisma 7 need a factory in `prisma-migrations.config.js`:
+
+```javascript
+import { createDatabaseClient } from "./src/database.js";
+
+export default {
+  clientFactory: createDatabaseClient,
+};
+```
+
+The CLI disconnects the returned client after the command finishes.
 
 ## Programmatic API
 
@@ -232,29 +240,33 @@ Use the migrations system from your Node.js/TypeScript code.
 ### Import
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 ```
 
 ### Constructor
 
 ```typescript
-new Migrations(prisma: PrismaClient, config?: MigrationsConfig)
+new Migrations(prisma: PrismaClient, options?: MigrationsOptions)
 ```
 
 **Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `prisma` | `PrismaClient` | Yes | Your Prisma Client instance |
-| `config` | `MigrationsConfig` | No | Optional configuration |
+| Parameter | Type                | Required | Description                 |
+| --------- | ------------------- | -------- | --------------------------- |
+| `prisma`  | `PrismaClient`      | Yes      | Your Prisma Client instance |
+| `options` | `MigrationsOptions` | No       | Optional migration behavior |
 
 **Config Options:**
 
 ```typescript
-interface MigrationsConfig {
-  migrationsDir?: string;  // Default: auto-discovered from ./prisma/migrations
-  logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+interface MigrationsOptions {
+  migrationsDir?: string;
+  disableLocking?: boolean;
+  skipChecksumValidation?: boolean;
+  lockTimeout?: number;
+  lockLeaseDuration?: number;
+  hooks?: MigrationHooks;
 }
 ```
 
@@ -263,8 +275,9 @@ interface MigrationsConfig {
 ```typescript
 const prisma = new PrismaClient();
 const migrations = new Migrations(prisma, {
-  migrationsDir: './database/migrations',
-  logLevel: 'info'
+  migrationsDir: "./database/migrations",
+  lockTimeout: 60_000,
+  lockLeaseDuration: 1_800_000,
 });
 ```
 
@@ -277,9 +290,11 @@ const migrations = new Migrations(prisma, {
 Run pending migrations.
 
 **Parameters:**
+
 - `steps` (optional) - Number of migrations to run. If omitted, runs all pending migrations.
 
 **Returns:**
+
 - `Promise<number>` - Number of migrations applied
 
 **Example:**
@@ -300,9 +315,11 @@ await migrations.up(3);
 Rollback migrations.
 
 **Parameters:**
+
 - `steps` (optional) - Number of migrations to rollback (default: 1)
 
 **Returns:**
+
 - `Promise<number>` - Number of migrations rolled back
 
 **Example:**
@@ -322,16 +339,18 @@ await migrations.down(3);
 Get list of pending migrations.
 
 **Returns:**
+
 - `Promise<MigrationFile[]>` - Array of pending migration objects
 
 **MigrationFile Interface:**
 
 ```typescript
 interface MigrationFile {
-  id: string;      // Migration ID (timestamp)
-  name: string;    // Migration name
-  path: string;    // Full path to migration file
-  fileType: 'ts' | 'sql';  // Migration file type
+  id: string;
+  name: string;
+  path: string;
+  downPath?: string;
+  format?: "prisma" | "legacy";
 }
 ```
 
@@ -340,7 +359,7 @@ interface MigrationFile {
 ```typescript
 const pending = await migrations.pending();
 console.log(`${pending.length} pending migrations:`);
-pending.forEach(m => console.log(`  ${m.id}_${m.name}`));
+pending.forEach((m) => console.log(`  ${m.id}_${m.name}`));
 ```
 
 ---
@@ -350,6 +369,7 @@ pending.forEach(m => console.log(`  ${m.id}_${m.name}`));
 Get list of applied migrations.
 
 **Returns:**
+
 - `Promise<MigrationFile[]>` - Array of applied migration objects
 
 **Example:**
@@ -366,6 +386,7 @@ console.log(`${applied.length} applied migrations`);
 Get the latest applied migration.
 
 **Returns:**
+
 - `Promise<MigrationFile | null>` - Latest migration or null if none applied
 
 **Example:**
@@ -379,14 +400,17 @@ if (latest) {
 
 ---
 
-#### `status(): Promise<void>`
+#### `status(): Promise<MigrationStatus[]>`
 
-Display migration status (logs to console).
+Return the applied state of every migration. The CLI formats this result for display.
 
 **Example:**
 
 ```typescript
-await migrations.status();
+const statuses = await migrations.status();
+statuses.forEach(({ migration, applied }) => {
+  console.log(applied, migration.name);
+});
 ```
 
 ---
@@ -396,6 +420,7 @@ await migrations.status();
 Rollback all migrations.
 
 **Returns:**
+
 - `Promise<number>` - Number of migrations rolled back
 
 **Example:**
@@ -412,6 +437,7 @@ console.log(`Rolled back ${count} migrations`);
 Rollback all migrations and re-run them.
 
 **Returns:**
+
 - `Promise<number>` - Number of migrations applied after reset
 
 **Example:**
@@ -427,6 +453,7 @@ await migrations.fresh();
 Alias for `fresh()` but returns detailed counts.
 
 **Returns:**
+
 - `Promise<{ down: number; up: number }>` - Number of migrations rolled back and reapplied
 
 **Example:**
@@ -439,8 +466,8 @@ console.log(`Rolled back ${result.down}, applied ${result.up}`);
 ## Complete Example
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 async function runMigrations() {
   const prisma = new PrismaClient();
@@ -461,7 +488,7 @@ async function runMigrations() {
       console.log(`Latest migration: ${latest.name}`);
     }
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error("Migration failed:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
@@ -478,8 +505,8 @@ runMigrations();
 Run migrations when your app starts:
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -502,8 +529,8 @@ bootstrap();
 Run migrations during deployment:
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 async function deploy() {
   const prisma = new PrismaClient();
@@ -514,15 +541,15 @@ async function deploy() {
     const pending = await migrations.pending();
 
     if (pending.length === 0) {
-      console.log('No migrations to run');
+      console.log("No migrations to run");
       return;
     }
 
     console.log(`Running ${pending.length} migrations...`);
     await migrations.up();
-    console.log('✓ Migrations completed successfully');
+    console.log("✓ Migrations completed successfully");
   } catch (error) {
-    console.error('✗ Migration failed:', error);
+    console.error("✗ Migration failed:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
@@ -537,8 +564,8 @@ deploy();
 Rollback with error handling:
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 async function rollbackLastMigration() {
   const prisma = new PrismaClient();
@@ -547,15 +574,15 @@ async function rollbackLastMigration() {
   try {
     const latest = await migrations.latest();
     if (!latest) {
-      console.log('No migrations to rollback');
+      console.log("No migrations to rollback");
       return;
     }
 
     console.log(`Rolling back: ${latest.name}`);
     await migrations.down();
-    console.log('✓ Rollback successful');
+    console.log("✓ Rollback successful");
   } catch (error) {
-    console.error('✗ Rollback failed:', error);
+    console.error("✗ Rollback failed:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
@@ -570,14 +597,14 @@ rollbackLastMigration();
 Fresh start for development:
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 async function resetDatabase() {
   const prisma = new PrismaClient();
   const migrations = new Migrations(prisma);
 
-  console.log('Resetting database...');
+  console.log("Resetting database...");
 
   // Rollback all migrations
   const rolled = await migrations.reset();
@@ -587,7 +614,7 @@ async function resetDatabase() {
   const applied = await migrations.up();
   console.log(`Applied ${applied} migrations`);
 
-  console.log('✓ Database reset complete');
+  console.log("✓ Database reset complete");
 
   await prisma.$disconnect();
 }
@@ -603,22 +630,12 @@ Prisma Migrations includes full TypeScript support with type safety:
 import type {
   PrismaClient,
   MigrationFile,
-  MigrationFunction,
-  MigrationsConfig
-} from 'prisma-migrations';
+  MigrationStatus,
+  MigrationsOptions,
+} from "prisma-migrations";
 
-// Type-safe migration functions
-export async function up(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`CREATE TABLE users (id SERIAL PRIMARY KEY)`;
-}
-
-export async function down(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-}
-
-// Type-safe configuration
-const config: MigrationsConfig = {
-  migrationsDir: './database/migrations',
-  logLevel: 'info'
+const config: MigrationsOptions = {
+  migrationsDir: "./database/migrations",
+  lockTimeout: 60_000,
 };
 ```

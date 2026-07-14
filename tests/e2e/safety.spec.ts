@@ -1,77 +1,51 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+} from "bun:test";
 import { PrismaClient } from "@prisma/client";
 import { Migrations } from "../../src/migrations";
-import { execSync } from "child_process";
 import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
 import { join } from "path";
 
 const testDir = join(process.cwd(), "test-safety-migrations");
-const prismaSchema = join(testDir, "schema.prisma");
 
 describe("Migration Safety Features", () => {
   let prisma: PrismaClient;
   let migrations: Migrations;
 
-  beforeAll(async () => {
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true });
-    }
+  async function resetTestState() {
+    if (existsSync(testDir)) rmSync(testDir, { recursive: true });
     mkdirSync(testDir, { recursive: true });
-
-    writeFileSync(
-      prismaSchema,
-      `datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-model _prisma_migrations {
-  id                    String   @id
-  checksum              String
-  finished_at           DateTime?
-  migration_name        String
-  logs                  String?
-  started_at            DateTime
-  applied_steps_count   Int
-}
-`,
-    );
-
-    process.env.DATABASE_URL =
-      "postgresql://postgres:postgres@localhost:5432/test_prisma_migrations";
-
-    execSync("bunx prisma generate --schema=" + prismaSchema, {
-      stdio: "ignore",
-    });
-
-    prisma = new PrismaClient();
-
-    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations_lock`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
-
-    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS _prisma_migrations (
-      id VARCHAR(255) PRIMARY KEY,
-      checksum VARCHAR(255) NOT NULL,
-      finished_at TIMESTAMP,
-      migration_name VARCHAR(255) NOT NULL,
-      logs TEXT,
-      started_at TIMESTAMP NOT NULL,
-      applied_steps_count INT NOT NULL
-    )`;
-
+    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations_lock_v2`;
+    await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
     migrations = new Migrations(prisma, {
       migrationsDir: testDir,
+      lockTimeout: 50,
     });
+  }
+
+  beforeAll(async () => {
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ||
+      "postgresql://test:test@localhost:5434/prisma_migrations_test";
+
+    prisma = new PrismaClient();
   });
+
+  beforeEach(resetTestState);
 
   afterAll(async () => {
     if (prisma) {
+      await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
+      await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
+      await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations_lock_v2`;
+      await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
       await prisma.$disconnect();
     }
     if (existsSync(testDir)) {
@@ -87,14 +61,8 @@ model _prisma_migrations {
   ) => {
     const migrationDir = join(testDir, `${id}_${name}`);
     mkdirSync(migrationDir, { recursive: true });
-    writeFileSync(
-      join(migrationDir, "migration.sql"),
-      `-- Migration: Up
-${upSql}
-
--- Migration: Down
-${downSql}`,
-    );
+    writeFileSync(join(migrationDir, "migration.sql"), upSql);
+    writeFileSync(join(migrationDir, "down.sql"), downSql);
   };
 
   describe("Transaction Support", () => {
@@ -169,9 +137,6 @@ DROP TABLE nonexistent_table;`,
         WHERE schemaname = 'public' AND tablename = 'posts'
       `;
       expect(tables.length).toBe(1);
-
-      await prisma.$executeRaw`DROP TABLE posts`;
-      await prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = '003'`;
     });
   });
 
@@ -181,30 +146,17 @@ DROP TABLE nonexistent_table;`,
       mkdirSync(migrationDir, { recursive: true });
       const migrationFile = join(migrationDir, "migration.sql");
 
-      writeFileSync(
-        migrationFile,
-        `-- Migration: Up
-CREATE TABLE users (id INT PRIMARY KEY);
-
--- Migration: Down
-DROP TABLE users;`,
-      );
+      writeFileSync(migrationFile, "CREATE TABLE users (id INT PRIMARY KEY);");
+      writeFileSync(join(migrationDir, "down.sql"), "DROP TABLE users;");
 
       await migrations.up();
 
       writeFileSync(
         migrationFile,
-        `-- Migration: Up
-CREATE TABLE users (id INT PRIMARY KEY, email VARCHAR(255));
-
--- Migration: Down
-DROP TABLE users;`,
+        "CREATE TABLE users (id INT PRIMARY KEY, email VARCHAR(255));",
       );
 
       await expect(migrations.up()).rejects.toThrow("has been modified");
-
-      await prisma.$executeRaw`DROP TABLE users`;
-      await prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = '004'`;
     });
 
     test("should allow running new migrations when checksums are valid", async () => {
@@ -229,7 +181,7 @@ DROP TABLE users;`,
       createMigration(
         "006",
         "concurrent_test",
-        "CREATE TABLE users (id INT PRIMARY KEY);",
+        "SELECT pg_sleep(0.15); CREATE TABLE users (id INT PRIMARY KEY);",
         "DROP TABLE users;",
       );
 
@@ -249,8 +201,7 @@ DROP TABLE users;`,
       expect(failureCount).toBe(1);
 
       const rejectedResult = results.find((r) => r.status === "rejected") as
-        | PromiseRejectedResult
-        | undefined;
+        PromiseRejectedResult | undefined;
 
       if (rejectedResult) {
         expect(rejectedResult.reason.message).toContain("migration lock");
@@ -266,7 +217,7 @@ DROP TABLE users;`,
       createMigration(
         "011",
         "concurrent_skip_test",
-        "CREATE TABLE posts (id INT PRIMARY KEY);",
+        "SELECT pg_sleep(0.15); CREATE TABLE posts (id INT PRIMARY KEY);",
         "DROP TABLE posts;",
       );
 
@@ -335,6 +286,9 @@ INSERT INTO users VALUES (1);`,
       );
 
       await expect(migrations.up()).rejects.toThrow();
+      rmSync(join(testDir, "009_failing_migration_lock_test"), {
+        recursive: true,
+      });
 
       createMigration(
         "010",
@@ -401,10 +355,7 @@ INSERT INTO users VALUES (1);`,
       const isLockedAfter = await migrations.checkLockStatus();
       expect(isLockedAfter).toBe(false);
 
-      await expect(migrationPromise).rejects.toThrow();
-
-      await prisma.$executeRaw`DROP TABLE IF EXISTS posts`;
-      await prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = '013'`;
+      await expect(migrationPromise).resolves.toBe(1);
     });
   });
 
@@ -459,7 +410,7 @@ INSERT INTO users VALUES (1);`,
       createMigration(
         "016",
         "multiple_calls",
-        "CREATE TABLE users (id INT PRIMARY KEY);",
+        "SELECT pg_sleep(0.15); CREATE TABLE users (id INT PRIMARY KEY);",
         "DROP TABLE users;",
       );
 
@@ -525,13 +476,13 @@ INSERT INTO users VALUES (1);`,
     test("should respect custom lock timeout", async () => {
       const customMigrations = new Migrations(prisma, {
         migrationsDir: testDir,
-        lockTimeout: 5000,
+        lockTimeout: 500,
       });
 
       createMigration(
         "019",
         "timeout_test",
-        "CREATE TABLE users (id INT PRIMARY KEY); SELECT pg_sleep(8);",
+        "CREATE TABLE users (id INT PRIMARY KEY); SELECT pg_sleep(2);",
         "DROP TABLE users;",
       );
 
@@ -541,19 +492,14 @@ INSERT INTO users VALUES (1);`,
 
       const startTime = Date.now();
       await expect(customMigrations.up()).rejects.toThrow(
-        "Failed to acquire migration lock after 5000ms",
+        "Failed to acquire migration lock after 500ms",
       );
       const duration = Date.now() - startTime;
 
-      expect(duration).toBeGreaterThanOrEqual(5000);
-      expect(duration).toBeLessThan(7000);
+      expect(duration).toBeGreaterThanOrEqual(500);
+      expect(duration).toBeLessThan(1500);
 
-      await customMigrations.releaseLock();
-
-      await expect(slowMigration).rejects.toThrow();
-
-      await prisma.$executeRaw`DROP TABLE IF EXISTS users`;
-      await prisma.$executeRaw`DELETE FROM _prisma_migrations WHERE id = '019'`;
+      await expect(slowMigration).resolves.toBe(1);
     });
   });
 });

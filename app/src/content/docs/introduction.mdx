@@ -4,17 +4,45 @@ description: "Add rollback and programmatic control to Prisma migrations"
 ---
 
 <div className="flex flex-wrap gap-2 mb-8">
-  <a href="https://badge.fury.io/js/prisma-migrations" target="_blank" rel="noopener noreferrer">
-    <img src="https://badge.fury.io/js/prisma-migrations.svg" alt="npm version" />
+  <a
+    href="https://badge.fury.io/js/prisma-migrations"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://badge.fury.io/js/prisma-migrations.svg"
+      alt="npm version"
+    />
   </a>
-  <a href="https://www.typescriptlang.org/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready" />
+  <a
+    href="https://www.typescriptlang.org/"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://img.shields.io/badge/TypeScript-Ready-blue"
+      alt="TypeScript Ready"
+    />
   </a>
-  <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
+  <a
+    href="https://opensource.org/licenses/MIT"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://img.shields.io/badge/License-MIT-yellow.svg"
+      alt="License: MIT"
+    />
   </a>
-  <a href="https://github.com/yowainwright/prisma-migrations" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/github/stars/yowainwright/prisma-migrations?style=social" alt="GitHub stars" />
+  <a
+    href="https://github.com/yowainwright/prisma-migrations"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://img.shields.io/github/stars/yowainwright/prisma-migrations?style=social"
+      alt="GitHub stars"
+    />
   </a>
 </div>
 
@@ -38,17 +66,19 @@ When you hit these limitations in production, you're stuck manually writing SQL 
 
 This tool wraps Prisma and adds what's missing:
 
-| Feature | Prisma Migrate | prisma-migrations |
-|---------|---------------|-------------------|
-| Run migrations forward | ✓ | ✓ |
-| Deploy to production | ✓ | ✓ |
-| Rollback migrations | ✗ | ✓ |
-| Run from Node.js code | ✗ | ✓ |
-| Step-by-step control | ✗ | ✓ |
-| Interactive mode | ✗ | ✓ |
-| Up/down migrations | ✗ | ✓ |
+| Feature                | Prisma Migrate | prisma-migrations |
+| ---------------------- | -------------- | ----------------- |
+| Run migrations forward | ✓              | ✓                 |
+| Deploy to production   | ✓              | ✓                 |
+| Rollback migrations    | ✗              | ✓                 |
+| Run from Node.js code  | ✗              | ✓                 |
+| Step-by-step control   | ✗              | ✓                 |
+| Interactive mode       | ✗              | ✓                 |
+| Up/down migrations     | ✗              | ✓                 |
 
-**Key point:** This is 100% compatible with Prisma. It uses Prisma's standard `_prisma_migrations` table and works alongside `prisma migrate` commands.
+**Key point:**
+
+New migrations use Prisma's standard `migration.sql` layout and `_prisma_migrations` table. Rollbacks live in a separate `down.sql` file, which Prisma ignores during forward deploys.
 
 ## Quick Example
 
@@ -68,22 +98,24 @@ npx prisma-migrations down
 ### Migration File
 
 ```sql
--- Migration: Up
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
+```
 
--- Migration: Down
+`down.sql`:
+
+```sql
 DROP TABLE IF EXISTS users;
 ```
 
 ### Programmatic API
 
 ```typescript
-import { Migrations } from 'prisma-migrations';
-import { PrismaClient } from '@prisma/client';
+import { Migrations } from "prisma-migrations";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const migrations = new Migrations(prisma);
@@ -101,19 +133,21 @@ await migrations.down();
 - **Programmatic API** - Run migrations from your Node.js/TypeScript code
 - **Step control** - Run or rollback N migrations at a time
 - **Interactive mode** - Choose which migrations to apply
-- **SQL migrations** - Standard SQL format with up/down sections
+- **SQL migrations** - Forward and rollback SQL in separate files
 - **Zero config** - Works out of the box with existing Prisma projects
 - **Prisma compatible** - Uses Prisma's `_prisma_migrations` table
 
 ## When to Use This
 
 **Use this tool if:**
+
 - You need to rollback migrations (especially in production)
 - You want to run migrations programmatically
 - You want step-by-step control over migrations
 - You're coming from Knex/TypeORM/etc and miss those features
 
 **Use Prisma Migrate if:**
+
 - You only ever need forward migrations
 - CLI-only execution is fine for you
 - You don't need rollback

@@ -1,6 +1,6 @@
 import { Migrations } from "../../../migrations";
+import type { MigrationsOptions } from "../../../migrations";
 import type { PrismaClient } from "../../../types";
-import { logger } from "../../../logger";
 import { colors } from "../../../utils/colors";
 import { Prompt } from "../../../utils/prompts";
 
@@ -9,7 +9,7 @@ const checkIfLockExists = async (migrations: Migrations): Promise<boolean> => {
   const noLockToRelease = !isLocked;
 
   if (noLockToRelease) {
-    logger.info(`${colors.green("✓")} No migration lock to release`);
+    console.log(colors.green("[x] No migration lock to release"));
     return false;
   }
 
@@ -36,8 +36,9 @@ const confirmLockRelease = async (force: boolean): Promise<boolean> => {
 export const releaseLock = async (
   prisma: PrismaClient,
   force: boolean = false,
+  options: MigrationsOptions = {},
 ): Promise<number> => {
-  const migrations = new Migrations(prisma);
+  const migrations = new Migrations(prisma, options);
 
   const lockExists = await checkIfLockExists(migrations);
   const noLockFound = !lockExists;
@@ -50,12 +51,12 @@ export const releaseLock = async (
   const userCancelled = !confirmed;
 
   if (userCancelled) {
-    logger.info("Lock release cancelled");
+    console.log("Lock release cancelled");
     return 1;
   }
 
   await migrations.releaseLock();
 
-  logger.info(`${colors.green("✓")} Migration lock released`);
+  console.log(colors.green("[x] Migration lock released"));
   return 0;
 };

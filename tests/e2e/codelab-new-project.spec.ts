@@ -176,19 +176,6 @@ generator client {
 
   await waitForPostgres();
   await cleanDatabase();
-
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS _prisma_migrations (
-      id VARCHAR(255) PRIMARY KEY,
-      checksum VARCHAR(64) NOT NULL,
-      finished_at TIMESTAMP WITH TIME ZONE,
-      migration_name VARCHAR(255) NOT NULL,
-      logs TEXT,
-      rolled_back_at TIMESTAMP WITH TIME ZONE,
-      started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-      applied_steps_count INTEGER NOT NULL DEFAULT 0
-    )
-  `;
 });
 
 afterAll(async () => {
@@ -249,6 +236,15 @@ describe("Code Lab: New Project Setup", () => {
       expect(result.code).toBe(0);
       expect(result.stdout).toContain("Created migration");
       expect(existsSync(MIGRATIONS_DIR)).toBe(true);
+
+      const initialMigration = require("fs")
+        .readdirSync(MIGRATIONS_DIR)
+        .find((entry: string) => entry.includes("initial_migration"));
+      expect(initialMigration).toBeTruthy();
+      if (!initialMigration) return;
+      const directory = path.join(MIGRATIONS_DIR, initialMigration);
+      writeFileSync(path.join(directory, "migration.sql"), "SELECT 1;\n");
+      writeFileSync(path.join(directory, "down.sql"), "SELECT 1;\n");
     });
   });
 
@@ -276,18 +272,18 @@ describe("Code Lab: New Project Setup", () => {
         );
         writeFileSync(
           migrationFile,
-          `-- Migration: Up
-CREATE TABLE users (
+          `CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
-
--- Migration: Down
-DROP TABLE IF EXISTS users CASCADE;
 `,
+        );
+        writeFileSync(
+          path.join(MIGRATIONS_DIR, usersMigration, "down.sql"),
+          "DROP TABLE IF EXISTS users CASCADE;\n",
         );
       }
     });
@@ -314,8 +310,7 @@ DROP TABLE IF EXISTS users CASCADE;
         );
         writeFileSync(
           migrationFile,
-          `-- Migration: Up
-CREATE TABLE posts (
+          `CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   content TEXT,
@@ -327,10 +322,11 @@ CREATE TABLE posts (
 );
 
 CREATE INDEX idx_posts_author_id ON posts(author_id);
-
--- Migration: Down
-DROP TABLE IF EXISTS posts CASCADE;
 `,
+        );
+        writeFileSync(
+          path.join(MIGRATIONS_DIR, postsMigration, "down.sql"),
+          "DROP TABLE IF EXISTS posts CASCADE;\n",
         );
       }
     });

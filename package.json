@@ -28,18 +28,16 @@
     "test:watch": "bun test ./tests/unit --watch",
     "test:coverage": "bun test ./tests/unit --coverage --coverage-reporter=lcov",
     "e2e": "./tests/e2e/run-e2e.sh",
-    "e2e:esm": "bun run build && bun test tests/e2e/test.js",
-    "e2e:cjs": "bun run build && bun test tests/e2e/test-cjs.js",
-    "e2e:cli": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-cli && bun test tests/e2e/cli-commands.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
-    "e2e:bun": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-bun && bun test tests/e2e/bun-only.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
+    "e2e:cli": "bun run e2e",
+    "e2e:bun": "bun run e2e",
     "e2e:monorepo": "bun run build && bun test tests/e2e/monorepo-commands.spec.ts",
-    "e2e:prisma-wrapper": "bun run build && docker-compose -f tests/e2e/docker-compose.yml up -d postgres-cli && bun test tests/e2e/prisma-wrapper-commands.spec.ts && docker-compose -f tests/e2e/docker-compose.yml down",
-    "e2e:all": "bun run e2e:cli && bun run e2e:bun && bun run e2e:monorepo && bun run e2e:prisma-wrapper",
+    "e2e:prisma-wrapper": "bun run e2e",
+    "e2e:all": "bun run e2e",
     "docker": "docker-compose -f tests/e2e/docker-compose.yml up --build --abort-on-container-exit",
     "docker:clean": "docker-compose -f tests/e2e/docker-compose.yml down -v",
     "lint": "turbo run lint-lib",
-    "lint-lib": "bunx -y oxlint src tests",
-    "lint:fix": "bunx -y oxlint src tests --fix",
+    "lint-lib": "oxlint src tests",
+    "lint:fix": "oxlint src tests --fix",
     "format": "bunx -y prettier --write src tests",
     "format:check": "bunx -y prettier --check src tests",
     "clean": "bun run clean:dist && bun run clean:turbo",
@@ -49,9 +47,7 @@
     "clean:all": "bun run clean && bun run clean:deps",
     "rebuild": "bun run clean && bun install && bun run build",
     "precommit": "bun run format && bun run lint && bun run build && bun run test",
-    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun run test-lib",
-    "postinstall": "bun scripts/install-hooks.ts",
-    "install-hooks": "bun scripts/install-hooks.ts"
+    "prepublishOnly": "bun run format:check && bun run lint && bun run build && bun run test-lib"
   },
   "keywords": [
     "prisma",
@@ -68,17 +64,24 @@
   ],
   "author": "Jeff Wainwright <me@jeffry.in> (https://jeffry.in)",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
-    "@prisma/client": "^6.18.0",
-    "@types/node": "^20.0.0",
-    "prettier": "3.6.2",
-    "prisma": "^6.18.0",
-    "turbo": "^2.5.8",
-    "typescript": "^5.0.0"
+    "@prisma/client": "^7.8.0",
+    "@types/node": "^26.1.1",
+    "codependence": "^1.0.1",
+    "eslint-plugin-legibility": "0.1.13",
+    "oxlint": "1.73.0",
+    "pastoralist": "^1.12.8",
+    "prettier": "3.9.5",
+    "prisma": "^7.8.0",
+    "turbo": "^2.10.4",
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "@prisma/client": ">=5.0.0 <8.0.0"
+    "@prisma/client": ">=5.0.0 <8.0.0",
+    "prisma": ">=5.0.0 <8.0.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "files": [
     "dist/",
@@ -96,5 +99,17 @@
   "workspaces": [
     "app"
   ],
-  "packageManager": "bun@1.3.1"
+  "packageManager": "bun@1.3.1",
+  "dependencies": {},
+  "optionalDependencies": {},
+  "pastoralist": {
+    "depPaths": "workspace",
+    "security": {
+      "enabled": true,
+      "provider": "osv",
+      "interactive": true,
+      "severityThreshold": "high",
+      "hasWorkspaceSecurityChecks": true
+    }
+  }
 }

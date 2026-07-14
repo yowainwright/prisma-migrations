@@ -136,7 +136,7 @@ describe("Error factory functions", () => {
 
       expect(error.message).toContain("123_test");
       expect(error.message).toContain("Constraint violation");
-      expect(error.suggestions.some((s) => s.includes("Down"))).toBe(true);
+      expect(error.suggestions.some((s) => s.includes("down.sql"))).toBe(true);
     });
   });
 
@@ -179,11 +179,11 @@ describe("Error factory functions", () => {
       expect(error.suggestions.length).toBeGreaterThan(0);
     });
 
-    test("should mention automatic rollback in suggestions", () => {
+    test("should warn that DDL rollback depends on the provider", () => {
       const dbError = new Error("Foreign key constraint");
       const error = createTransactionFailedError("002_add_fk", dbError);
       expect(
-        error.suggestions.some((s) => s.includes("rolled back automatically")),
+        error.suggestions.some((s) => s.includes("depends on the provider")),
       ).toBe(true);
     });
   });

@@ -31,4 +31,11 @@ export interface MigrationFile {
   id: string;
   name: string;
   path: string;
+  downPath?: string;
+  format?: "prisma" | "legacy";
+}
+
+export interface MigrationStatus {
+  migration: MigrationFile;
+  applied: boolean;
 }
