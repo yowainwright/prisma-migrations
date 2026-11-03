@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "strict": true,
+  "boundaries": {
+    "cli": { "root": "src/cli", "public": ["index.ts", "types.ts"] },
+    "config": { "root": "src/config", "public": ["index.ts", "types.ts"] },
+    "errors": { "root": "src/errors", "public": ["index.ts", "types.ts"] },
+    "logger": { "root": "src/logger", "public": ["index.ts", "types.ts"] },
+    "migrations": {
+      "root": "src/migrations",
+      "public": ["index.ts", "types.ts"]
+    },
+    "utils": { "root": "src/utils", "public": ["index.ts", "types.ts"] }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "newFiles": {
+    "default": "allow",
+    "allow": [
+      "!src/**",
+      "src/**/{index,utils,constants,types}.ts",
+      "!tests/unit/**",
+      "tests/unit/**/{index,utils,constants,types}.test.ts"
+    ]
+  },
+  "counterparts": [{ "from": "tests/unit/**.test.ts", "to": "src/**.ts" }]
+}

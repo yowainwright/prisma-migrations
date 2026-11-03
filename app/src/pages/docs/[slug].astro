@@ -1,5 +1,5 @@
 ---
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import Toc from "../../components/docs/Toc.astro";
 import Pagination from "../../components/docs/Pagination.astro";
@@ -10,7 +10,7 @@ export const getStaticPaths = async () => {
   const path = docs.map((doc) => {
     return {
       params: {
-        slug: doc.slug,
+        slug: doc.id,
       },
       props: {
         doc,
@@ -26,7 +26,7 @@ type Props = {
 
 const { doc } = Astro.props;
 
-const { Content, headings } = await doc.render();
+const { Content, headings } = await render(doc);
 ---
 
 <Layout title={doc.data.title}>

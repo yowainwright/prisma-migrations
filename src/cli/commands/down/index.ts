@@ -2,7 +2,7 @@ import type { PrismaClient, MigrationFile } from "../../../types";
 import { Migrations } from "../../../migrations";
 import type { MigrationsOptions } from "../../../migrations";
 import { logger } from "../../../logger";
-import { Prompt, type PromptChoice } from "../../../utils/prompts";
+import { Prompt, type PromptChoice } from "../../../utils";
 import { spinner, createTable, colors } from "../../../utils";
 
 export interface DownDependencies {

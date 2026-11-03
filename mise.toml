@@ -1,0 +1,3 @@
+[tools]
+"github:yowainwright/fs-lint" = "0.4.0"
+"github:yowainwright/src-lint" = "0.2.0"

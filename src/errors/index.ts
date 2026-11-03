@@ -1,4 +1,4 @@
-import { colors } from "../utils/colors";
+import { colors } from "../utils";
 
 export class MigrationError extends Error {
   constructor(

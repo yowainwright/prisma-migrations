@@ -14,8 +14,8 @@ import { createPrismaClient } from "./client-factory";
 import { setLogLevel } from "../logger";
 import type { MigrationFile, MigrationStatus, PrismaClient } from "../types";
 import { MigrationError } from "../errors";
-import { colors } from "../utils/colors";
-import { Prompt } from "../utils/prompts";
+import { colors } from "../utils";
+import { Prompt } from "../utils";
 import { PROMPTS, MESSAGES } from "./constants";
 import { parseArgs, showHelp, showVersion } from "./parser";
 
@@ -337,9 +337,11 @@ async function main() {
         break;
       }
 
-      case "dev":
-        await prisma.dev(parsed.args[0]);
+      case "dev": {
+        const config = await loadRuntimeConfig();
+        await prisma.dev(parsed.args[0], config.migrationsDir);
         break;
+      }
 
       case "deploy": {
         const config = await loadRuntimeConfig();
@@ -397,4 +399,4 @@ async function main() {
   }
 }
 
-main();
+main().catch(handleError);
