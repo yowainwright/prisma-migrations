@@ -6,14 +6,29 @@
       "outputs": ["dist/**"]
     },
     "//#build-lib": {
-      "inputs": ["src/**/*.ts"],
+      "inputs": [
+        "src/**/*.ts",
+        "scripts/build.ts",
+        "tsconfig.json",
+        "package.json",
+        "bun.lock"
+      ],
       "outputs": ["dist/**"]
     },
     "lint-lib": {
       "inputs": ["src/**/*.{tsx,ts}", "tests/**/*.ts"]
     },
     "//#lint-lib": {
-      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
+      "inputs": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        ".oxlintrc.json",
+        "fs-lint.json",
+        ".src-lintrc",
+        "mise.toml",
+        "package.json",
+        "bun.lock"
+      ]
     },
     "test-lib": {
       "inputs": ["src/**/*.ts", "tests/**/*.ts"]

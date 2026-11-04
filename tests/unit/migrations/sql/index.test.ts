@@ -3,6 +3,26 @@ import { Database } from "bun:sqlite";
 import { splitSqlStatements } from "../../../../src/migrations/sql";
 
 describe("SQL statement boundaries", () => {
+  test("ends PostgreSQL triggers before the following statement", () => {
+    const trigger =
+      "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION audit_widget()";
+    const alter = "ALTER TABLE widgets ADD COLUMN label TEXT";
+    expect(splitSqlStatements(`${trigger}; ${alter};`)).toEqual([
+      trigger,
+      alter,
+    ]);
+  });
+
+  test("ends MySQL triggers without block bodies", () => {
+    const trigger =
+      "CREATE TRIGGER set_label BEFORE INSERT ON widgets FOR EACH ROW SET NEW.label = 'BEGIN'";
+    const insert = "INSERT INTO widgets(id) VALUES(1)";
+    expect(splitSqlStatements(`${trigger}; ${insert};`, true)).toEqual([
+      trigger,
+      insert,
+    ]);
+  });
+
   test("preserves SQLite trigger bodies", () => {
     const sql =
       "CREATE TABLE widgets(id INTEGER); CREATE TABLE audit(id INTEGER); CREATE TRIGGER log_widget AFTER INSERT ON widgets BEGIN INSERT INTO audit VALUES(new.id); INSERT INTO audit VALUES(new.id + 1); END; INSERT INTO widgets VALUES(1);";

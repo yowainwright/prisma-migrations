@@ -39,6 +39,7 @@ class SqlSplitter {
   private singleQuoted = false;
   private escapeString = false;
   private trigger = false;
+  private triggerBody = false;
   private afterSemicolon = false;
   private triggerEnd = false;
   private prefix = "";
@@ -178,6 +179,7 @@ class SqlSplitter {
       this.prefix += ` ${word}`;
       this.trigger = /^ CREATE(?: TEMP(?:ORARY)?)? TRIGGER$/.test(this.prefix);
     }
+    if (this.trigger && word === "BEGIN") this.triggerBody = true;
     this.triggerEnd = this.trigger && this.afterSemicolon && word === "END";
     this.afterSemicolon = false;
     this.index += match[0].length;
@@ -185,7 +187,7 @@ class SqlSplitter {
   }
 
   private consumeCharacter(): void {
-    if (this.current === ";" && this.trigger && !this.triggerEnd) {
+    if (this.current === ";" && this.triggerBody && !this.triggerEnd) {
       this.afterSemicolon = true;
       this.index++;
       return;
@@ -193,6 +195,7 @@ class SqlSplitter {
     if (this.current === ";") {
       this.prefix = "";
       this.trigger = false;
+      this.triggerBody = false;
       this.triggerEnd = false;
       this.afterSemicolon = false;
       const statement = this.sql.slice(this.statementStart, this.index);

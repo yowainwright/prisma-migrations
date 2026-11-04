@@ -116,10 +116,12 @@ Full documentation: **[jeffry.in/prisma-migrations](https://jeffry.in/prisma-mig
 
 ## Development
 
+Use Bun 1.4.4 or newer. `mise install` installs the pinned project tools.
+
 ```bash
 bun install
 bun run build
-bun test
+bun run test
 ```
 
 ## License

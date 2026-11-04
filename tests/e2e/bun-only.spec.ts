@@ -11,7 +11,7 @@ import { rmSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "bun";
 
-const TEST_DIR = path.join(import.meta.dir, "bun-test");
+const TEST_DIR = path.join(import.meta.dir, "../../tmp/e2e/bun-test");
 const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5436/bun_test";
 

@@ -1,11 +1,11 @@
-import React, {useState } from "react";
+import React, { useState } from "react";
 
 export const CopyButton = () => {
   const [isClicked, setIsClicked] = useState(false);
 
   const handleCopy = (e: React.MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget;
-    const codeElement = target.closest("div").querySelector("code");
+    const codeElement = target.closest("div")?.querySelector("code");
 
     if (!codeElement) {
       console.log("Code not found");

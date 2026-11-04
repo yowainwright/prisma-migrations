@@ -1,5 +1,31 @@
 import { describe, test, expect, afterEach } from "bun:test";
+import { mkdtemp, rm } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
+import { fileURLToPath } from "url";
 import { parseArgs, showHelp, showVersion } from "../../../../src/cli/parser";
+
+async function bundleInstalledParser(directory: string): Promise<string> {
+  const packageDirectory = join(directory, "node_modules/prisma-migrations");
+  const outdir = join(packageDirectory, "dist");
+  const sourceUrl = new URL(
+    "../../../../src/cli/parser/index.ts",
+    import.meta.url,
+  );
+  const entrypoint = fileURLToPath(sourceUrl);
+  const result = await Bun.build({
+    entrypoints: [entrypoint],
+    outdir,
+    target: "node",
+    format: "esm",
+  });
+  expect(result.success).toBe(true);
+  const consumer = JSON.stringify({ version: "9.9.9" });
+  const installed = JSON.stringify({ type: "module", version: "0.2.2" });
+  await Bun.write(join(directory, "package.json"), consumer);
+  await Bun.write(join(packageDirectory, "package.json"), installed);
+  return result.outputs[0].path;
+}
 
 describe("parseArgs", () => {
   test("rejects missing step values", () => {
@@ -326,6 +352,26 @@ describe("showVersion", () => {
 
   afterEach(() => {
     console.log = originalLog;
+  });
+
+  test("reports the installed package version instead of the consumer version", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "prisma-version-"));
+    try {
+      const entrypoint = await bundleInstalledParser(directory);
+      const script = `import { showVersion } from ${JSON.stringify(entrypoint)}; showVersion();`;
+      const child = Bun.spawn(
+        ["node", "--input-type=module", "--eval", script],
+        {
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      const output = await new Response(child.stdout).text();
+      expect(await child.exited).toBe(0);
+      expect(output.trim()).toBe("0.2.2");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   test("should output version number from package.json", () => {

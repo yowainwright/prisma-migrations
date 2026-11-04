@@ -4,7 +4,10 @@ import { spawn } from "child_process";
 import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
-const TEST_DIR = path.join(import.meta.dir, "prisma-wrapper-test");
+const TEST_DIR = path.join(
+  import.meta.dir,
+  "../../tmp/e2e/prisma-wrapper-test",
+);
 const DATABASE_URL = "postgresql://test:test@localhost:5435/cli_test";
 
 let prisma: PrismaClient;

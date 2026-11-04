@@ -18,12 +18,12 @@
   "scripts": {
     "build": "turbo run build build-lib",
     "build-lib": "bun scripts/build.ts",
-    "build-app": "bun run --filter app build",
+    "build-app": "bun run --filter prisma-migrations-docs build",
     "dev": "turbo run dev",
     "dev-lib": "bun --watch scripts/build.ts",
-    "dev-app": "bun run --filter app dev",
-    "preview": "bun run --filter app preview",
-    "test": "turbo run test-lib",
+    "dev-app": "bun run --filter prisma-migrations-docs dev",
+    "preview": "bun run --filter prisma-migrations-docs preview",
+    "test": "turbo run test-lib && bun run --filter prisma-migrations-docs test",
     "test-lib": "bun test ./tests/unit",
     "test:watch": "bun test ./tests/unit --watch",
     "test:coverage": "bun test ./tests/unit --coverage --coverage-reporter=lcov",
@@ -33,8 +33,8 @@
     "e2e:monorepo": "bun run build && bun test tests/e2e/monorepo-commands.spec.ts",
     "e2e:prisma-wrapper": "bun run e2e",
     "e2e:all": "bun run e2e",
-    "docker": "docker-compose -f tests/e2e/docker-compose.yml up --build --abort-on-container-exit",
-    "docker:clean": "docker-compose -f tests/e2e/docker-compose.yml down -v",
+    "docker": "docker compose -p prisma-migrations-e2e -f tests/e2e/docker-compose.yml up --build --abort-on-container-exit",
+    "docker:clean": "docker compose -p prisma-migrations-e2e -f tests/e2e/docker-compose.yml down -v",
     "lint": "turbo run lint-lib",
     "lint-lib": "oxlint src tests && bun run lint:fs && bun run lint:src",
     "lint:fs": "find src tests/unit -type f -print0 | fs-lint check --stdin0",
@@ -77,13 +77,14 @@
     "prettier": "3.9.10",
     "prisma": "^7.10.1",
     "turbo": "^2.11.10",
-    "typescript": "^7.0.2"
+    "typescript": "7.1.0-beta"
   },
   "peerDependencies": {
     "@prisma/client": ">=5.0.0 <8.0.0",
     "prisma": ">=5.0.0 <8.0.0"
   },
   "engines": {
+    "bun": ">=1.4.4",
     "node": ">=20.19.0"
   },
   "files": [
@@ -102,7 +103,7 @@
   "workspaces": [
     "app"
   ],
-  "packageManager": "bun@1.3.1",
+  "packageManager": "bun@1.4.4",
   "dependencies": {
     "jsonc-parser": "3.3.1"
   },

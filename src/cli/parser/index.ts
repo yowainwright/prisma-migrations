@@ -12,9 +12,9 @@ function getVersion(): string {
   try {
     const moduleDirectory = dirname(fileURLToPath(import.meta.url));
     const candidates = [
-      join(moduleDirectory, "../../../package.json"),
-      join(moduleDirectory, "../../package.json"),
       join(moduleDirectory, "../package.json"),
+      join(moduleDirectory, "../../package.json"),
+      join(moduleDirectory, "../../../package.json"),
     ];
     const packageJsonPath = candidates.find(existsSync);
     if (!packageJsonPath) return "unknown";

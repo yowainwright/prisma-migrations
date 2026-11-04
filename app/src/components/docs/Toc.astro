@@ -1,13 +1,23 @@
 ---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+interface TocHeading extends MarkdownHeading {
+  subheadings: TocHeading[];
+}
+
 const { headings } = Astro.props;
 
 const toc = buildToc(headings || []);
 
-function buildToc(headings) {
-  const toc = [];
-  const parentHeadings = new Map();
+function buildToc(headings: MarkdownHeading[]): TocHeading[] {
+  const toc: TocHeading[] = [];
+  const parentHeadings = new Map<number, TocHeading>();
   headings.forEach((h) => {
-    const heading = { ...h, subheadings: [] };
+    const heading: TocHeading = { ...h, subheadings: [] };
     parentHeadings.set(heading.depth, heading);
     if (heading.depth === 2) {
       toc.push(heading);

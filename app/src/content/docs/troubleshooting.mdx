@@ -106,6 +106,10 @@ For these cases:
 
 Prisma wraps each migration in a transaction, but DDL behavior is provider-specific. PostgreSQL and SQLite can roll back most schema changes. MySQL implicitly commits many DDL statements, so inspect and repair the database before retrying a failed migration.
 
+## MySQL Error 1295
+
+Prisma executes raw SQL through prepared statements. MySQL rejects `CREATE TRIGGER` through this protocol with error 1295, even when the SQL is valid. Trigger execution through this library is supported for PostgreSQL and SQLite; MySQL migrations must use [statements supported by MySQL's prepared-statement protocol](https://dev.mysql.com/doc/refman/8.4/en/sql-prepared-statements.html).
+
 ## Common Error Messages
 
 ### "Migration lock timeout"

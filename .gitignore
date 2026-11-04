@@ -179,4 +179,5 @@ app/.astro/
 .DS_Store
 **/.DS_Store
 prisma
+!tests/unit/cli/commands/prisma/
 coverage/
