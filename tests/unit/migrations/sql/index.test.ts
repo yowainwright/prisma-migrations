@@ -3,6 +3,25 @@ import { Database } from "bun:sqlite";
 import { splitSqlStatements } from "../../../../src/migrations/sql";
 
 describe("SQL statement boundaries", () => {
+  test.each(['"', "`"])(
+    "preserves escaped %s identifiers containing semicolons",
+    (quote) => {
+      const identifier = `${quote}widget;${quote}${quote}audit${quote}`;
+      const sql = `CREATE TABLE ${identifier}(id INTEGER); INSERT INTO ${identifier} VALUES(1);`;
+      const statements = splitSqlStatements(sql);
+      const database = new Database(":memory:");
+      try {
+        expect(statements).toHaveLength(2);
+        statements.forEach((statement) => database.run(statement));
+        expect(database.query(`SELECT id FROM ${identifier}`).all()).toEqual([
+          { id: 1 },
+        ]);
+      } finally {
+        database.close();
+      }
+    },
+  );
+
   test.each([
     "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION begin()",
     "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION begin(update)",

@@ -130,6 +130,36 @@ describe("MigrationLock", () => {
   });
 
   describe("withLock", () => {
+    test("fails when a heartbeat detects a replacement owner", async () => {
+      lock = new MigrationLock(mockPrisma, 30);
+      const work = async () => {
+        activeOwner = "replacement-owner";
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      };
+
+      await expect(lock.withLock(work)).rejects.toThrow(
+        "Migration lock ownership was lost",
+      );
+      expect(activeOwner).toBe("replacement-owner");
+    });
+
+    test("releases the lease when a heartbeat rejects with a non-Error value", async () => {
+      lock = new MigrationLock(mockPrisma, 30);
+      mockPrisma.$executeRaw = mock((query, ...values) => {
+        const isHeartbeat = String(query).includes(
+          "UPDATE _prisma_migrations_lock_v2",
+        );
+        if (isHeartbeat) return Promise.reject("Heartbeat unavailable");
+        return executeRaw(query, ...values);
+      });
+      const work = () => new Promise((resolve) => setTimeout(resolve, 25));
+
+      await expect(lock.withLock(work)).rejects.toThrow(
+        "Heartbeat unavailable",
+      );
+      expect(activeOwner).toBeNull();
+    });
+
     test("should timeout when lock cannot be acquired", async () => {
       activeOwner = "existing-owner";
       const fn = mock(() => Promise.resolve());
@@ -204,6 +234,28 @@ describe("MigrationLock", () => {
   });
 
   describe("error handling", () => {
+    test("retries initialization on a later call after table creation fails", async () => {
+      mockPrisma.$executeRaw = mock(executeRaw)
+        .mockRejectedValueOnce(new Error("DDL unavailable"))
+        .mockRejectedValueOnce(new Error("DDL unavailable"));
+
+      await expect(lock.isLocked()).rejects.toThrow("DDL unavailable");
+      await expect(lock.isLocked()).resolves.toBe(false);
+    });
+
+    test("propagates insertion failures that are not lock conflicts", async () => {
+      mockPrisma.$executeRaw = mock((query, ...values) => {
+        const isInsert = String(query).includes(
+          "INSERT INTO _prisma_migrations_lock_v2",
+        );
+        if (isInsert) return Promise.reject(new Error("Connection lost"));
+        return executeRaw(query, ...values);
+      });
+
+      await expect(lock.acquire(5000)).rejects.toThrow("Connection lost");
+      expect(activeOwner).toBeNull();
+    });
+
     test("should propagate lock status errors", async () => {
       mockPrisma.$queryRaw = mock(() =>
         Promise.reject(new Error("Check error")),

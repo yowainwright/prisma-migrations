@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        prisma-version: ["5.22.0", "6.19.2", "latest"]
+        prisma-version: ["5.22.0", "6.19.2", "7.10.1"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -94,7 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        prisma-version: ["5.22.0", "6.19.2", "latest"]
+        prisma-version: ["5.22.0", "6.19.2", "7.10.1"]
     services:
       postgres:
         image: postgres:16-alpine
