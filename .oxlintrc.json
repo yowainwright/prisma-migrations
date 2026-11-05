@@ -3,7 +3,7 @@
   "jsPlugins": [
     {
       "name": "legibility",
-      "specifier": "eslint-plugin-legibility"
+      "specifier": "oxlint-plugin-legibility"
     }
   ],
   "rules": {
@@ -29,6 +29,9 @@
     "legibility/prefer-guard-clauses": "warn",
     "legibility/prefer-object-lookup": "warn",
     "legibility/require-executable-shebang": "warn",
-    "legibility/require-filename-matches-dirname": "warn"
+    "legibility/require-filename-matches-dirname": [
+      "warn",
+      { "schema": "index", "minDepth": 3 }
+    ]
   }
 }

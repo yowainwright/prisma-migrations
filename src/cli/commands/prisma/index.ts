@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { createRequire } from "module";
 import { readFile, readdir } from "fs/promises";
 import { dirname, join, resolve } from "path";
-import { colors } from "../../../utils/colors";
+import { colors } from "../../../utils";
 
 const UP_MARKER = "-- Migration: Up";
 const DOWN_MARKER = "-- Migration: Down";
@@ -94,7 +94,8 @@ export async function execPrismaCommand(
   await runPrisma(installation.cliPath, commandArgs);
 }
 
-export async function dev(name?: string): VoidResult {
+export async function dev(name?: string, migrationsDir?: string): VoidResult {
+  await assertNativeDeployCompatible(migrationsDir);
   const args = ["dev"];
   if (name) args.push("--name", name);
   await execPrismaCommand("migrate", args);

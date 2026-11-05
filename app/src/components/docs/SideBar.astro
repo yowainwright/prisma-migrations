@@ -54,7 +54,7 @@ const expandedSections = SIDEBAR.map((section) => {
                     >
                       <span class="flex items-center justify-between">
                         {item.title}
-                        {item.label && (
+                        {"label" in item && item.label && (
                           <span class="ml-auto text-xs bg-[#1D4ED8]/20 text-[#1D4ED8] px-1.5 py-0.5 rounded">
                             New
                           </span>

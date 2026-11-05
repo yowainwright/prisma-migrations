@@ -30,7 +30,7 @@ export async function getSearchData() {
       title: doc.data.title,
       description: doc.data.description || "",
       content,
-      slug: doc.slug,
+      slug: doc.id,
     };
   });
 

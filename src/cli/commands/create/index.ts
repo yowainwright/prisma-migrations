@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from "fs/promises";
 import { resolve } from "path";
-import { Prompt } from "../../../utils/prompts";
+import { Prompt } from "../../../utils";
 import {
   generateMigrationId,
   validateMigrationName,

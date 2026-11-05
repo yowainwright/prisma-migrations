@@ -11,13 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: jdx/mise-action@v3
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.1
+          bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
       - run: bunx tsc --noEmit
+      - run: bun run --filter prisma-migrations-docs check
       - run: bun run build
 
   unit-tests:
@@ -26,9 +31,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.1
+          bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bun run test:coverage
+      - run: bun run --filter prisma-migrations-docs test
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -42,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        prisma-version: ["5.22.0", "6.19.2", "latest"]
+        prisma-version: ["5.22.0", "6.19.2", "7.10.1"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,7 +56,7 @@ jobs:
           node-version: 20.19.0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.1
+          bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bun run build-lib
       - name: Install packed package
@@ -88,7 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        prisma-version: ["5.22.0", "6.19.2", "latest"]
+        prisma-version: ["5.22.0", "6.19.2", "7.10.1"]
     services:
       postgres:
         image: postgres:16-alpine
@@ -124,7 +130,7 @@ jobs:
           node-version: 20.19.0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.1
+          bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bun run build-lib
       - name: Prepare compatibility project
@@ -198,7 +204,7 @@ jobs:
           node-version: 20.19.0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.1
+          bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bun run build-lib
       - name: Install Prisma 6 for legacy project fixtures

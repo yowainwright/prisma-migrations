@@ -15,7 +15,7 @@ import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "child_process";
 
-const TEST_DIR = path.join(import.meta.dir, "codelab-migrate");
+const TEST_DIR = path.join(import.meta.dir, "../../tmp/e2e/codelab-migrate");
 const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5438/codelab_migrate";
 

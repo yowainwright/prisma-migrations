@@ -5,7 +5,7 @@ ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT_DIR"
 
 cleanup() {
-  docker compose -f tests/e2e/docker-compose.yml down || true
+  docker compose -p prisma-migrations-e2e -f tests/e2e/docker-compose.yml down || true
   bun install --force --frozen-lockfile
 }
 
@@ -13,10 +13,11 @@ trap cleanup EXIT
 
 bun run build-lib
 bun add --no-save --exact prisma@6.19.2 @prisma/client@6.19.2
+node -e 'if (require("prisma/package.json").version !== "6.19.2") process.exit(1)'
 DATABASE_URL="postgresql://test:test@localhost:5434/prisma_migrations_test" \
   bunx prisma generate --schema tests/e2e/schema.prisma
 
-docker compose -f tests/e2e/docker-compose.yml up -d --wait \
+docker compose -p prisma-migrations-e2e -f tests/e2e/docker-compose.yml up -d --wait \
   postgres postgres-cli postgres-bun \
   postgres-codelab-new postgres-codelab-migrate
 

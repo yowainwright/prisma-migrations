@@ -19,7 +19,7 @@ const buildLibrary = async () => {
     target: "node",
     format: "esm",
     sourcemap: "external",
-    external: ["@prisma/client", "commander", "inquirer"],
+    external: ["@prisma/client", "commander", "inquirer", "jsonc-parser"],
     naming: {
       entry: "index.js",
     },
@@ -40,7 +40,7 @@ const buildCLI = async () => {
     target: "node",
     format: "esm",
     sourcemap: "external",
-    external: ["@prisma/client", "commander", "inquirer"],
+    external: ["@prisma/client", "commander", "inquirer", "jsonc-parser"],
     naming: {
       entry: "cli.js",
     },

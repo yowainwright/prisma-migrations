@@ -1,8 +1,12 @@
 import React, { useEffect } from "react";
-import docsearch from "@docsearch/js";
-import "@docsearch/css";
+import docsearch, { type DocSearchProps } from "@docsearch/js";
+import "@docsearch/css/dist/style.css";
 
-function DocSearchReact({ algoliaDocsearchConfig }) {
+interface Props {
+  algoliaDocsearchConfig: DocSearchProps;
+}
+
+function DocSearchReact({ algoliaDocsearchConfig }: Props) {
   useEffect(() => {
     docsearch(algoliaDocsearchConfig);
   }, []);

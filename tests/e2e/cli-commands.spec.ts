@@ -22,7 +22,7 @@ import { spawn } from "child_process";
 import { rmSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 
-const TEST_DIR = path.join(import.meta.dir, "cli-test");
+const TEST_DIR = path.join(import.meta.dir, "../../tmp/e2e/cli-test");
 const MIGRATIONS_DIR = path.join(TEST_DIR, "prisma", "migrations");
 const DATABASE_URL = "postgresql://test:test@localhost:5435/cli_test";
 

@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
-    "jsx": "react"
+    "jsx": "react-jsx"
   },
-  "extends": "astro/tsconfigs/base"
+  "contentMappers": [
+    {
+      "package": "@astrojs/ts-content-mapper",
+      "extensions": [".astro"]
+    }
+  ],
+  "extends": "astro/tsconfigs/base",
+  "exclude": ["dist", "**/*.test.ts", "**/*.test.tsx", "src/test-setup.ts"]
 }
