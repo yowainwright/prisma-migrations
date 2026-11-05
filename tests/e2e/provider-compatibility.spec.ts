@@ -14,7 +14,7 @@ async function dropTestTables(client: ProviderClient): Promise<void> {
   await client.$executeRawUnsafe("DROP TABLE IF EXISTS provider_widgets");
   await client.$executeRawUnsafe("DROP TABLE IF EXISTS provider_audit");
   if (process.env.PRISMA_PROVIDER === "postgresql") {
-    await client.$executeRawUnsafe("DROP FUNCTION IF EXISTS log_widget()");
+    await client.$executeRawUnsafe("DROP FUNCTION IF EXISTS begin()");
   }
   await client.$executeRawUnsafe(
     "DROP TABLE IF EXISTS _prisma_migrations_lock_v2",
@@ -40,11 +40,11 @@ async function writeMigration(
 function triggerSql(): string {
   const provider = process.env.PRISMA_PROVIDER;
   if (provider === "postgresql") {
-    return `CREATE FUNCTION log_widget() RETURNS trigger AS $$
+    return `CREATE FUNCTION begin() RETURNS trigger AS $$
       BEGIN INSERT INTO provider_audit VALUES (NEW.id); RETURN NEW; END;
       $$ LANGUAGE plpgsql;
       CREATE TRIGGER log_widget AFTER INSERT ON provider_widgets
-      FOR EACH ROW EXECUTE FUNCTION log_widget();`;
+      FOR EACH ROW EXECUTE FUNCTION begin();`;
   }
   if (provider === "sqlite") {
     return `CREATE TRIGGER log_widget AFTER INSERT ON provider_widgets
@@ -57,7 +57,7 @@ function triggerSql(): string {
 
 function dropTriggerSql(): string {
   if (process.env.PRISMA_PROVIDER === "postgresql") {
-    return "DROP TRIGGER log_widget ON provider_widgets; DROP FUNCTION log_widget(); DROP TABLE provider_audit;";
+    return "DROP TRIGGER log_widget ON provider_widgets; DROP FUNCTION begin(); DROP TABLE provider_audit;";
   }
   return "DROP TRIGGER log_widget; DROP TABLE provider_audit;";
 }

@@ -3,6 +3,19 @@ import { Database } from "bun:sqlite";
 import { splitSqlStatements } from "../../../../src/migrations/sql";
 
 describe("SQL statement boundaries", () => {
+  test.each([
+    "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION begin()",
+    "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION begin(update)",
+    "CREATE TRIGGER begin AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION audit_widget()",
+    "CREATE TRIGGER audit AFTER INSERT ON begin FOR EACH ROW EXECUTE FUNCTION audit_widget()",
+  ])("keeps BEGIN identifiers outside trigger bodies: %s", (trigger) => {
+    const following = "ALTER TABLE widgets ADD COLUMN label TEXT";
+    expect(splitSqlStatements(`${trigger}; ${following};`)).toEqual([
+      trigger,
+      following,
+    ]);
+  });
+
   test("ends PostgreSQL triggers before the following statement", () => {
     const trigger =
       "CREATE TRIGGER audit AFTER INSERT ON widgets FOR EACH ROW EXECUTE FUNCTION audit_widget()";
@@ -25,7 +38,7 @@ describe("SQL statement boundaries", () => {
 
   test("preserves SQLite trigger bodies", () => {
     const sql =
-      "CREATE TABLE widgets(id INTEGER); CREATE TABLE audit(id INTEGER); CREATE TRIGGER log_widget AFTER INSERT ON widgets BEGIN INSERT INTO audit VALUES(new.id); INSERT INTO audit VALUES(new.id + 1); END; INSERT INTO widgets VALUES(1);";
+      "CREATE TABLE widgets(id INTEGER); CREATE TABLE audit(id INTEGER); CREATE TRIGGER log_widget AFTER INSERT ON widgets BEGIN /* body */ INSERT INTO audit VALUES(new.id); INSERT INTO audit VALUES(new.id + 1); END; INSERT INTO widgets VALUES(1);";
     const database = new Database(":memory:");
     try {
       splitSqlStatements(sql).forEach((statement) => database.run(statement));

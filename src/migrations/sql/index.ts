@@ -6,6 +6,13 @@ const BLOCK_COMMENT_PATTERN = /\/\*[\s\S]*?\*\//g;
 const LINE_COMMENT_PATTERN = /^\s*--.*$/gm;
 const UP_MARKER = "-- Migration: Up";
 const DOWN_MARKER = "-- Migration: Down";
+const TRIGGER_STATEMENT_KEYWORDS = [
+  "DELETE",
+  "INSERT",
+  "REPLACE",
+  "SELECT",
+  "UPDATE",
+];
 
 type Direction = "up" | "down";
 type SqlResult = Promise<string>;
@@ -40,6 +47,7 @@ class SqlSplitter {
   private escapeString = false;
   private trigger = false;
   private triggerBody = false;
+  private triggerBegin = false;
   private afterSemicolon = false;
   private triggerEnd = false;
   private prefix = "";
@@ -111,7 +119,8 @@ class SqlSplitter {
     const isEscaped =
       this.escapeString && this.current === "\\" && Boolean(this.next);
     const isDoubled = this.current === "'" && this.next === "'";
-    if (isEscaped || isDoubled) {
+    const skipsPair = isEscaped || isDoubled;
+    if (skipsPair) {
       this.index += 2;
       return true;
     }
@@ -142,7 +151,8 @@ class SqlSplitter {
   private startComment(): boolean {
     const isLineComment = this.current === "-" && this.next === "-";
     const isBlockComment = this.current === "/" && this.next === "*";
-    if (!isLineComment && !isBlockComment) return false;
+    const isComment = isLineComment || isBlockComment;
+    if (!isComment) return false;
     this.lineComment = isLineComment;
     this.blockComment = isBlockComment;
     this.index += 2;
@@ -175,11 +185,15 @@ class SqlSplitter {
     const match = this.sql.slice(this.index).match(/^[A-Za-z_][A-Za-z0-9_$]*/);
     if (!match) return false;
     const word = match[0].toUpperCase();
-    if (!this.trigger && this.prefix.length < 40) {
+    const tracksPrefix = !this.trigger && this.prefix.length < 40;
+    if (tracksPrefix) {
       this.prefix += ` ${word}`;
       this.trigger = /^ CREATE(?: TEMP(?:ORARY)?)? TRIGGER$/.test(this.prefix);
     }
-    if (this.trigger && word === "BEGIN") this.triggerBody = true;
+    const startsTriggerBody =
+      this.triggerBegin && TRIGGER_STATEMENT_KEYWORDS.includes(word);
+    if (startsTriggerBody) this.triggerBody = true;
+    this.triggerBegin = this.trigger && word === "BEGIN";
     this.triggerEnd = this.trigger && this.afterSemicolon && word === "END";
     this.afterSemicolon = false;
     this.index += match[0].length;
@@ -187,7 +201,11 @@ class SqlSplitter {
   }
 
   private consumeCharacter(): void {
-    if (this.current === ";" && this.triggerBody && !this.triggerEnd) {
+    const isWhitespace = /\s/.test(this.current);
+    if (!isWhitespace) this.triggerBegin = false;
+    const isTriggerBodySemicolon =
+      this.current === ";" && this.triggerBody && !this.triggerEnd;
+    if (isTriggerBodySemicolon) {
       this.afterSemicolon = true;
       this.index++;
       return;
