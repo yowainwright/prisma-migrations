@@ -1,7 +1,7 @@
 services:
   # Main PostgreSQL database for existing e2e tests
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -14,11 +14,11 @@ services:
       timeout: 5s
       retries: 5
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   # PostgreSQL for CLI commands e2e test
   postgres-cli:
-    image: postgres:16-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -31,11 +31,11 @@ services:
       timeout: 5s
       retries: 5
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   # PostgreSQL for Bun-only e2e test
   postgres-bun:
-    image: postgres:16-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -48,11 +48,11 @@ services:
       timeout: 5s
       retries: 5
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   # PostgreSQL for new project code lab
   postgres-codelab-new:
-    image: postgres:16-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -65,11 +65,11 @@ services:
       timeout: 5s
       retries: 5
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   # PostgreSQL for migration code lab (pre-seeded with existing Prisma schema)
   postgres-codelab-migrate:
-    image: postgres:16-alpine
+    image: postgres:18.6-alpine
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -82,10 +82,10 @@ services:
       timeout: 5s
       retries: 5
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   mysql:
-    image: mysql:8.4
+    image: mysql:9.7.4
     environment:
       MYSQL_ROOT_PASSWORD: test
       MYSQL_DATABASE: prisma_migrations_test

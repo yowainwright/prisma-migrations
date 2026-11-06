@@ -71,8 +71,8 @@
     "@prisma/client": "^7.10.1",
     "@types/node": "^26.6.6",
     "codependence": "^1.0.16",
+    "oxlint": "1.91.0",
     "oxlint-plugin-legibility": "0.0.5",
-    "oxlint": "1.90.0",
     "pastoralist": "^1.14.0",
     "prettier": "3.9.10",
     "prisma": "^7.10.1",
@@ -109,7 +109,8 @@
   },
   "optionalDependencies": {},
   "overrides": {
-    "postcss-selector-parser": "6.1.5"
+    "postcss-selector-parser": "6.1.5",
+    "lodash": "4.18.1"
   },
   "pastoralist": {
     "appendix": {
@@ -121,14 +122,45 @@
         "ledger": {
           "addedDate": "2026-11-03T09:31:15.621Z"
         }
+      },
+      "lodash@4.18.1": {
+        "dependents": {
+          "prisma-migrations": "lodash (required by @prisma/client, prisma)"
+        },
+        "ledger": {
+          "addedDate": "2026-11-06T04:42:22.795Z",
+          "reason": "Security fix: lodash vulnerable to prototype pollution via array-path bypass in `_.unset`, `_.omit`, and `_.pullAt (medium)",
+          "source": "security",
+          "securityChecked": true,
+          "securityCheckDate": "2026-11-06T04:42:22.812Z",
+          "securityProvider": "osv",
+          "cves": [
+            "CVE-2026-2950"
+          ],
+          "cveDetails": [
+            {
+              "cve": "CVE-2026-2950",
+              "severity": "medium",
+              "patchedVersion": "4.18.1"
+            }
+          ],
+          "severity": "medium",
+          "url": "https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh",
+          "vulnerableRange": ">= 4.17.23 < 4.18.1",
+          "patchedVersion": "4.18.1",
+          "sources": [
+            "osv"
+          ],
+          "confidence": "possible"
+        }
       }
     },
     "depPaths": "workspace",
     "security": {
       "enabled": true,
       "provider": "osv",
-      "interactive": true,
-      "severityThreshold": "high",
+      "interactive": false,
+      "severityThreshold": "low",
       "hasWorkspaceSecurityChecks": true
     }
   }
